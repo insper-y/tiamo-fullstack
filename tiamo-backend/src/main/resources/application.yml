@@ -1,0 +1,70 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: tiamo-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/tiamo_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+  # 邮件配置（用于操作日志实时推送）
+  mail:
+    host: smtp.qq.com          # 邮箱SMTP服务器（QQ邮箱用smtp.qq.com，163用smtp.163.com）
+    port: 465                   # SMTP端口（QQ:465/587，163:465/25）
+    username: your_email@qq.com # 你的邮箱地址
+    password: your_auth_code    # 邮箱授权码（不是登录密码，需在邮箱设置中开启SMTP获取）
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          starttls:
+            enable: true
+            required: true
+    default-encoding: UTF-8
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.tiamo.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 日志配置
+logging:
+  level:
+    com.tiamo: debug
+    org.springframework.web: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+
+# JWT 配置
+jwt:
+  secret: tiamo-ai-secret-key-2024-must-be-at-least-256-bits-long-for-hs256
+  expiration: 86400000   # Token有效期：24小时（毫秒）
+
+# 默认管理员账号（首次启动自动创建）
+app:
+  default-admin:
+    username: admin
+    password: Admin123
+    nickname: 系统管理员
+  # 操作日志邮件推送配置
+  log-email:
+    enabled: false              # 是否开启邮件推送（true=开启，false=关闭）
+    to: your_email@qq.com      # 接收操作日志的邮箱地址

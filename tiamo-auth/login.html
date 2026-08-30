@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>登录 - Tiamo AI 数据管理</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><path d='M30 35 L50 25 L70 35 L70 65 L50 75 L30 65 Z' fill='none' stroke='white' stroke-width='4'/><circle cx='50' cy='50' r='8' fill='%2322d3ee'/></svg>">
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="ai-bg">
+        <div class="grid"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <canvas id="particles"></canvas>
+    </div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- Logo -->
+            <div class="auth-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h1>Tiamo AI</h1>
+                <p>智能数据管理平台</p>
+            </div>
+
+            <!-- 提示消息 -->
+            <div class="alert" id="alert">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <span class="alert-text"></span>
+            </div>
+
+            <!-- 登录表单 -->
+            <form class="auth-form" id="loginForm" novalidate>
+                <!-- 用户名/邮箱 -->
+                <div class="form-group">
+                    <label class="form-label" for="username">账号</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        </span>
+                        <input type="text" class="form-input" id="username" name="username"
+                               placeholder="请输入用户名或邮箱"
+                               data-required data-rules="required" autocomplete="username">
+                    </div>
+                    <div class="error-message">请输入账号</div>
+                </div>
+
+                <!-- 密码 -->
+                <div class="form-group">
+                    <label class="form-label" for="password">密码</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </span>
+                        <input type="password" class="form-input" id="password" name="password"
+                               placeholder="请输入密码"
+                               data-required data-rules="required" autocomplete="current-password">
+                        <button type="button" class="toggle-password" aria-label="显示密码">
+                            <svg class="eye-open" viewBox="0 0 24 24" style="display:none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                            <svg class="eye-closed" viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
+                        </button>
+                    </div>
+                    <div class="error-message">请输入密码</div>
+                </div>
+
+                <!-- 选项行 -->
+                <div class="form-options">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span class="checkbox-custom">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        </span>
+                        <span>记住我</span>
+                    </label>
+                    <a href="forgot-password.html" class="forgot-link">忘记密码？</a>
+                </div>
+
+                <!-- 提交按钮 -->
+                <button type="submit" class="btn-submit">
+                    <span class="btn-text">登 录</span>
+                </button>
+            </form>
+
+            <!-- 分割线 -->
+            <div class="divider"><span>其他方式</span></div>
+
+            <!-- 第三方登录 -->
+            <div class="social-login">
+                <button type="button" class="social-btn" title="微信登录">
+                    <svg viewBox="0 0 24 24"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z"/></svg>
+                </button>
+                <button type="button" class="social-btn" title="QQ登录">
+                    <svg viewBox="0 0 24 24"><path d="M12.003 2c-2.265 0-6.29 1.364-6.29 7.325v1.195S3.55 14.96 3.55 17.474c0 .665.17 1.025.28 1.025.114 0 .902-.484 1.718-1.98.183 1.542.866 3.226 2.677 3.226.62 0 1.37-.17 1.778-.39.41.22 1.16.39 1.78.39 1.81 0 2.495-1.684 2.677-3.226.816 1.496 1.604 1.98 1.718 1.98.11 0 .28-.36.28-1.025 0-2.514-2.16-6.954-2.16-6.954V9.325C18.293 3.364 14.268 2 12.003 2z"/></svg>
+                </button>
+                <button type="button" class="social-btn" title="GitHub登录">
+                    <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </button>
+            </div>
+
+            <!-- 底部链接 -->
+            <div class="auth-footer">
+                <p>还没有账号？<a href="register.html">立即注册</a></p>
+            </div>
+
+            <div class="copyright">
+                &copy; 2026 Tiamo AI. All rights reserved.
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // 如果已登录，直接跳转到后台
+        if (Auth.isLoggedIn()) {
+            window.location.href = 'dashboard.html';
+        }
+
+        var loginForm = document.getElementById('loginForm');
+        var submitBtn = loginForm.querySelector('.btn-submit');
+
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            var username = document.getElementById('username');
+            var password = document.getElementById('password');
+            var valid = true;
+
+            if (!AuthUtils.validateField(username, ['required'])) valid = false;
+            if (!AuthUtils.validateField(password, ['required'])) valid = false;
+
+            if (!valid) {
+                var firstError = loginForm.querySelector('.form-group.has-error .form-input');
+                if (firstError) firstError.focus();
+                return;
+            }
+
+            var remember = document.getElementById('remember').checked;
+            var originalText = submitBtn.querySelector('.btn-text').textContent;
+            AuthUtils.setButtonLoading(submitBtn, true);
+
+            // 调用真实登录接口
+            Api.login(username.value.trim(), password.value, remember).then(function (res) {
+                AuthUtils.setButtonLoading(submitBtn, false, originalText);
+
+                if (res.code === 200 && res.data && res.data.token) {
+                    // 保存 Token 和用户信息
+                    Auth.setAuth(res.data.token, {
+                        userId: res.data.userId,
+                        username: res.data.username,
+                        nickname: res.data.nickname,
+                        email: res.data.email
+                    });
+
+                    // 记住我
+                    if (remember) {
+                        localStorage.setItem('tiamo_username', username.value.trim());
+                    } else {
+                        localStorage.removeItem('tiamo_username');
+                    }
+
+                    AuthUtils.showAlert('success', '登录成功，正在跳转...');
+                    setTimeout(function () {
+                        window.location.href = 'dashboard.html';
+                    }, 800);
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '登录失败，请检查用户名和密码');
+                }
+            });
+        });
+
+        // 页面加载时填充记住的用户名
+        window.addEventListener('DOMContentLoaded', function () {
+            var savedUsername = localStorage.getItem('tiamo_username');
+            if (savedUsername) {
+                document.getElementById('username').value = savedUsername;
+                document.getElementById('remember').checked = true;
+            }
+        });
+    </script>
+</body>
+</html>

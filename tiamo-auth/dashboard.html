@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>控制台 - Tiamo AI 数据管理</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <style>
+        .dashboard-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .dashboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 0; margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .dashboard-header h1 {
+            font-size: 24px; background: linear-gradient(135deg, var(--text-primary), var(--primary-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; color: white; font-size: 16px;
+        }
+        .logout-btn {
+            padding: 8px 20px; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer;
+            font-size: 13px; transition: var(--transition); font-family: inherit;
+        }
+        .logout-btn:hover { background: var(--bg-input-focus); color: var(--error); border-color: var(--error); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 24px; transition: var(--transition);
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--border-focus); }
+        .stat-value { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--primary-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        .data-card {
+            background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px;
+        }
+        .data-card h2 { font-size: 18px; margin-bottom: 16px; color: var(--text-primary); }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .data-table th { text-align: left; padding: 12px; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .data-table td { padding: 12px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+        .data-table tr:hover { background: var(--bg-input); }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .token-info {
+            background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md);
+            padding: 16px; font-size: 12px; color: var(--text-secondary); word-break: break-all;
+            font-family: monospace; margin-top: 16px;
+        }
+        .token-info strong { color: var(--primary-light); }
+        @media (max-width: 600px) {
+            .dashboard-header { flex-direction: column; gap: 16px; text-align: center; }
+            .data-table { font-size: 12px; }
+            .data-table th, .data-table td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="ai-bg">
+        <div class="grid"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <canvas id="particles"></canvas>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- 顶部导航 -->
+        <div class="dashboard-header">
+            <h1>Tiamo AI 控制台</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div>
+                    <div style="font-size:14px;font-weight:500;" id="userNickname">加载中...</div>
+                    <div style="font-size:12px;color:var(--text-muted);" id="userEmail"></div>
+                </div>
+                <button class="logout-btn" onclick="window.location.href='logs.html'" style="color:var(--primary-light);">操作日志</button>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <!-- 提示消息 -->
+        <div class="alert" id="alert">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <span class="alert-text"></span>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="bookCount">--</div>
+                <div class="stat-label">商品数据总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="userCount">--</div>
+                <div class="stat-label">当前用户ID</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">JWT</div>
+                <div class="stat-label">认证方式</div>
+            </div>
+        </div>
+
+        <!-- 商品数据列表 -->
+        <div class="data-card">
+            <h2>商品数据列表（受保护接口）</h2>
+            <div id="bookList">
+                <div class="empty-state">加载中...</div>
+            </div>
+        </div>
+
+        <!-- Token 信息 -->
+        <div class="data-card">
+            <h2>当前 Token 信息</h2>
+            <div class="token-info" id="tokenInfo">加载中...</div>
+        </div>
+
+        <div class="copyright" style="margin-top:24px;">
+            &copy; 2026 Tiamo AI. All rights reserved.
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // 检查登录状态
+        if (!Auth.requireAuth()) {
+            throw new Error('未登录');
+        }
+
+        var user = Auth.getUser();
+
+        // 显示用户信息
+        document.getElementById('userNickname').textContent = user ? (user.nickname || user.username) : '未知';
+        document.getElementById('userEmail').textContent = user ? (user.email || '') : '';
+        document.getElementById('userAvatar').textContent = user ? (user.nickname || user.username).charAt(0).toUpperCase() : '?';
+        document.getElementById('userCount').textContent = user ? user.userId : '--';
+
+        // 显示 Token
+        var token = Auth.getToken();
+        document.getElementById('tokenInfo').innerHTML =
+            '<strong>Token:</strong> ' + token.substring(0, 50) + '...' +
+            '<br><br><strong>长度:</strong> ' + token.length + ' 字符' +
+            '<br><strong>存储位置:</strong> localStorage';
+
+        // 加载商品列表（调用受保护接口）
+        function loadBooks() {
+            Api.getBooks().then(function (res) {
+                var listEl = document.getElementById('bookList');
+                if (res.code === 20041 && res.data) {
+                    document.getElementById('bookCount').textContent = res.data.length;
+                    if (res.data.length === 0) {
+                        listEl.innerHTML = '<div class="empty-state">暂无数据</div>';
+                        return;
+                    }
+                    var html = '<table class="data-table"><thead><tr>' +
+                        '<th>ID</th><th>分销软件</th><th>微信账号</th><th>商品标题</th>' +
+                        '</tr></thead><tbody>';
+                    res.data.forEach(function (item) {
+                        html += '<tr>' +
+                            '<td>' + item.id + '</td>' +
+                            '<td>' + (item.name || '-') + '</td>' +
+                            '<td>' + (item.type || '-') + '</td>' +
+                            '<td>' + (item.ax || '-') + '</td>' +
+                            '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    listEl.innerHTML = html;
+                } else if (res.httpStatus === 401) {
+                    listEl.innerHTML = '<div class="empty-state" style="color:var(--error);">Token已过期，请重新登录</div>';
+                    AuthUtils.showAlert('error', 'Token已过期，请重新登录');
+                    setTimeout(function () { logout(); }, 2000);
+                } else {
+                    listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
+                }
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            Auth.logout();
+            window.location.href = 'login.html';
+        }
+
+        // 页面加载完成后加载数据
+        document.addEventListener('DOMContentLoaded', function () {
+            loadBooks();
+        });
+    </script>
+</body>
+</html>

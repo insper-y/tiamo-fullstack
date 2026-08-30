@@ -1,0 +1,36 @@
+# ============================================================
+# Render 后端部署配置
+# Render 提供免费的 Web Service 托管（每月750小时）
+# 文档：https://render.com/docs
+# ============================================================
+
+services:
+  - type: web
+    name: tiamo-backend
+    runtime: docker
+    repo: https://github.com/你的用户名/tiamo-fullstack.git
+    dockerfilePath: ./tiamo-backend/Dockerfile
+    dockerContext: ./tiamo-backend
+    branch: main
+    plan: free
+    healthCheckPath: /api/auth/verify
+    autoDeploy: true
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:mysql://你的数据库地址:3306/tiamo_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      - key: SPRING_DATASOURCE_USERNAME
+        value: 你的数据库用户名
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: 你的数据库密码
+      - key: JWT_SECRET
+        value: 你的自定义JWT密钥至少32位
+      - key: APP_LOG_EMAIL_ENABLED
+        value: "false"
+      - key: SPRING_MAIL_HOST
+        value: smtp.qq.com
+      - key: SPRING_MAIL_USERNAME
+        value: 你的邮箱@qq.com
+      - key: SPRING_MAIL_PASSWORD
+        value: 你的邮箱授权码
+      - key: APP_LOG_EMAIL_TO
+        value: 接收日志的邮箱@qq.com

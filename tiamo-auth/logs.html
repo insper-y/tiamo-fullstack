@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>操作日志 - Tiamo AI 数据管理</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <style>
+        .dashboard-container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .dashboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 0; margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .dashboard-header h1 {
+            font-size: 22px; background: linear-gradient(135deg, var(--text-primary), var(--primary-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .btn-secondary {
+            padding: 8px 18px; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer;
+            font-size: 13px; transition: var(--transition); font-family: inherit;
+        }
+        .btn-secondary:hover { background: var(--bg-input-focus); color: var(--primary-light); border-color: var(--border-focus); }
+        .btn-primary {
+            padding: 8px 18px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none; border-radius: var(--radius-md); color: white; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: var(--transition); font-family: inherit;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,0.4); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .stat-card {
+            background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 20px; transition: var(--transition);
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--border-focus); }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-value.primary { background: linear-gradient(135deg, var(--primary-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-value.success { color: var(--success); }
+        .stat-value.error { color: var(--error); }
+        .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .filter-bar {
+            background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 16px;
+            display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+        }
+        .filter-item { display: flex; flex-direction: column; gap: 4px; }
+        .filter-item label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-item select, .filter-item input {
+            padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;
+            font-family: inherit; outline: none; transition: var(--transition); min-width: 140px;
+        }
+        .filter-item select:focus, .filter-item input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+        .data-card {
+            background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 20px; overflow-x: auto;
+        }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+        .data-table th {
+            text-align: left; padding: 12px 10px; color: var(--text-secondary); font-weight: 500;
+            border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .data-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); color: var(--text-primary); vertical-align: top; }
+        .data-table tr:hover { background: var(--bg-input); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+        }
+        .badge-success { background: rgba(52,211,153,0.15); color: var(--success); }
+        .badge-error { background: rgba(248,113,113,0.15); color: var(--error); }
+        .badge-login { background: rgba(34,211,238,0.15); color: var(--accent-light); }
+        .badge-create { background: rgba(52,211,153,0.15); color: var(--success); }
+        .badge-update { background: rgba(251,191,36,0.15); color: var(--warning); }
+        .badge-delete { background: rgba(248,113,113,0.15); color: var(--error); }
+        .badge-query { background: rgba(129,140,248,0.15); color: var(--primary-light); }
+        .badge-other { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
+        .params-cell {
+            max-width: 250px; font-size: 11px; color: var(--text-muted); font-family: monospace;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+        }
+        .pagination {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+        }
+        .pagination-info { font-size: 12px; color: var(--text-muted); }
+        .pagination-buttons { display: flex; gap: 6px; }
+        .page-btn {
+            padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer;
+            font-size: 12px; transition: var(--transition); font-family: inherit;
+        }
+        .page-btn:hover:not(:disabled) { background: var(--bg-input-focus); color: var(--primary-light); border-color: var(--border-focus); }
+        .page-btn.active { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border-color: var(--primary); }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .loading-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .loading-spinner {
+            display: inline-block; width: 24px; height: 24px;
+            border: 2px solid var(--border); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+            .dashboard-header { flex-direction: column; gap: 12px; text-align: center; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-item select, .filter-item input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ai-bg">
+        <div class="grid"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <canvas id="particles"></canvas>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>操作日志</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="loadLogs()">刷新</button>
+                <button class="btn-secondary" onclick="window.location.href='dashboard.html'">返回控制台</button>
+            </div>
+        </div>
+
+        <div class="alert" id="alert">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <span class="alert-text"></span>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value primary" id="statTotal">--</div>
+                <div class="stat-label">总操作数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value success" id="statSuccess">--</div>
+                <div class="stat-label">成功</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value error" id="statFail">--</div>
+                <div class="stat-label">失败</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value primary" id="statRate">--</div>
+                <div class="stat-label">成功率</div>
+            </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <div class="filter-item">
+                <label>操作模块</label>
+                <select id="filterModule">
+                    <option value="">全部</option>
+                    <option value="认证管理">认证管理</option>
+                    <option value="商品管理">商品管理</option>
+                    <option value="日志管理">日志管理</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>操作类型</label>
+                <select id="filterType">
+                    <option value="">全部</option>
+                    <option value="LOGIN">登录</option>
+                    <option value="CREATE">新增</option>
+                    <option value="UPDATE">修改</option>
+                    <option value="DELETE">删除</option>
+                    <option value="QUERY">查询</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>操作结果</label>
+                <select id="filterStatus">
+                    <option value="">全部</option>
+                    <option value="SUCCESS">成功</option>
+                    <option value="FAIL">失败</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>操作人</label>
+                <input type="text" id="filterUsername" placeholder="输入用户名">
+            </div>
+            <div class="filter-item">
+                <button class="btn-primary" onclick="applyFilter()">查询</button>
+            </div>
+            <div class="filter-item">
+                <button class="btn-secondary" onclick="resetFilter()">重置</button>
+            </div>
+        </div>
+
+        <!-- 日志列表 -->
+        <div class="data-card">
+            <div id="logList">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <div>加载中...</div>
+                </div>
+            </div>
+
+            <div class="pagination" id="pagination" style="display:none;">
+                <div class="pagination-info" id="paginationInfo"></div>
+                <div class="pagination-buttons" id="paginationButtons"></div>
+            </div>
+        </div>
+
+        <div class="copyright" style="margin-top:20px;">
+            &copy; 2026 Tiamo AI. All rights reserved.
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        if (!Auth.requireAuth()) throw new Error('未登录');
+
+        var currentPage = 1;
+        var pageSize = 15;
+        var totalPages = 1;
+
+        function loadStats() {
+            Api.get('/api/logs/stats').then(function (res) {
+                if (res.code === 200 && res.data) {
+                    document.getElementById('statTotal').textContent = res.data.total;
+                    document.getElementById('statSuccess').textContent = res.data.success;
+                    document.getElementById('statFail').textContent = res.data.fail;
+                    document.getElementById('statRate').textContent = res.data.successRate;
+                }
+            });
+        }
+
+        function loadLogs() {
+            var listEl = document.getElementById('logList');
+            listEl.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div><div>加载中...</div></div>';
+
+            var params = new URLSearchParams({
+                page: currentPage,
+                size: pageSize
+            });
+
+            var module = document.getElementById('filterModule').value;
+            var type = document.getElementById('filterType').value;
+            var status = document.getElementById('filterStatus').value;
+            var username = document.getElementById('filterUsername').value.trim();
+
+            if (module) params.append('module', module);
+            if (type) params.append('operationType', type);
+            if (status) params.append('status', status);
+            if (username) params.append('username', username);
+
+            Api.get('/api/logs?' + params.toString()).then(function (res) {
+                if (res.httpStatus === 401) {
+                    AuthUtils.showAlert('error', '登录已过期，请重新登录');
+                    setTimeout(function () { Auth.logout(); window.location.href = 'login.html'; }, 1500);
+                    return;
+                }
+
+                if (res.code === 200 && res.data) {
+                    renderLogs(res.data.records || []);
+                    renderPagination(res.data);
+                } else {
+                    listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
+                }
+            });
+        }
+
+        function renderLogs(logs) {
+            var listEl = document.getElementById('logList');
+            if (!logs || logs.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">暂无操作日志</div>';
+                return;
+            }
+
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th>时间</th><th>操作人</th><th>模块</th><th>操作</th>' +
+                '<th>类型</th><th>IP</th><th>耗时</th><th>结果</th>' +
+                '</tr></thead><tbody>';
+
+            logs.forEach(function (log) {
+                var typeClass = 'badge-other';
+                var typeText = log.operationType || 'OTHER';
+                if (log.operationType === 'LOGIN') typeClass = 'badge-login';
+                else if (log.operationType === 'CREATE') typeClass = 'badge-create';
+                else if (log.operationType === 'UPDATE') typeClass = 'badge-update';
+                else if (log.operationType === 'DELETE') typeClass = 'badge-delete';
+                else if (log.operationType === 'QUERY') typeClass = 'badge-query';
+
+                var statusClass = log.status === 'SUCCESS' ? 'badge-success' : 'badge-error';
+                var statusText = log.status === 'SUCCESS' ? '成功' : '失败';
+
+                var time = log.createTime ? log.createTime.replace('T', ' ') : '-';
+
+                html += '<tr>' +
+                    '<td style="white-space:nowrap;font-size:12px;color:var(--text-muted);">' + time + '</td>' +
+                    '<td>' + (log.username || '匿名') + '</td>' +
+                    '<td>' + (log.module || '-') + '</td>' +
+                    '<td>' + (log.description || '-') + '</td>' +
+                    '<td><span class="badge ' + typeClass + '">' + typeText + '</span></td>' +
+                    '<td style="font-family:monospace;font-size:11px;">' + (log.ip || '-') + '</td>' +
+                    '<td>' + (log.costTime != null ? log.costTime + 'ms' : '-') + '</td>' +
+                    '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
+                    '</tr>';
+            });
+
+            html += '</tbody></table>';
+            listEl.innerHTML = html;
+        }
+
+        function renderPagination(pageData) {
+            var paginationEl = document.getElementById('pagination');
+            var infoEl = document.getElementById('paginationInfo');
+            var buttonsEl = document.getElementById('paginationButtons');
+
+            totalPages = pageData.pages || 1;
+            var total = pageData.total || 0;
+
+            if (total === 0) {
+                paginationEl.style.display = 'none';
+                return;
+            }
+
+            paginationEl.style.display = 'flex';
+            infoEl.textContent = '共 ' + total + ' 条记录，第 ' + currentPage + '/' + totalPages + ' 页';
+
+            var html = '';
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '>上一页</button>';
+
+            var startPage = Math.max(1, currentPage - 2);
+            var endPage = Math.min(totalPages, currentPage + 2);
+
+            for (var i = startPage; i <= endPage; i++) {
+                html += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+            }
+
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '>下一页</button>';
+            buttonsEl.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadLogs();
+        }
+
+        function applyFilter() {
+            currentPage = 1;
+            loadLogs();
+        }
+
+        function resetFilter() {
+            document.getElementById('filterModule').value = '';
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterUsername').value = '';
+            currentPage = 1;
+            loadLogs();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadStats();
+            loadLogs();
+        });
+    </script>
+</body>
+</html>

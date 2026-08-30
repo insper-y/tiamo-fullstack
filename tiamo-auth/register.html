@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>注册 - Tiamo AI 数据管理</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><path d='M30 35 L50 25 L70 35 L70 65 L50 75 L30 65 Z' fill='none' stroke='white' stroke-width='4'/><circle cx='50' cy='50' r='8' fill='%2322d3ee'/></svg>">
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="ai-bg">
+        <div class="grid"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <canvas id="particles"></canvas>
+    </div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- 返回登录 -->
+            <a href="login.html" class="back-link">
+                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                返回登录
+            </a>
+
+            <!-- Logo -->
+            <div class="auth-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+                <h1>创建账号</h1>
+                <p>加入 Tiamo AI，开启智能数据管理</p>
+            </div>
+
+            <!-- 提示消息 -->
+            <div class="alert" id="alert">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <span class="alert-text"></span>
+            </div>
+
+            <!-- 注册表单 -->
+            <form class="auth-form" id="registerForm" novalidate>
+                <!-- 用户名 -->
+                <div class="form-group">
+                    <label class="form-label" for="username">用户名</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        </span>
+                        <input type="text" class="form-input" id="username" name="username"
+                               placeholder="4-20位字母、数字或下划线"
+                               data-required data-rules="required,username" autocomplete="username">
+                    </div>
+                    <div class="error-message">用户名需为4-20位字母、数字或下划线</div>
+                </div>
+
+                <!-- 邮箱 -->
+                <div class="form-group">
+                    <label class="form-label" for="email">邮箱</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                        </span>
+                        <input type="email" class="form-input" id="email" name="email"
+                               placeholder="请输入邮箱地址"
+                               data-required data-rules="required,email" autocomplete="email">
+                    </div>
+                    <div class="error-message">请输入有效的邮箱地址</div>
+                </div>
+
+                <!-- 手机号 + 验证码 -->
+                <div class="form-group">
+                    <label class="form-label" for="phone">手机号</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24"><path d="M17.01 14h-.8l-.27-.27c.98-1.14 1.57-2.61 1.57-4.23 0-3.42-2.61-6.2-6-6.2s-6 2.78-6 6.2c0 3.42 2.61 6.2 6 6.2 1.61 0 3.09-.59 4.23-1.57l.27.27v.79l5.01 4.99L21 19l-3.99-5zm-6.01 0c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                        </span>
+                        <input type="tel" class="form-input" id="phone" name="phone"
+                               placeholder="请输入手机号"
+                               data-required data-rules="required,phone" autocomplete="tel">
+                    </div>
+                    <div class="error-message">请输入有效的手机号</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="captcha">验证码</label>
+                    <div class="captcha-group">
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                            </span>
+                            <input type="text" class="form-input" id="captcha" name="captcha"
+                                   placeholder="6位验证码" maxlength="6"
+                                   data-required data-rules="required,captcha" autocomplete="one-time-code">
+                        </div>
+                        <button type="button" class="captcha-btn"
+                                data-target="#phone" data-validate="phone"
+                                data-countdown="60" data-original-text="获取验证码">
+                            获取验证码
+                        </button>
+                    </div>
+                    <div class="error-message">请输入6位验证码</div>
+                </div>
+
+                <!-- 密码 -->
+                <div class="form-group">
+                    <label class="form-label" for="password">设置密码</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </span>
+                        <input type="password" class="form-input" id="password" name="password"
+                               placeholder="至少8位，含大小写字母和数字"
+                               data-required data-rules="required,strongPassword"
+                               data-strength="#passwordStrength" autocomplete="new-password">
+                        <button type="button" class="toggle-password" aria-label="显示密码">
+                            <svg class="eye-open" viewBox="0 0 24 24" style="display:none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                            <svg class="eye-closed" viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
+                        </button>
+                    </div>
+                    <div class="error-message">密码需至少8位，包含大小写字母和数字</div>
+                    <!-- 密码强度指示器 -->
+                    <div class="password-strength" id="passwordStrength">
+                        <div class="strength-bar">
+                            <div class="strength-segment"></div>
+                            <div class="strength-segment"></div>
+                            <div class="strength-segment"></div>
+                        </div>
+                        <div class="strength-text">密码强度：弱</div>
+                    </div>
+                </div>
+
+                <!-- 确认密码 -->
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">确认密码</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </span>
+                        <input type="password" class="form-input" id="confirmPassword" name="confirmPassword"
+                               placeholder="请再次输入密码"
+                               data-required autocomplete="new-password">
+                    </div>
+                    <div class="error-message">两次输入的密码不一致</div>
+                </div>
+
+                <!-- 用户协议 -->
+                <div class="form-group">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="agree" name="agree" data-required>
+                        <span class="checkbox-custom">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        </span>
+                        <span>我已阅读并同意 <a href="#" onclick="event.preventDefault()">《用户协议》</a> 和 <a href="#" onclick="event.preventDefault()">《隐私政策》</a></span>
+                    </label>
+                    <div class="error-message" style="margin-top:4px">请先同意用户协议</div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <button type="submit" class="btn-submit">
+                    <span class="btn-text">注 册</span>
+                </button>
+            </form>
+
+            <!-- 底部链接 -->
+            <div class="auth-footer">
+                <p>已有账号？<a href="login.html">立即登录</a></p>
+            </div>
+
+            <div class="copyright">
+                &copy; 2026 Tiamo AI. All rights reserved.
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        var registerForm = document.getElementById('registerForm');
+        var submitBtn = registerForm.querySelector('.btn-submit');
+
+        registerForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            var username = document.getElementById('username');
+            var email = document.getElementById('email');
+            var phone = document.getElementById('phone');
+            var captcha = document.getElementById('captcha');
+            var password = document.getElementById('password');
+            var confirmPassword = document.getElementById('confirmPassword');
+            var agree = document.getElementById('agree');
+
+            var valid = true;
+            if (!AuthUtils.validateField(username, ['required', 'username'])) valid = false;
+            if (!AuthUtils.validateField(email, ['required', 'email'])) valid = false;
+            if (!AuthUtils.validateField(phone, ['required', 'phone'])) valid = false;
+            if (!AuthUtils.validateField(captcha, ['required', 'captcha'])) valid = false;
+            if (!AuthUtils.validateField(password, ['required', 'strongPassword'])) valid = false;
+
+            if (password.value !== confirmPassword.value) {
+                AuthUtils.showError(confirmPassword.closest('.form-group'), '两次输入的密码不一致');
+                valid = false;
+            }
+
+            if (!agree.checked) {
+                AuthUtils.showError(agree.closest('.form-group'), '请先同意用户协议');
+                valid = false;
+            }
+
+            if (!valid) {
+                var firstError = registerForm.querySelector('.form-group.has-error .form-input');
+                if (firstError) firstError.focus();
+                return;
+            }
+
+            var originalText = submitBtn.querySelector('.btn-text').textContent;
+            AuthUtils.setButtonLoading(submitBtn, true);
+
+            // 调用真实注册接口
+            Api.register({
+                username: username.value.trim(),
+                email: email.value.trim(),
+                phone: phone.value.trim(),
+                captcha: captcha.value.trim(),
+                password: password.value,
+                confirmPassword: confirmPassword.value
+            }).then(function (res) {
+                AuthUtils.setButtonLoading(submitBtn, false, originalText);
+
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', '注册成功！正在跳转到登录页...');
+                    setTimeout(function () {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '注册失败，请稍后重试');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
