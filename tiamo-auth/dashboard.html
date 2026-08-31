@@ -514,7 +514,13 @@
         var user = Auth.getUser();
         var currentDeleteId = null;
         var bookList = [];
+        var bookCurrentPage = 1;
+        var bookPageSize = 20;
+        var bookFilteredList = [];
         var userList = [];
+        var userCurrentPage = 1;
+        var userPageSize = 20;
+        var userFilteredList = [];
         var isAdmin = user && user.role === 1;
         // 显示用户信息
         document.getElementById('userNickname').textContent = user ? (user.nickname || user.username) : '未知';
@@ -593,6 +599,7 @@
                         listEl.innerHTML = '<div class="empty-state">暂无用户</div>';
                         return;
                     }
+                    userCurrentPage = 1;
                     renderUserList(userList);
                     document.getElementById('userSearchInfo').style.display = 'none';
                 } else if (res.code === 403) {
@@ -602,18 +609,26 @@
                 }
             });
         }
-        // 渲染用户列表
+        // 渲染用户列表（带分页）
         function renderUserList(list) {
             var listEl = document.getElementById('userList');
             if (!list || list.length === 0) {
                 listEl.innerHTML = '<div class="empty-state">暂无匹配用户</div>';
                 return;
             }
+            userFilteredList = list;
+            var totalPages = Math.ceil(list.length / userPageSize);
+            if (userCurrentPage > totalPages) userCurrentPage = totalPages;
+            if (userCurrentPage < 1) userCurrentPage = 1;
+            var start = (userCurrentPage - 1) * userPageSize;
+            var end = start + userPageSize;
+            var pageData = list.slice(start, end);
+            
             var currentUserId = user ? user.userId : null;
             var html = '<table class="data-table"><thead><tr>' +
                 '<th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>手机号</th><th>角色</th><th>状态</th><th>注册时间</th><th>操作</th>' +
                 '</tr></thead><tbody>';
-            list.forEach(function(item) {
+            pageData.forEach(function(item) {
                 var isSelf = String(item.id) === String(currentUserId);
                 var roleSelect = '<select onchange="setUserRole(' + item.id + ', this.value)" style="padding:4px 8px;border-radius:6px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);font-size:12px;"' + (isSelf ? ' disabled title="不能修改自己"' : '') + '>' +
                     '<option value="0"' + (item.role === 0 ? ' selected' : '') + '>普通用户</option>' +
@@ -635,12 +650,64 @@
                     '</tr>';
             });
             html += '</tbody></table>';
+            
+            // 分页控件
+            html += '<div class="pagination" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border);flex-wrap:wrap;gap:12px;">';
+            html += '<div style="font-size:13px;color:var(--text-secondary);">共 ' + list.length + ' 条，第 ' + userCurrentPage + '/' + totalPages + ' 页</div>';
+            html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+            html += '<button class="btn-primary btn-sm" onclick="userGoToPage(1)" ' + (userCurrentPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>首页</button>';
+            html += '<button class="btn-primary btn-sm" onclick="userPrevPage()" ' + (userCurrentPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>上一页</button>';
+            var startPage = Math.max(1, userCurrentPage - 2);
+            var endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+            for (var i = startPage; i <= endPage; i++) {
+                if (i === userCurrentPage) {
+                    html += '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">' + i + '</button>';
+                } else {
+                    html += '<button class="btn-primary btn-sm" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);" onclick="userGoToPage(' + i + ')">' + i + '</button>';
+                }
+            }
+            html += '<button class="btn-primary btn-sm" onclick="userNextPage()" ' + (userCurrentPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>下一页</button>';
+            html += '<button class="btn-primary btn-sm" onclick="userGoToPage(' + totalPages + ')" ' + (userCurrentPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>末页</button>';
+            html += '<select class="form-input" style="width:auto;padding:6px 10px;font-size:13px;" onchange="userChangePageSize(this.value)">';
+            html += '<option value="10" ' + (userPageSize === 10 ? 'selected' : '') + '>10条/页</option>';
+            html += '<option value="20" ' + (userPageSize === 20 ? 'selected' : '') + '>20条/页</option>';
+            html += '<option value="50" ' + (userPageSize === 50 ? 'selected' : '') + '>50条/页</option>';
+            html += '<option value="100" ' + (userPageSize === 100 ? 'selected' : '') + '>100条/页</option>';
+            html += '</select>';
+            html += '</div></div>';
+            
             listEl.innerHTML = html;
+        }
+        
+        // 用户分页相关函数
+        function userGoToPage(page) {
+            userCurrentPage = page;
+            renderUserList(userFilteredList);
+        }
+        function userPrevPage() {
+            if (userCurrentPage > 1) {
+                userCurrentPage--;
+                renderUserList(userFilteredList);
+            }
+        }
+        function userNextPage() {
+            var totalPages = Math.ceil(userFilteredList.length / userPageSize);
+            if (userCurrentPage < totalPages) {
+                userCurrentPage++;
+                renderUserList(userFilteredList);
+            }
+        }
+        function userChangePageSize(size) {
+            userPageSize = parseInt(size);
+            userCurrentPage = 1;
+            renderUserList(userFilteredList);
         }
         // 用户快速搜索
         function quickSearchUsers() {
             var keyword = document.getElementById('userQuickSearch').value.trim().toLowerCase();
             if (!keyword) {
+                userCurrentPage = 1;
                 renderUserList(userList);
                 document.getElementById('userSearchInfo').style.display = 'none';
                 return;
@@ -651,6 +718,7 @@
                        (item.email || '').toLowerCase().indexOf(keyword) !== -1 ||
                        (item.phone || '').toLowerCase().indexOf(keyword) !== -1;
             });
+            userCurrentPage = 1;
             renderUserList(filtered);
             var info = document.getElementById('userSearchInfo');
             info.style.display = 'block';
@@ -685,6 +753,7 @@
                 if (status !== '' && String(item.status) !== status) return false;
                 return true;
             });
+            userCurrentPage = 1;
             renderUserList(filtered);
             var info = document.getElementById('userSearchInfo');
             info.style.display = 'block';
@@ -699,6 +768,7 @@
             document.getElementById('advUserPhone').value = '';
             document.getElementById('advUserRole').value = '';
             document.getElementById('advUserStatus').value = '';
+            userCurrentPage = 1;
             renderUserList(userList);
             document.getElementById('userSearchInfo').style.display = 'none';
         }
@@ -713,6 +783,7 @@
                         listEl.innerHTML = '<div class="empty-state">暂无数据，点击右上角"新增商品"添加</div>';
                         return;
                     }
+                    bookCurrentPage = 1;
                     renderBooks(bookList);
                     document.getElementById('bookSearchInfo').style.display = 'none';
                 } else if (res.httpStatus === 401) {
@@ -724,19 +795,27 @@
                 }
             });
         }
-        // 渲染商品列表
+        // 渲染商品列表（带分页）
         function renderBooks(list) {
             var listEl = document.getElementById('bookList');
             if (!list || list.length === 0) {
                 listEl.innerHTML = '<div class="empty-state">暂无匹配数据</div>';
                 return;
             }
+            bookFilteredList = list;
+            var totalPages = Math.ceil(list.length / bookPageSize);
+            if (bookCurrentPage > totalPages) bookCurrentPage = totalPages;
+            if (bookCurrentPage < 1) bookCurrentPage = 1;
+            var start = (bookCurrentPage - 1) * bookPageSize;
+            var end = start + bookPageSize;
+            var pageData = list.slice(start, end);
+            
             var html = '<table class="data-table"><thead><tr>' +
                 '<th style="width:40px;"><input type="checkbox" id="selectAllBooks" onchange="toggleSelectAllBooks(this)"></th>' +
                 '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
                 '<th>微信备注</th><th>商品ID</th><th>商品标题</th><th>操作</th>' +
                 '</tr></thead><tbody>';
-            list.forEach(function (item) {
+            pageData.forEach(function (item) {
                 html += '<tr>' +
                     '<td><input type="checkbox" class="book-checkbox" value="' + item.id + '" onchange="updateBatchBtnState()"></td>' +
                     '<td>' + item.id + '</td>' +
@@ -753,12 +832,67 @@
                     '</tr>';
             });
             html += '</tbody></table>';
+            
+            // 分页控件
+            html += '<div class="pagination" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border);flex-wrap:wrap;gap:12px;">';
+            html += '<div style="font-size:13px;color:var(--text-secondary);">共 ' + list.length + ' 条，第 ' + bookCurrentPage + '/' + totalPages + ' 页</div>';
+            html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+            html += '<button class="btn-primary btn-sm" onclick="bookGoToPage(1)" ' + (bookCurrentPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>首页</button>';
+            html += '<button class="btn-primary btn-sm" onclick="bookPrevPage()" ' + (bookCurrentPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>上一页</button>';
+            
+            // 页码按钮（最多显示5个）
+            var startPage = Math.max(1, bookCurrentPage - 2);
+            var endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+            for (var i = startPage; i <= endPage; i++) {
+                if (i === bookCurrentPage) {
+                    html += '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">' + i + '</button>';
+                } else {
+                    html += '<button class="btn-primary btn-sm" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);" onclick="bookGoToPage(' + i + ')">' + i + '</button>';
+                }
+            }
+            
+            html += '<button class="btn-primary btn-sm" onclick="bookNextPage()" ' + (bookCurrentPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>下一页</button>';
+            html += '<button class="btn-primary btn-sm" onclick="bookGoToPage(' + totalPages + ')" ' + (bookCurrentPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>末页</button>';
+            html += '<select class="form-input" style="width:auto;padding:6px 10px;font-size:13px;" onchange="bookChangePageSize(this.value)">';
+            html += '<option value="10" ' + (bookPageSize === 10 ? 'selected' : '') + '>10条/页</option>';
+            html += '<option value="20" ' + (bookPageSize === 20 ? 'selected' : '') + '>20条/页</option>';
+            html += '<option value="50" ' + (bookPageSize === 50 ? 'selected' : '') + '>50条/页</option>';
+            html += '<option value="100" ' + (bookPageSize === 100 ? 'selected' : '') + '>100条/页</option>';
+            html += '</select>';
+            html += '</div></div>';
+            
             listEl.innerHTML = html;
+        }
+        
+        // 分页相关函数
+        function bookGoToPage(page) {
+            bookCurrentPage = page;
+            renderBooks(bookFilteredList);
+        }
+        function bookPrevPage() {
+            if (bookCurrentPage > 1) {
+                bookCurrentPage--;
+                renderBooks(bookFilteredList);
+            }
+        }
+        function bookNextPage() {
+            var totalPages = Math.ceil(bookFilteredList.length / bookPageSize);
+            if (bookCurrentPage < totalPages) {
+                bookCurrentPage++;
+                renderBooks(bookFilteredList);
+            }
+        }
+        function bookChangePageSize(size) {
+            bookPageSize = parseInt(size);
+            bookCurrentPage = 1;
+            renderBooks(bookFilteredList);
         }
         // 商品快速搜索
         function quickSearchBooks() {
             var keyword = document.getElementById('bookQuickSearch').value.trim().toLowerCase();
             if (!keyword) {
+                bookCurrentPage = 1;
                 renderBooks(bookList);
                 document.getElementById('bookSearchInfo').style.display = 'none';
                 return;
@@ -771,6 +905,7 @@
                        (item.bd || '').toLowerCase().indexOf(keyword) !== -1 ||
                        (item.ax || '').toLowerCase().indexOf(keyword) !== -1;
             });
+            bookCurrentPage = 1;
             renderBooks(filtered);
             var info = document.getElementById('bookSearchInfo');
             info.style.display = 'block';
@@ -805,6 +940,7 @@
                 if (ax && (item.ax || '').toLowerCase().indexOf(ax) === -1) return false;
                 return true;
             });
+            bookCurrentPage = 1;
             renderBooks(filtered);
             var info = document.getElementById('bookSearchInfo');
             info.style.display = 'block';
@@ -819,6 +955,7 @@
             document.getElementById('advBookAa').value = '';
             document.getElementById('advBookBd').value = '';
             document.getElementById('advBookAx').value = '';
+            bookCurrentPage = 1;
             renderBooks(bookList);
             document.getElementById('bookSearchInfo').style.display = 'none';
         }
