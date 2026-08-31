@@ -18,11 +18,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Result<String> handleException(Exception e) {
         e.printStackTrace();
-        // 临时返回详细错误信息用于调试
-        String errorMsg = "系统异常: " + e.getMessage();
-        if (e.getCause() != null) {
-            errorMsg += " | 原因: " + e.getCause().getMessage();
-        }
-        return new Result<>(Code.SYSTEM_ERR, null, errorMsg);
+        return new Result<>(Code.SYSTEM_ERR, null, "系统繁忙，请稍后重试");
     }
 }

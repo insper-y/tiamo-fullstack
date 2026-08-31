@@ -705,8 +705,8 @@
                 if (res.code === 200 && res.data) {
                     document.getElementById('configSendTime').value = res.data.sendTime || '20:00';
                     document.getElementById('configToEmail').value = res.data.toEmail || '';
-                    document.getElementById('configDailyEnabled').value = res.data.enabled || 'true';
-                    document.getElementById('configRealTimeEnabled').value = res.data.realTimeEnabled || 'true';
+                    document.getElementById('configDailyEnabled').value = (res.data.enabled === false || res.data.enabled === 'false') ? 'false' : 'true';
+                    document.getElementById('configRealTimeEnabled').value = (res.data.realTimeEnabled === false || res.data.realTimeEnabled === 'false') ? 'false' : 'true';
                     // 同时填充导出邮箱
                     document.getElementById('exportEmail').value = res.data.toEmail || '';
                 }
