@@ -14,6 +14,9 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
+  task:
+    scheduling:
+      timezone: Asia/Shanghai
   # 邮件配置（用于操作日志实时推送）
   mail:
     host: smtp.qq.com          # 邮箱SMTP服务器（QQ邮箱用smtp.qq.com，163用smtp.163.com）
