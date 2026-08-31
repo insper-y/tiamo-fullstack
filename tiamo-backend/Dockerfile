@@ -35,8 +35,8 @@ COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8080/api/auth/verify || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD wget -qO- http://localhost:8080/maven/books || exit 1
 
 # 启动应用
 ENTRYPOINT ["java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "-Xmx512m", "-Xms256m", "app.jar"]
