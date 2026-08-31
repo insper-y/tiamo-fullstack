@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tiamo.entity.Books;
 import com.tiamo.entity.RecycleApproval;
+import com.tiamo.mapper.BooksMapper;
 import com.tiamo.mapper.RecycleApprovalMapper;
 import com.tiamo.service.BooksService;
 import com.tiamo.service.RecycleApprovalService;
@@ -23,6 +24,8 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
 
     @Autowired
     private BooksService booksService;
+    @Autowired
+    private BooksMapper booksMapper;
 
     @PostConstruct
     public void init() {
@@ -37,10 +40,10 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
     @Override
     @Transactional
     public RecycleApproval submitApproval(Integer bookId, String approvalType, Long applicantId, String applicantName) {
-        // 检查商品是否在回收站
-        Books book = booksService.getById(bookId);
+        // 检查商品是否在回收站（用原生SQL绕过逻辑删除过滤）
+        Books book = booksMapper.selectDeletedById(bookId);
         if (book == null) {
-            throw new RuntimeException("商品不存在");
+            throw new RuntimeException("商品不存在或不在回收站中");
         }
         // 检查是否已有待审批的申请
         long pendingCount = this.count(new LambdaQueryWrapper<RecycleApproval>()

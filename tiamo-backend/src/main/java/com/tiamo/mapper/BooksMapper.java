@@ -35,6 +35,12 @@ public interface BooksMapper extends BaseMapper<Books> {
     List<Books> selectDeletedList();
 
     /**
+     * 根据ID查询已删除的数据 - 原生SQL绕过逻辑删除过滤
+     */
+    @Select("SELECT * FROM books WHERE id = #{id} AND deleted = 1")
+    Books selectDeletedById(@Param("id") Integer id);
+
+    /**
      * 恢复已删除的数据 - 原生SQL绕过逻辑删除过滤
      */
     @Update("UPDATE books SET deleted = 0, deleted_time = NULL, deleted_by = NULL WHERE id = #{id}")
