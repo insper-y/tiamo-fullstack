@@ -104,6 +104,26 @@
         deleteBook: function (id) {
             return this.del('/maven/books/' + id);
         },
+        /** 批量删除商品 */
+        batchDeleteBooks: function (ids) {
+            return this.post('/maven/books/batch-delete', { ids: ids });
+        },
+        /** 获取回收站列表（仅管理员） */
+        getRecycleBooks: function () {
+            return this.get('/maven/books/recycle');
+        },
+        /** 恢复商品（仅管理员） */
+        restoreBook: function (id) {
+            return this.put('/maven/books/restore/' + id, {});
+        },
+        /** 批量恢复商品（仅管理员） */
+        batchRestoreBooks: function (ids) {
+            return this.post('/maven/books/batch-restore', { ids: ids });
+        },
+        /** 彻底删除商品（仅管理员） */
+        hardDeleteBook: function (id) {
+            return this.del('/maven/books/hard/' + id);
+        },
         /* ---- 数据导出接口 ---- */
         /** 通用文件下载方法 */
         downloadFile: function (url, defaultFilename) {
@@ -165,6 +185,14 @@
         /** 获取用户列表（仅管理员） */
         getUserList: function () {
             return this.get('/api/admin/users');
+        },
+        /** 设置用户角色（仅管理员） role: 0-普通用户 1-管理员 */
+        updateUserRole: function (userId, role) {
+            return this.put('/api/admin/users/' + userId + '/role', { role: role });
+        },
+        /** 设置用户状态（仅管理员） status: 0-禁用 1-启用 */
+        updateUserStatus: function (userId, status) {
+            return this.put('/api/admin/users/' + userId + '/status', { status: status });
         },
         /* ---- 系统配置接口 ---- */
         /** 获取邮件配置（仅管理员） */

@@ -175,6 +175,7 @@
         <div class="tabs-nav" id="tabsNav" style="display:none;">
             <button class="tab-btn active" onclick="switchTab('users')">用户列表</button>
             <button class="tab-btn" onclick="switchTab('books')">商品数据</button>
+            <button class="tab-btn" onclick="switchTab('recycle')">回收站</button>
         </div>
         <!-- 用户列表标签页（仅管理员可见） -->
         <div class="tab-content" id="usersTab">
@@ -220,6 +221,7 @@
                         <input type="text" id="bookQuickSearch" class="form-input" placeholder="搜索分销软件/微信账号/商品标题..." style="max-width:260px;" onkeyup="if(event.key==='Enter')quickSearchBooks()">
                         <button class="btn-primary btn-sm" onclick="quickSearchBooks()">搜索</button>
                         <button class="btn-primary btn-sm" id="bookAdvBtn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="toggleBookAdvanced()">高级查询</button>
+                        <button class="btn-primary btn-sm" id="batchDeleteBtn" style="background:linear-gradient(135deg,#ef4444,#dc2626);display:none;" onclick="batchDeleteBooks()">批量删除</button>
                         <button class="btn-primary" onclick="openAddModal()">+ 新增商品</button>
                     </div>
                 </div>
@@ -241,6 +243,24 @@
                 <div id="bookSearchInfo" style="display:none;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"></div>
                 <div class="table-wrapper">
                     <div id="bookList">
+                        <div class="empty-state">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 回收站标签页（仅管理员可见） -->
+        <div class="tab-content" id="recycleTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>回收站（已删除商品，可恢复）</h2>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <button class="btn-primary btn-sm" id="batchRestoreBtn" style="background:linear-gradient(135deg,#10b981,#059669);display:none;" onclick="batchRestoreBooks()">批量恢复</button>
+                        <button class="btn-primary" onclick="loadRecycleList()">刷新</button>
+                    </div>
+                </div>
+                <div id="recycleSearchInfo" style="display:none;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"></div>
+                <div class="table-wrapper">
+                    <div id="recycleList">
                         <div class="empty-state">加载中...</div>
                     </div>
                 </div>
@@ -471,6 +491,8 @@
                 loadUserList();
             } else if (tabName === 'books') {
                 loadBooks();
+            } else if (tabName === 'recycle' && isAdmin) {
+                loadRecycleList();
             }
         }
         // 加载用户列表（仅管理员）
@@ -500,19 +522,29 @@
                 listEl.innerHTML = '<div class="empty-state">暂无匹配用户</div>';
                 return;
             }
+            var currentUserId = user ? user.userId : null;
             var html = '<table class="data-table"><thead><tr>' +
-                '<th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>手机号</th><th>角色</th><th>状态</th><th>注册时间</th>' +
+                '<th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>手机号</th><th>角色</th><th>状态</th><th>注册时间</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             list.forEach(function(item) {
+                var isSelf = String(item.id) === String(currentUserId);
+                var roleSelect = '<select onchange="setUserRole(' + item.id + ', this.value)" style="padding:4px 8px;border-radius:6px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);font-size:12px;"' + (isSelf ? ' disabled title="不能修改自己"' : '') + '>' +
+                    '<option value="0"' + (item.role === 0 ? ' selected' : '') + '>普通用户</option>' +
+                    '<option value="1"' + (item.role === 1 ? ' selected' : '') + '>管理员</option>' +
+                    '</select>';
+                var statusBtn = item.status === 1
+                    ? '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="toggleUserStatus(' + item.id + ', 0)"' + (isSelf ? ' disabled title="不能禁用自己"' : '') + '>禁用</button>'
+                    : '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="toggleUserStatus(' + item.id + ', 1)">启用</button>';
                 html += '<tr>' +
                     '<td>' + item.id + '</td>' +
                     '<td>' + (item.username || '-') + '</td>' +
                     '<td>' + (item.nickname || '-') + '</td>' +
                     '<td>' + (item.email || '-') + '</td>' +
                     '<td>' + (item.phone || '-') + '</td>' +
-                    '<td><span class="role-badge ' + (item.role === 1 ? 'role-admin' : 'role-user') + '">' + (item.roleName || '普通用户') + '</span></td>' +
+                    '<td>' + roleSelect + '</td>' +
                     '<td>' + (item.statusName || '-') + '</td>' +
                     '<td>' + (item.createTime || '-') + '</td>' +
+                    '<td style="white-space:nowrap;">' + statusBtn + '</td>' +
                     '</tr>';
             });
             html += '</tbody></table>';
@@ -613,11 +645,13 @@
                 return;
             }
             var html = '<table class="data-table"><thead><tr>' +
+                '<th style="width:40px;"><input type="checkbox" id="selectAllBooks" onchange="toggleSelectAllBooks(this)"></th>' +
                 '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
                 '<th>微信备注</th><th>商品ID</th><th>商品标题</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             list.forEach(function (item) {
                 html += '<tr>' +
+                    '<td><input type="checkbox" class="book-checkbox" value="' + item.id + '" onchange="updateBatchBtnState()"></td>' +
                     '<td>' + item.id + '</td>' +
                     '<td>' + (item.name || '-') + '</td>' +
                     '<td>' + (item.type || '-') + '</td>' +
@@ -787,7 +821,7 @@
             if (currentDeleteId) {
                 Api.deleteBook(currentDeleteId).then(function (res) {
                     if (res.code === 20021) {
-                        AuthUtils.showAlert('success', '删除成功！');
+                        AuthUtils.showAlert('success', '删除成功！已移入回收站，管理员可恢复');
                         closeDeleteModal();
                         loadBooks();
                     } else {
@@ -799,6 +833,234 @@
                 });
             }
         }
+
+        /* ==================== 用户角色与状态管理 ==================== */
+        // 设置用户角色
+        function setUserRole(userId, role) {
+            if (!confirm('确定要将该用户设置为' + (role == 1 ? '管理员' : '普通用户') + '吗？')) {
+                loadUserList();
+                return;
+            }
+            Api.updateUserRole(userId, parseInt(role)).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '设置成功');
+                    loadUserList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '设置失败');
+                    loadUserList();
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+                loadUserList();
+            });
+        }
+
+        // 切换用户状态（启用/禁用）
+        function toggleUserStatus(userId, status) {
+            var action = status == 1 ? '启用' : '禁用';
+            if (!confirm('确定要' + action + '该用户吗？')) {
+                return;
+            }
+            Api.updateUserStatus(userId, status).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '操作成功');
+                    loadUserList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '操作失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        /* ==================== 商品批量操作 ==================== */
+        // 全选/取消全选商品
+        function toggleSelectAllBooks(checkbox) {
+            document.querySelectorAll('.book-checkbox').forEach(function (cb) {
+                cb.checked = checkbox.checked;
+            });
+            updateBatchBtnState();
+        }
+
+        // 获取选中的商品ID
+        function getSelectedBookIds() {
+            var ids = [];
+            document.querySelectorAll('.book-checkbox:checked').forEach(function (cb) {
+                ids.push(parseInt(cb.value));
+            });
+            return ids;
+        }
+
+        // 更新批量删除按钮显示状态
+        function updateBatchBtnState() {
+            var selected = getSelectedBookIds();
+            var btn = document.getElementById('batchDeleteBtn');
+            if (btn) {
+                btn.style.display = selected.length > 0 ? 'inline-block' : 'none';
+                btn.textContent = '批量删除(' + selected.length + ')';
+            }
+        }
+
+        // 批量删除商品
+        function batchDeleteBooks() {
+            var ids = getSelectedBookIds();
+            if (ids.length === 0) {
+                AuthUtils.showAlert('error', '请先选择要删除的数据');
+                return;
+            }
+            if (!confirm('确定要批量删除选中的 ' + ids.length + ' 条数据吗？删除后可在回收站恢复。')) {
+                return;
+            }
+            Api.batchDeleteBooks(ids).then(function (res) {
+                if (res.code === 20021) {
+                    AuthUtils.showAlert('success', res.msg || '批量删除成功');
+                    loadBooks();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '批量删除失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        /* ==================== 回收站 ==================== */
+        var recycleList = [];
+
+        // 加载回收站列表
+        function loadRecycleList() {
+            if (!isAdmin) return;
+            Api.getRecycleBooks().then(function (res) {
+                var listEl = document.getElementById('recycleList');
+                if (res.code === 20041 && res.data) {
+                    recycleList = res.data;
+                    if (res.data.length === 0) {
+                        listEl.innerHTML = '<div class="empty-state">回收站为空</div>';
+                        return;
+                    }
+                    renderRecycleList(recycleList);
+                } else if (res.code === 403) {
+                    listEl.innerHTML = '<div class="empty-state" style="color:var(--error);">无权限访问</div>';
+                } else {
+                    listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
+                }
+            });
+        }
+
+        // 渲染回收站列表
+        function renderRecycleList(list) {
+            var listEl = document.getElementById('recycleList');
+            if (!list || list.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">回收站为空</div>';
+                return;
+            }
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th style="width:40px;"><input type="checkbox" id="selectAllRecycle" onchange="toggleSelectAllRecycle(this)"></th>' +
+                '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
+                '<th>商品标题</th><th>删除时间</th><th>删除人</th><th>操作</th>' +
+                '</tr></thead><tbody>';
+            list.forEach(function (item) {
+                html += '<tr>' +
+                    '<td><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>' +
+                    '<td>' + item.id + '</td>' +
+                    '<td>' + (item.name || '-') + '</td>' +
+                    '<td>' + (item.type || '-') + '</td>' +
+                    '<td>' + (item.description || '-') + '</td>' +
+                    '<td title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
+                    '<td>' + (item.deletedTime || '-') + '</td>' +
+                    '<td>' + (item.deletedBy || '-') + '</td>' +
+                    '<td style="white-space:nowrap;">' +
+                        '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="restoreBook(' + item.id + ')">恢复</button>' +
+                        '<button class="btn-primary btn-sm btn-delete" onclick="hardDeleteBook(' + item.id + ')">彻底删除</button>' +
+                    '</td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            listEl.innerHTML = html;
+        }
+
+        // 全选/取消全选回收站
+        function toggleSelectAllRecycle(checkbox) {
+            document.querySelectorAll('.recycle-checkbox').forEach(function (cb) {
+                cb.checked = checkbox.checked;
+            });
+            updateRecycleBatchBtnState();
+        }
+
+        // 获取回收站选中的ID
+        function getSelectedRecycleIds() {
+            var ids = [];
+            document.querySelectorAll('.recycle-checkbox:checked').forEach(function (cb) {
+                ids.push(parseInt(cb.value));
+            });
+            return ids;
+        }
+
+        // 更新批量恢复按钮状态
+        function updateRecycleBatchBtnState() {
+            var selected = getSelectedRecycleIds();
+            var btn = document.getElementById('batchRestoreBtn');
+            if (btn) {
+                btn.style.display = selected.length > 0 ? 'inline-block' : 'none';
+                btn.textContent = '批量恢复(' + selected.length + ')';
+            }
+        }
+
+        // 恢复单个商品
+        function restoreBook(id) {
+            if (!confirm('确定要恢复这条商品数据吗？')) {
+                return;
+            }
+            Api.restoreBook(id).then(function (res) {
+                if (res.code === 20031) {
+                    AuthUtils.showAlert('success', '恢复成功');
+                    loadRecycleList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '恢复失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 批量恢复
+        function batchRestoreBooks() {
+            var ids = getSelectedRecycleIds();
+            if (ids.length === 0) {
+                AuthUtils.showAlert('error', '请先选择要恢复的数据');
+                return;
+            }
+            if (!confirm('确定要批量恢复选中的 ' + ids.length + ' 条数据吗？')) {
+                return;
+            }
+            Api.batchRestoreBooks(ids).then(function (res) {
+                if (res.code === 20031) {
+                    AuthUtils.showAlert('success', res.msg || '批量恢复成功');
+                    loadRecycleList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '批量恢复失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 彻底删除（不可恢复）
+        function hardDeleteBook(id) {
+            if (!confirm('警告：彻底删除后不可恢复！确定要彻底删除这条数据吗？')) {
+                return;
+            }
+            Api.hardDeleteBook(id).then(function (res) {
+                if (res.code === 20021) {
+                    AuthUtils.showAlert('success', '已彻底删除');
+                    loadRecycleList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '删除失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
         // 退出登录
         function logout() {
             Auth.logout();

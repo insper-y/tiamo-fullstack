@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 分销商品数据实体
@@ -15,7 +16,6 @@ import java.io.Serializable;
 @Data
 @TableName("books")
 public class Books implements Serializable {
-
     private static final long serialVersionUID = 1L;
 
     /** 主键ID */
@@ -53,4 +53,16 @@ public class Books implements Serializable {
     /** 商品标题 */
     @TableField("ax")
     private String ax;
+
+    /** 软删除标记 0-未删除 1-已删除 */
+    @TableField("deleted")
+    private Integer deleted;
+
+    /** 删除时间 */
+    @TableField("deleted_time")
+    private LocalDateTime deletedTime;
+
+    /** 删除操作人 */
+    @TableField("deleted_by")
+    private String deletedBy;
 }
