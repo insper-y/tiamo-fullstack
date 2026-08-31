@@ -103,6 +103,11 @@
         /** 删除商品 */
         deleteBook: function (id) {
             return this.del('/maven/books/' + id);
+        },
+        /* ---- 管理员接口 ---- */
+        /** 获取用户列表（仅管理员） */
+        getUserList: function () {
+            return this.get('/api/admin/users');
         }
     };
 

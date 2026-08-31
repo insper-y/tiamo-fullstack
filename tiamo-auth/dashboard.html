@@ -24,6 +24,11 @@
             display: flex; align-items: center; justify-content: center;
             font-weight: 600; color: white; font-size: 16px;
         }
+        .role-badge {
+            padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;
+        }
+        .role-admin { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .role-user { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
         .logout-btn {
             padding: 8px 20px; background: var(--bg-input); border: 1px solid var(--border);
             border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer;
@@ -38,6 +43,25 @@
         .stat-card:hover { transform: translateY(-2px); border-color: var(--border-focus); }
         .stat-value { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--primary-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        /* 标签页导航 */
+        .tabs-nav {
+            display: flex; gap: 8px; margin-bottom: 20px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 8px;
+        }
+        .tab-btn {
+            padding: 10px 24px; background: transparent; border: none;
+            border-radius: var(--radius-md); color: var(--text-secondary);
+            cursor: pointer; font-size: 14px; font-weight: 500; transition: var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover { color: var(--text-primary); background: var(--bg-input); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         .data-card {
             background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--border);
             border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px;
@@ -99,6 +123,7 @@
             .data-table { font-size: 12px; }
             .data-table th, .data-table td { padding: 8px; }
             .form-grid { grid-template-columns: 1fr; }
+            .tabs-nav { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -121,7 +146,8 @@
                     <div style="font-size:14px;font-weight:500;" id="userNickname">加载中...</div>
                     <div style="font-size:12px;color:var(--text-muted);" id="userEmail"></div>
                 </div>
-                <button class="logout-btn" onclick="window.location.href='logs.html'" style="color:var(--primary-light);">操作日志</button>
+                <span class="role-badge" id="roleBadge">普通用户</span>
+                <button class="logout-btn" id="logBtn" style="color:var(--primary-light);display:none;">操作日志</button>
                 <button class="logout-btn" onclick="logout()">退出登录</button>
             </div>
         </div>
@@ -141,19 +167,40 @@
                 <div class="stat-label">当前用户ID</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">JWT</div>
-                <div class="stat-label">认证方式</div>
+                <div class="stat-value" id="roleStat">用户</div>
+                <div class="stat-label">当前角色</div>
             </div>
         </div>
-        <!-- 商品数据列表 -->
-        <div class="data-card">
-            <div class="data-card-header">
-                <h2>商品数据列表（受保护接口）</h2>
-                <button class="btn-primary" onclick="openAddModal()">+ 新增商品</button>
+        <!-- 标签页导航（仅管理员可见） -->
+        <div class="tabs-nav" id="tabsNav" style="display:none;">
+            <button class="tab-btn active" onclick="switchTab('users')">用户列表</button>
+            <button class="tab-btn" onclick="switchTab('books')">商品数据</button>
+        </div>
+        <!-- 用户列表标签页（仅管理员可见） -->
+        <div class="tab-content" id="usersTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>用户列表（仅管理员可见）</h2>
+                    <button class="btn-primary" onclick="loadUserList()">刷新</button>
+                </div>
+                <div class="table-wrapper">
+                    <div id="userList">
+                        <div class="empty-state">加载中...</div>
+                    </div>
+                </div>
             </div>
-            <div class="table-wrapper">
-                <div id="bookList">
-                    <div class="empty-state">加载中...</div>
+        </div>
+        <!-- 商品数据标签页 -->
+        <div class="tab-content active" id="booksTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>商品数据列表</h2>
+                    <button class="btn-primary" onclick="openAddModal()">+ 新增商品</button>
+                </div>
+                <div class="table-wrapper">
+                    <div id="bookList">
+                        <div class="empty-state">加载中...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -258,24 +305,94 @@
         }
         var user = Auth.getUser();
         var currentDeleteId = null;
-        var bookList = []; // 缓存商品列表数据
+        var bookList = [];
+        var isAdmin = user && user.role === 1;
         // 显示用户信息
         document.getElementById('userNickname').textContent = user ? (user.nickname || user.username) : '未知';
         document.getElementById('userEmail').textContent = user ? (user.email || '') : '';
         document.getElementById('userAvatar').textContent = user ? (user.nickname || user.username).charAt(0).toUpperCase() : '?';
         document.getElementById('userCount').textContent = user ? user.userId : '--';
+        // 显示角色
+        var roleBadge = document.getElementById('roleBadge');
+        var roleStat = document.getElementById('roleStat');
+        if (isAdmin) {
+            roleBadge.textContent = '管理员';
+            roleBadge.className = 'role-badge role-admin';
+            roleStat.textContent = '管理员';
+            // 管理员显示标签页导航和操作日志按钮
+            document.getElementById('tabsNav').style.display = 'flex';
+            document.getElementById('logBtn').style.display = 'inline-block';
+            document.getElementById('logBtn').onclick = function() { window.location.href = 'logs.html'; };
+            // 默认显示用户列表标签页
+            switchTab('users');
+        } else {
+            roleBadge.textContent = '普通用户';
+            roleBadge.className = 'role-badge role-user';
+            roleStat.textContent = '普通用户';
+            // 普通用户只显示商品数据
+            document.getElementById('tabsNav').style.display = 'none';
+            document.getElementById('logBtn').style.display = 'none';
+            switchTab('books');
+        }
         // 显示 Token
         var token = Auth.getToken();
         document.getElementById('tokenInfo').innerHTML =
             '<strong>Token:</strong> ' + token.substring(0, 50) + '...' +
             '<br><br><strong>长度:</strong> ' + token.length + ' 字符' +
             '<br><strong>存储位置:</strong> localStorage';
+        // 切换标签页
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+            document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            var activeBtn = document.querySelector('.tab-btn[onclick="switchTab(\'' + tabName + '\')"]');
+            if (activeBtn) activeBtn.classList.add('active');
+            if (tabName === 'users' && isAdmin) {
+                loadUserList();
+            } else if (tabName === 'books') {
+                loadBooks();
+            }
+        }
+        // 加载用户列表（仅管理员）
+        function loadUserList() {
+            if (!isAdmin) return;
+            Api.getUserList().then(function(res) {
+                var listEl = document.getElementById('userList');
+                if (res.code === 200 && res.data) {
+                    if (res.data.length === 0) {
+                        listEl.innerHTML = '<div class="empty-state">暂无用户</div>';
+                        return;
+                    }
+                    var html = '<table class="data-table"><thead><tr>' +
+                        '<th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>手机号</th><th>角色</th><th>状态</th><th>注册时间</th>' +
+                        '</tr></thead><tbody>';
+                    res.data.forEach(function(item) {
+                        html += '<tr>' +
+                            '<td>' + item.id + '</td>' +
+                            '<td>' + (item.username || '-') + '</td>' +
+                            '<td>' + (item.nickname || '-') + '</td>' +
+                            '<td>' + (item.email || '-') + '</td>' +
+                            '<td>' + (item.phone || '-') + '</td>' +
+                            '<td><span class="role-badge ' + (item.role === 1 ? 'role-admin' : 'role-user') + '">' + (item.roleName || '普通用户') + '</span></td>' +
+                            '<td>' + (item.statusName || '-') + '</td>' +
+                            '<td>' + (item.createTime || '-') + '</td>' +
+                            '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    listEl.innerHTML = html;
+                } else if (res.code === 403) {
+                    listEl.innerHTML = '<div class="empty-state" style="color:var(--error);">无权限访问</div>';
+                } else {
+                    listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
+                }
+            });
+        }
         // 加载商品列表
         function loadBooks() {
             Api.getBooks().then(function (res) {
                 var listEl = document.getElementById('bookList');
                 if (res.code === 20041 && res.data) {
-                    bookList = res.data; // 缓存数据
+                    bookList = res.data;
                     document.getElementById('bookCount').textContent = res.data.length;
                     if (res.data.length === 0) {
                         listEl.innerHTML = '<div class="empty-state">暂无数据，点击右上角"新增商品"添加</div>';
@@ -356,7 +473,6 @@
             };
             var saveBtn = document.getElementById('saveBtn');
             var originalText = saveBtn.textContent;
-            // 设置加载状态
             saveBtn.disabled = true;
             saveBtn.textContent = '保存中...';
             var promise;
@@ -367,7 +483,6 @@
                 promise = Api.addBook(data);
             }
             promise.then(function (res) {
-                // 恢复按钮状态
                 saveBtn.disabled = false;
                 saveBtn.textContent = originalText;
                 if (res.code === 20011 || res.code === 20031) {
@@ -378,7 +493,6 @@
                     AuthUtils.showAlert('error', res.msg || '保存失败，请稍后重试');
                 }
             }).catch(function (err) {
-                // 恢复按钮状态
                 saveBtn.disabled = false;
                 saveBtn.textContent = originalText;
                 AuthUtils.showAlert('error', '网络请求失败，请检查后端服务');
@@ -423,10 +537,6 @@
         });
         document.getElementById('deleteModal').addEventListener('click', function (e) {
             if (e.target === this) closeDeleteModal();
-        });
-        // 页面加载完成后加载数据
-        document.addEventListener('DOMContentLoaded', function () {
-            loadBooks();
         });
     </script>
 </body>

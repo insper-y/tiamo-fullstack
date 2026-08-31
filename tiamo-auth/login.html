@@ -71,6 +71,20 @@
                     <div class="error-message">请输入密码</div>
                 </div>
 
+                <!-- 角色选择 -->
+                <div class="form-group">
+                    <label class="form-label">登录角色</label>
+                    <div class="role-selector" style="display:flex;gap:12px;margin-top:8px;">
+                        <label style="flex:1;cursor:pointer;">
+                            <input type="radio" name="loginRole" value="1" style="margin-right:6px;">
+                            <span style="color:var(--text-primary);">管理员</span>
+                        </label>
+                        <label style="flex:1;cursor:pointer;">
+                            <input type="radio" name="loginRole" value="0" checked style="margin-right:6px;">
+                            <span style="color:var(--text-primary);">普通用户</span>
+                        </label>
+                    </div>
+                </div>
                 <!-- 选项行 -->
                 <div class="form-options">
                     <label class="checkbox-wrapper">
@@ -152,12 +166,22 @@
                 AuthUtils.setButtonLoading(submitBtn, false, originalText);
 
                 if (res.code === 200 && res.data && res.data.token) {
-                    // 保存 Token 和用户信息
+                    // 获取用户选择的角色
+                    var selectedRole = document.querySelector('input[name="loginRole"]:checked').value;
+                    var actualRole = res.data.role != null ? res.data.role : 0;
+                    // 验证角色是否匹配
+                    if (parseInt(selectedRole) !== parseInt(actualRole)) {
+                        var roleName = actualRole === 1 ? '管理员' : '普通用户';
+                        AuthUtils.showAlert('error', '该账号角色为「' + roleName + '」，请选择正确的登录角色');
+                        return;
+                    }
+                    // 保存 Token 和用户信息（包含角色）
                     Auth.setAuth(res.data.token, {
                         userId: res.data.userId,
                         username: res.data.username,
                         nickname: res.data.nickname,
-                        email: res.data.email
+                        email: res.data.email,
+                        role: actualRole
                     });
 
                     // 记住我
