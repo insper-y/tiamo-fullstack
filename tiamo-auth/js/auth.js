@@ -104,6 +104,63 @@
         deleteBook: function (id) {
             return this.del('/maven/books/' + id);
         },
+        /* ---- 数据导出接口 ---- */
+        /** 通用文件下载方法 */
+        downloadFile: function (url, defaultFilename) {
+            var token = Auth.getToken();
+            var headers = {};
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+            return fetch(API_BASE + url, { headers: headers })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('下载失败，状态码: ' + response.status);
+                    }
+                    // 从响应头获取文件名
+                    var filename = defaultFilename;
+                    var contentDisposition = response.headers.get('Content-Disposition');
+                    if (contentDisposition) {
+                        var match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/);
+                        if (match && match[1]) {
+                            filename = decodeURIComponent(match[1]);
+                        } else {
+                            match = contentDisposition.match(/filename="([^"]+)"/);
+                            if (match && match[1]) {
+                                filename = match[1];
+                            }
+                        }
+                    }
+                    return response.blob().then(function (blob) {
+                        // 创建下载链接
+                        var url = window.URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        return { success: true, filename: filename };
+                    });
+                })
+                .catch(function (error) {
+                    console.error('文件下载失败:', error);
+                    return { success: false, msg: error.message || '下载失败' };
+                });
+        },
+        /** 下载用户列表 */
+        downloadUsers: function () {
+            return this.downloadFile('/api/export/users', '用户列表.csv');
+        },
+        /** 下载商品数据 */
+        downloadBooks: function () {
+            return this.downloadFile('/api/export/books', '商品数据.csv');
+        },
+        /** 下载操作日志 */
+        downloadLogs: function () {
+            return this.downloadFile('/api/export/logs', '操作日志.csv');
+        },
         /* ---- 管理员接口 ---- */
         /** 获取用户列表（仅管理员） */
         getUserList: function () {

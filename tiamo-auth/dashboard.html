@@ -209,6 +209,26 @@
             <h2>当前 Token 信息</h2>
             <div class="token-info" id="tokenInfo">加载中...</div>
         </div>
+        <!-- 数据导出 -->
+        <div class="data-card">
+            <div class="data-card-header">
+                <h2>数据导出（CSV格式）</h2>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn-primary" onclick="downloadUsers()" style="background:linear-gradient(135deg,#10b981,#059669);">
+                    下载用户列表
+                </button>
+                <button class="btn-primary" onclick="downloadBooks()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
+                    下载商品数据
+                </button>
+                <button class="btn-primary" onclick="downloadLogs()" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                    下载操作日志
+                </button>
+            </div>
+            <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
+                提示：用户列表和操作日志仅管理员可下载；CSV文件可用Excel打开，UTF-8编码。
+            </p>
+        </div>
         <div class="copyright" style="margin-top:24px;">
             &copy; 2026 Tiamo AI. All rights reserved.
         </div>
@@ -530,6 +550,39 @@
         function logout() {
             Auth.logout();
             window.location.href = 'login.html';
+        }
+        // 下载用户列表
+        function downloadUsers() {
+            AuthUtils.showAlert('success', '正在下载用户列表...');
+            Api.downloadUsers().then(function (res) {
+                if (res.success) {
+                    AuthUtils.showAlert('success', '用户列表下载成功: ' + res.filename);
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '下载失败，可能无管理员权限');
+                }
+            });
+        }
+        // 下载商品数据
+        function downloadBooks() {
+            AuthUtils.showAlert('success', '正在下载商品数据...');
+            Api.downloadBooks().then(function (res) {
+                if (res.success) {
+                    AuthUtils.showAlert('success', '商品数据下载成功: ' + res.filename);
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '下载失败');
+                }
+            });
+        }
+        // 下载操作日志
+        function downloadLogs() {
+            AuthUtils.showAlert('success', '正在下载操作日志...');
+            Api.downloadLogs().then(function (res) {
+                if (res.success) {
+                    AuthUtils.showAlert('success', '操作日志下载成功: ' + res.filename);
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '下载失败，可能无管理员权限');
+                }
+            });
         }
         // 点击弹窗外部关闭
         document.getElementById('bookModal').addEventListener('click', function (e) {
