@@ -888,6 +888,35 @@
             bookCurrentPage = 1;
             renderBooks(bookFilteredList);
         }
+        
+        // 通用分页HTML构建函数
+        function buildPaginationHtml(total, currentPage, totalPages, pageSize, prefix) {
+            var html = '<div class="pagination" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border);flex-wrap:wrap;gap:12px;">';
+            html += '<div style="font-size:13px;color:var(--text-secondary);">共 ' + total + ' 条，第 ' + currentPage + '/' + totalPages + ' 页</div>';
+            html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+            html += '<button class="btn-primary btn-sm" onclick="' + prefix + 'GoToPage(1)" ' + (currentPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>首页</button>';
+            html += '<button class="btn-primary btn-sm" onclick="' + prefix + 'PrevPage()" ' + (currentPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>上一页</button>';
+            var startPage = Math.max(1, currentPage - 2);
+            var endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+            for (var i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    html += '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">' + i + '</button>';
+                } else {
+                    html += '<button class="btn-primary btn-sm" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);" onclick="' + prefix + 'GoToPage(' + i + ')">' + i + '</button>';
+                }
+            }
+            html += '<button class="btn-primary btn-sm" onclick="' + prefix + 'NextPage()" ' + (currentPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>下一页</button>';
+            html += '<button class="btn-primary btn-sm" onclick="' + prefix + 'GoToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>末页</button>';
+            html += '<select class="form-input" style="width:auto;padding:6px 10px;font-size:13px;" onchange="' + prefix + 'ChangePageSize(this.value)">';
+            html += '<option value="10" ' + (pageSize === 10 ? 'selected' : '') + '>10条/页</option>';
+            html += '<option value="20" ' + (pageSize === 20 ? 'selected' : '') + '>20条/页</option>';
+            html += '<option value="50" ' + (pageSize === 50 ? 'selected' : '') + '>50条/页</option>';
+            html += '<option value="100" ' + (pageSize === 100 ? 'selected' : '') + '>100条/页</option>';
+            html += '</select>';
+            html += '</div></div>';
+            return html;
+        }
         // 商品快速搜索
         function quickSearchBooks() {
             var keyword = document.getElementById('bookQuickSearch').value.trim().toLowerCase();
@@ -1154,6 +1183,9 @@
 
         /* ==================== 回收站 ==================== */
         var recycleList = [];
+        var recycleCurrentPage = 1;
+        var recyclePageSize = 20;
+        var recycleFilteredList = [];
 
         // 加载回收站列表
         function loadRecycleList() {
@@ -1165,6 +1197,7 @@
                         listEl.innerHTML = '<div class="empty-state">回收站为空</div>';
                         return;
                     }
+                    recycleCurrentPage = 1;
                     renderRecycleList(recycleList);
                 } else if (res.code === 403) {
                     listEl.innerHTML = '<div class="empty-state" style="color:var(--error);">无权限访问</div>';
@@ -1174,13 +1207,21 @@
             });
         }
 
-        // 渲染回收站列表
+        // 渲染回收站列表（带分页）
         function renderRecycleList(list) {
             var listEl = document.getElementById('recycleList');
             if (!list || list.length === 0) {
                 listEl.innerHTML = '<div class="empty-state">回收站为空</div>';
                 return;
             }
+            recycleFilteredList = list;
+            var totalPages = Math.ceil(list.length / recyclePageSize);
+            if (recycleCurrentPage > totalPages) recycleCurrentPage = totalPages;
+            if (recycleCurrentPage < 1) recycleCurrentPage = 1;
+            var start = (recycleCurrentPage - 1) * recyclePageSize;
+            var end = start + recyclePageSize;
+            var pageData = list.slice(start, end);
+            
             var html = '<table class="data-table"><thead><tr>';
             if (isAdmin) {
                 html += '<th style="width:40px;"><input type="checkbox" id="selectAllRecycle" onchange="toggleSelectAllRecycle(this)"></th>';
@@ -1188,7 +1229,7 @@
             html += '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
                 '<th>商品标题</th><th>删除时间</th><th>删除人</th><th>操作</th>' +
                 '</tr></thead><tbody>';
-            list.forEach(function (item) {
+            pageData.forEach(function (item) {
                 html += '<tr>';
                 if (isAdmin) {
                     html += '<td><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>';
@@ -1211,6 +1252,9 @@
                 html += '</td></tr>';
             });
             html += '</tbody></table>';
+            
+            // 分页控件
+            html += buildPaginationHtml(list.length, recycleCurrentPage, totalPages, recyclePageSize, 'recycle');
             listEl.innerHTML = html;
             // 普通用户隐藏批量恢复按钮
             if (!isAdmin) {
@@ -1218,11 +1262,18 @@
                 if (batchBtn) batchBtn.style.display = 'none';
             }
         }
+        
+        // 回收站分页相关函数
+        function recycleGoToPage(page) { recycleCurrentPage = page; renderRecycleList(recycleFilteredList); }
+        function recyclePrevPage() { if (recycleCurrentPage > 1) { recycleCurrentPage--; renderRecycleList(recycleFilteredList); } }
+        function recycleNextPage() { var t = Math.ceil(recycleFilteredList.length / recyclePageSize); if (recycleCurrentPage < t) { recycleCurrentPage++; renderRecycleList(recycleFilteredList); } }
+        function recycleChangePageSize(size) { recyclePageSize = parseInt(size); recycleCurrentPage = 1; renderRecycleList(recycleFilteredList); }
 
         // 回收站快速搜索
         function quickSearchRecycle() {
             var keyword = document.getElementById('recycleQuickSearch').value.toLowerCase().trim();
             if (!keyword) {
+                recycleCurrentPage = 1;
                 renderRecycleList(recycleList);
                 document.getElementById('recycleSearchInfo').style.display = 'none';
                 return;
@@ -1233,6 +1284,7 @@
                     (item.ax && item.ax.toLowerCase().indexOf(keyword) >= 0) ||
                     (item.deletedBy && item.deletedBy.toLowerCase().indexOf(keyword) >= 0);
             });
+            recycleCurrentPage = 1;
             renderRecycleList(filtered);
             var info = document.getElementById('recycleSearchInfo');
             info.style.display = 'block';
@@ -1258,6 +1310,7 @@
                 if (deletedBy && (!item.deletedBy || item.deletedBy.toLowerCase().indexOf(deletedBy) < 0)) return false;
                 return true;
             });
+            recycleCurrentPage = 1;
             renderRecycleList(filtered);
             var info = document.getElementById('recycleSearchInfo');
             info.style.display = 'block';
@@ -1272,6 +1325,7 @@
             document.getElementById('advRecycleTitle').value = '';
             document.getElementById('advRecycleDeletedBy').value = '';
             document.getElementById('recycleSearchInfo').style.display = 'none';
+            recycleCurrentPage = 1;
             renderRecycleList(recycleList);
         }
 
@@ -1392,18 +1446,26 @@
             });
         }
 
-        // 渲染待审批列表
+        // 渲染待审批列表（带分页）
         function renderApprovalList(list) {
             var listEl = document.getElementById('approvalList');
             if (!list || list.length === 0) {
                 listEl.innerHTML = '<div class="empty-state">暂无待审批申请</div>';
                 return;
             }
+            approvalList = list;
+            var totalPages = Math.ceil(list.length / approvalPageSize);
+            if (approvalCurrentPage > totalPages) approvalCurrentPage = totalPages;
+            if (approvalCurrentPage < 1) approvalCurrentPage = 1;
+            var start = (approvalCurrentPage - 1) * approvalPageSize;
+            var end = start + approvalPageSize;
+            var pageData = list.slice(start, end);
+            
             var html = '<table class="data-table"><thead><tr>' +
                 '<th>ID</th><th>商品ID</th><th>商品名称</th><th>申请类型</th>' +
                 '<th>申请人</th><th>申请时间</th><th>操作</th>' +
                 '</tr></thead><tbody>';
-            list.forEach(function (item) {
+            pageData.forEach(function (item) {
                 var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
                 var typeColor = item.approvalType === 'RESTORE' ? '#10b981' : '#ef4444';
                 html += '<tr>' +
@@ -1420,8 +1482,15 @@
                     '</tr>';
             });
             html += '</tbody></table>';
+            html += buildPaginationHtml(list.length, approvalCurrentPage, totalPages, approvalPageSize, 'approval');
             listEl.innerHTML = html;
         }
+        
+        // 待审批分页相关函数
+        function approvalGoToPage(page) { approvalCurrentPage = page; renderApprovalList(approvalList); }
+        function approvalPrevPage() { if (approvalCurrentPage > 1) { approvalCurrentPage--; renderApprovalList(approvalList); } }
+        function approvalNextPage() { var t = Math.ceil(approvalList.length / approvalPageSize); if (approvalCurrentPage < t) { approvalCurrentPage++; renderApprovalList(approvalList); } }
+        function approvalChangePageSize(size) { approvalPageSize = parseInt(size); approvalCurrentPage = 1; renderApprovalList(approvalList); }
 
         // 审批通过
         function approveApproval(id) {
@@ -1472,6 +1541,13 @@
         }
 
         /* ==================== 普通用户我的申请 ==================== */
+        var approvalList = [];
+        var approvalCurrentPage = 1;
+        var approvalPageSize = 20;
+        var myApprovalList = [];
+        var myApprovalCurrentPage = 1;
+        var myApprovalPageSize = 20;
+        
         function loadMyApprovals() {
             Api.getMyApprovals().then(function (res) {
                 var listEl = document.getElementById('myApprovalList');
@@ -1491,11 +1567,19 @@
                 listEl.innerHTML = '<div class="empty-state">暂无申请记录</div>';
                 return;
             }
+            myApprovalList = list;
+            var totalPages = Math.ceil(list.length / myApprovalPageSize);
+            if (myApprovalCurrentPage > totalPages) myApprovalCurrentPage = totalPages;
+            if (myApprovalCurrentPage < 1) myApprovalCurrentPage = 1;
+            var start = (myApprovalCurrentPage - 1) * myApprovalPageSize;
+            var end = start + myApprovalPageSize;
+            var pageData = list.slice(start, end);
+            
             var html = '<table class="data-table"><thead><tr>' +
                 '<th>ID</th><th>商品ID</th><th>商品名称</th><th>申请类型</th>' +
                 '<th>申请时间</th><th>状态</th><th>审批人</th><th>审批时间</th><th>拒绝原因</th><th>操作</th>' +
                 '</tr></thead><tbody>';
-            list.forEach(function (item) {
+            pageData.forEach(function (item) {
                 var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
                 var typeColor = item.approvalType === 'RESTORE' ? '#10b981' : '#ef4444';
                 var statusText, statusColor;
@@ -1518,8 +1602,15 @@
                     '</tr>';
             });
             html += '</tbody></table>';
+            html += buildPaginationHtml(list.length, myApprovalCurrentPage, totalPages, myApprovalPageSize, 'myApproval');
             listEl.innerHTML = html;
         }
+        
+        // 我的申请分页相关函数
+        function myApprovalGoToPage(page) { myApprovalCurrentPage = page; renderMyApprovals(myApprovalList); }
+        function myApprovalPrevPage() { if (myApprovalCurrentPage > 1) { myApprovalCurrentPage--; renderMyApprovals(myApprovalList); } }
+        function myApprovalNextPage() { var t = Math.ceil(myApprovalList.length / myApprovalPageSize); if (myApprovalCurrentPage < t) { myApprovalCurrentPage++; renderMyApprovals(myApprovalList); } }
+        function myApprovalChangePageSize(size) { myApprovalPageSize = parseInt(size); myApprovalCurrentPage = 1; renderMyApprovals(myApprovalList); }
 
         // 删除我的申请记录
         function deleteMyApproval(id) {
