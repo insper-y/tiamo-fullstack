@@ -5,7 +5,6 @@
 
 # ---------- 构建阶段 ----------
 FROM maven:3.9-eclipse-temurin-17 AS builder
-
 WORKDIR /app
 
 # 先复制 pom.xml，利用 Docker 缓存依赖
@@ -18,7 +17,6 @@ RUN mvn clean package -DskipTests -B
 
 # ---------- 运行阶段 ----------
 FROM eclipse-temurin:17-jre-alpine
-
 WORKDIR /app
 
 # 安装必要工具
@@ -34,9 +32,5 @@ COPY --from=builder /app/target/*.jar app.jar
 # 暴露端口
 EXPOSE 8080
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-  CMD wget -qO- http://localhost:8080/maven/books || exit 1
-
 # 启动应用
-ENTRYPOINT ["java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "-Xmx512m", "-Xms256m", "app.jar"]
+ENTRYPOINT ["java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "-Xmx384m", "-Xms128m", "app.jar"]
