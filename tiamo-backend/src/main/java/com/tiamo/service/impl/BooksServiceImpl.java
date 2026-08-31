@@ -67,12 +67,8 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
 
     @Override
     public boolean softDelete(Integer id, String operator) {
-        LambdaUpdateWrapper<Books> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(Books::getId, id)
-                .set(Books::getDeleted, 1)
-                .set(Books::getDeletedTime, LocalDateTime.now())
-                .set(Books::getDeletedBy, operator != null ? operator : "unknown");
-        return this.update(wrapper);
+        // 用原生SQL绕过MyBatis-Plus逻辑删除插件拦截
+        return baseMapper.softDeleteById(id, LocalDateTime.now(), operator != null ? operator : "unknown") > 0;
     }
 
     @Override
@@ -80,12 +76,8 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
         if (ids == null || ids.isEmpty()) {
             return false;
         }
-        LambdaUpdateWrapper<Books> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.in(Books::getId, ids)
-                .set(Books::getDeleted, 1)
-                .set(Books::getDeletedTime, LocalDateTime.now())
-                .set(Books::getDeletedBy, operator != null ? operator : "unknown");
-        return this.update(wrapper);
+        // 用原生SQL绕过MyBatis-Plus逻辑删除插件拦截
+        return baseMapper.batchSoftDeleteByIds(ids, LocalDateTime.now(), operator != null ? operator : "unknown") > 0;
     }
 
     @Override

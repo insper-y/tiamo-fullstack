@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -49,4 +50,22 @@ public interface BooksMapper extends BaseMapper<Books> {
             "</script>"
     })
     int batchRestoreByIds(@Param("ids") List<Integer> ids);
+
+    /**
+     * 软删除 - 原生SQL绕过逻辑删除插件拦截
+     */
+    @Update("UPDATE books SET deleted = 1, deleted_time = #{deletedTime}, deleted_by = #{deletedBy} WHERE id = #{id} AND deleted = 0")
+    int softDeleteById(@Param("id") Integer id, @Param("deletedTime") LocalDateTime deletedTime, @Param("deletedBy") String deletedBy);
+
+    /**
+     * 批量软删除 - 原生SQL绕过逻辑删除插件拦截
+     */
+    @Update({
+            "<script>",
+            "UPDATE books SET deleted = 1, deleted_time = #{deletedTime}, deleted_by = #{deletedBy} WHERE id IN",
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>",
+            "AND deleted = 0",
+            "</script>"
+    })
+    int batchSoftDeleteByIds(@Param("ids") List<Integer> ids, @Param("deletedTime") LocalDateTime deletedTime, @Param("deletedBy") String deletedBy);
 }
