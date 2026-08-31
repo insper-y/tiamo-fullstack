@@ -30,9 +30,16 @@ public interface BooksMapper extends BaseMapper<Books> {
 
     /**
      * 查询已删除的数据（回收站）- 原生SQL绕过逻辑删除过滤
+     * 优化：只查询需要的字段，避免大文本字段传输
      */
-    @Select("SELECT * FROM books WHERE deleted = 1 ORDER BY deleted_time DESC")
+    @Select("SELECT id, name, type, description, aa, bd, ac, ab, ax, deleted, deleted_time, deleted_by FROM books WHERE deleted = 1 ORDER BY deleted_time DESC")
     List<Books> selectDeletedList();
+
+    /**
+     * 查询所有未删除数据（优化版：只查询需要的字段，走覆盖索引）
+     */
+    @Select("SELECT id, name, type, description, aa, bd, ac, ab, ax, deleted FROM books WHERE deleted = 0 ORDER BY id DESC")
+    List<Books> selectAllOptimized();
 
     /**
      * 根据ID查询已删除的数据 - 原生SQL绕过逻辑删除过滤

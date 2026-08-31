@@ -43,8 +43,8 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
 
     @Override
     public List<Books> listAll() {
-        // MyBatis-Plus逻辑删除自动过滤已删除数据，只需排序
-        return this.list(new LambdaQueryWrapper<Books>().orderByDesc(Books::getId));
+        // 优化：使用原生SQL只查询需要的字段，走覆盖索引 idx_deleted_id
+        return baseMapper.selectAllOptimized();
     }
 
     @Override
