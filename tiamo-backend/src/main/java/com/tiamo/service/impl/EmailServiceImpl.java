@@ -32,6 +32,11 @@ public class EmailServiceImpl implements EmailService {
     private boolean logEmailEnabled;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    /**
+     * 邮件发送全局锁：QQ SMTP 不允许同一账号并发认证，
+     * 多封邮件（如实时通知 + 附件导出）必须串行发送，否则报 Authentication failed
+     */
+    private static final Object MAIL_LOCK = new Object();
 
     @Override
     @Async("logExecutor")
@@ -56,7 +61,9 @@ public class EmailServiceImpl implements EmailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(content);
-        mailSender.send(message);
+        synchronized (MAIL_LOCK) {
+            mailSender.send(message);
+        }
     }
 
     @Override
@@ -68,7 +75,9 @@ public class EmailServiceImpl implements EmailService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
-            mailSender.send(helper.getMimeMessage());
+            synchronized (MAIL_LOCK) {
+                mailSender.send(helper.getMimeMessage());
+            }
         } catch (Exception e) {
             throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
         }
@@ -87,7 +96,9 @@ public class EmailServiceImpl implements EmailService {
             // 添加附件
             ByteArrayResource resource = new ByteArrayResource(attachment);
             helper.addAttachment(attachmentName, resource);
-            mailSender.send(helper.getMimeMessage());
+            synchronized (MAIL_LOCK) {
+                mailSender.send(helper.getMimeMessage());
+            }
         } catch (Exception e) {
             throw new RuntimeException("带附件邮件发送失败: " + e.getMessage(), e);
         }
