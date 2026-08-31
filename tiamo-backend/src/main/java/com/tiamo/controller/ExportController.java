@@ -21,6 +21,8 @@ import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
@@ -46,6 +48,22 @@ public class ExportController {
     private JwtUtil jwtUtil;
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter LOCAL_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * 通用日期格式化（支持 Date 和 LocalDateTime）
+     */
+    private String formatDateTime(Object dateTime) {
+        if (dateTime == null) {
+            return "";
+        }
+        if (dateTime instanceof Date) {
+            return DATE_FORMAT.format((Date) dateTime);
+        } else if (dateTime instanceof LocalDateTime) {
+            return ((LocalDateTime) dateTime).format(LOCAL_DATE_TIME_FORMATTER);
+        }
+        return dateTime.toString();
+    }
 
     /**
      * 导出用户列表（仅管理员）
@@ -74,7 +92,7 @@ public class ExportController {
             for (SysUser user : users) {
                 String role = (user.getRole() != null && user.getRole() == 1) ? "管理员" : "普通用户";
                 String status = (user.getStatus() != null && user.getStatus() == 1) ? "启用" : "禁用";
-                String createTime = user.getCreateTime() != null ? DATE_FORMAT.format(user.getCreateTime()) : "";
+                String createTime = formatDateTime(user.getCreateTime());
                 writer.println(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
                         user.getId(),
                         escapeCsv(user.getUsername()),
@@ -170,7 +188,7 @@ public class ExportController {
             writer.println("ID,模块,操作描述,操作类型,用户名,IP地址,请求方法,请求URL,状态,耗时(ms),创建时间");
 
             for (SysOperationLog log : logs) {
-                String createTime = log.getCreateTime() != null ? DATE_FORMAT.format(log.getCreateTime()) : "";
+                String createTime = formatDateTime(log.getCreateTime());
                 String costTime = log.getCostTime() != null ? String.valueOf(log.getCostTime()) : "";
                 writer.println(String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
                         log.getId(),
