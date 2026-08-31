@@ -18,7 +18,7 @@ spring:
   mail:
     host: smtp.qq.com          # 邮箱SMTP服务器（QQ邮箱用smtp.qq.com，163用smtp.163.com）
     port: 465                   # SMTP端口（QQ:465/587，163:465/25）
-    username: 2149212156@qq.com # 你的邮箱地址
+    username: 1301628876@qq.com # 你的邮箱地址
     password: shabjipxdffeifdg    # 邮箱授权码（不是登录密码，需在邮箱设置中开启SMTP获取）
     properties:
       mail:
@@ -67,4 +67,4 @@ app:
   # 操作日志邮件推送配置
   log-email:
     enabled: true              # 是否开启邮件推送（true=开启，false=关闭）
-    to: 2149212156@qq.com      # 接收操作日志的邮箱地址
+    to: 1301628876@qq.com      # 接收操作日志的邮箱地址
