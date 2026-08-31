@@ -424,7 +424,7 @@
                 <h3>确认删除</h3>
                 <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
             </div>
-            <p style="color:var(--text-secondary);margin-bottom:20px;">确定要删除这条商品数据吗？此操作不可恢复。</p>
+            <p style="color:var(--text-secondary);margin-bottom:20px;">确定要删除这条商品数据吗？删除后可在回收站恢复。</p>
             <div class="modal-footer">
                 <button type="button" class="btn-cancel" onclick="closeDeleteModal()">取消</button>
                 <button type="button" class="btn-primary btn-delete" onclick="confirmDelete()">确认删除</button>
@@ -823,6 +823,11 @@
                     if (res.code === 20021) {
                         AuthUtils.showAlert('success', '删除成功！已移入回收站，管理员可恢复');
                         closeDeleteModal();
+                        // 清除所有复选框选择
+                        document.querySelectorAll('.book-checkbox').forEach(function(cb){ cb.checked = false; });
+                        var selectAll = document.getElementById('selectAllBooks');
+                        if (selectAll) selectAll.checked = false;
+                        updateBatchBtnState();
                         loadBooks();
                     } else {
                         AuthUtils.showAlert('error', res.msg || '删除失败，请稍后重试');
