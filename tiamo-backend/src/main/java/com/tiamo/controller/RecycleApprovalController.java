@@ -153,6 +153,27 @@ public class RecycleApprovalController {
         return new Result<>(200, data, "查询成功");
     }
 
+    /**
+     * 删除申请记录（申请人本人或管理员）
+     * DELETE /api/recycle-approval/{id}
+     */
+    @DeleteMapping("/{id}")
+    @OperationLog(module = "回收站审批", description = "删除申请记录", operationType = "DELETE")
+    public Result<String> delete(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser user = getCurrentUser(authHeader);
+        if (user == null) {
+            return new Result<>(401, null, "请先登录");
+        }
+        try {
+            approvalService.deleteById(id, user.getId(), user.getRole());
+            return new Result<>(200, null, "删除成功");
+        } catch (Exception e) {
+            return new Result<>(500, null, e.getMessage());
+        }
+    }
+
     /* ==================== 辅助方法 ==================== */
 
     private SysUser getCurrentUser(String authHeader) {

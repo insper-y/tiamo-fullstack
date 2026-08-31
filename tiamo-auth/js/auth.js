@@ -242,6 +242,10 @@
         rejectApproval: function (id, remark) {
             return this.put('/api/recycle-approval/' + id + '/reject', { remark: remark });
         },
+        /** 删除申请记录（本人或管理员） */
+        deleteApproval: function (id) {
+            return this.del('/api/recycle-approval/' + id);
+        },
 
         /* ---- 操作日志管理接口 ---- */
         /** 批量删除操作日志（管理员） */

@@ -130,4 +130,19 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
         return this.count(new LambdaQueryWrapper<RecycleApproval>()
                 .eq(RecycleApproval::getStatus, "PENDING"));
     }
+
+    @Override
+    public boolean deleteById(Long id, Long userId, Integer userRole) {
+        RecycleApproval approval = this.getById(id);
+        if (approval == null) {
+            throw new RuntimeException("申请记录不存在");
+        }
+        // 仅申请人本人或管理员可删除
+        boolean isOwner = approval.getApplicantId() != null && approval.getApplicantId().equals(userId);
+        boolean isAdmin = userRole != null && userRole == 1;
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("无权限删除，仅申请人本人或管理员可操作");
+        }
+        return this.removeById(id);
+    }
 }

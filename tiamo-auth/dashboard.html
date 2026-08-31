@@ -1356,7 +1356,7 @@
             }
             var html = '<table class="data-table"><thead><tr>' +
                 '<th>ID</th><th>商品ID</th><th>商品名称</th><th>申请类型</th>' +
-                '<th>申请时间</th><th>状态</th><th>审批人</th><th>审批时间</th><th>拒绝原因</th>' +
+                '<th>申请时间</th><th>状态</th><th>审批人</th><th>审批时间</th><th>拒绝原因</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             list.forEach(function (item) {
                 var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
@@ -1375,10 +1375,30 @@
                     '<td>' + (item.approverName || '-') + '</td>' +
                     '<td style="white-space:nowrap;font-size:12px;">' + (item.approveTime || '-') + '</td>' +
                     '<td style="max-width:200px;word-break:break-all;color:' + (item.status === 'REJECTED' ? '#ef4444' : 'var(--text-muted)') + ';">' + (item.remark || '-') + '</td>' +
+                    '<td style="white-space:nowrap;">' +
+                        '<button class="btn-primary btn-sm btn-delete" onclick="deleteMyApproval(' + item.id + ')">删除</button>' +
+                    '</td>' +
                     '</tr>';
             });
             html += '</tbody></table>';
             listEl.innerHTML = html;
+        }
+
+        // 删除我的申请记录
+        function deleteMyApproval(id) {
+            if (!confirm('确定要删除这条申请记录吗？此操作不可恢复！')) {
+                return;
+            }
+            Api.deleteApproval(id).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', '删除成功');
+                    loadMyApprovals();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '删除失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
         }
 
         /* ==================== 主题切换 ==================== */

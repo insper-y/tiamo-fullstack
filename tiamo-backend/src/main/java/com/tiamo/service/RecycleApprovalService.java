@@ -39,4 +39,9 @@ public interface RecycleApprovalService extends IService<RecycleApproval> {
      * 获取待审批数量
      */
     long countPending();
+
+    /**
+     * 删除申请记录（仅申请人本人或管理员）
+     */
+    boolean deleteById(Long id, Long userId, Integer userRole);
 }
