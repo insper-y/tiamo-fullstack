@@ -92,12 +92,12 @@
 
         /** 新增商品 */
         addBook: function (data) {
-            return this.post('/maven/books/', data);
+            return this.post('/maven/books', data);
         },
 
         /** 修改商品 */
         updateBook: function (data) {
-            return this.put('/maven/books/', data);
+            return this.put('/maven/books', data);
         },
 
         /** 删除商品 */

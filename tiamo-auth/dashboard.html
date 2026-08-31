@@ -258,6 +258,7 @@
         }
         var user = Auth.getUser();
         var currentDeleteId = null;
+        var bookList = []; // 缓存商品列表数据
         // 显示用户信息
         document.getElementById('userNickname').textContent = user ? (user.nickname || user.username) : '未知';
         document.getElementById('userEmail').textContent = user ? (user.email || '') : '';
@@ -274,6 +275,7 @@
             Api.getBooks().then(function (res) {
                 var listEl = document.getElementById('bookList');
                 if (res.code === 20041 && res.data) {
+                    bookList = res.data; // 缓存数据
                     document.getElementById('bookCount').textContent = res.data.length;
                     if (res.data.length === 0) {
                         listEl.innerHTML = '<div class="empty-state">暂无数据，点击右上角"新增商品"添加</div>';
@@ -318,24 +320,22 @@
         }
         // 打开编辑弹窗
         function openEditModal(id) {
-            Api.getBooks().then(function (res) {
-                if (res.code === 20041 && res.data) {
-                    var item = res.data.find(function (b) { return b.id === id; });
-                    if (item) {
-                        document.getElementById('modalTitle').textContent = '编辑商品';
-                        document.getElementById('bookId').value = item.id;
-                        document.getElementById('name').value = item.name || '';
-                        document.getElementById('type').value = item.type || '';
-                        document.getElementById('description').value = item.description || '';
-                        document.getElementById('aa').value = item.aa || '';
-                        document.getElementById('bd').value = item.bd || '';
-                        document.getElementById('ac').value = item.ac || '';
-                        document.getElementById('ab').value = item.ab || '';
-                        document.getElementById('ax').value = item.ax || '';
-                        document.getElementById('bookModal').classList.add('active');
-                    }
-                }
-            });
+            var item = bookList.find(function (b) { return b.id === id; });
+            if (!item) {
+                AuthUtils.showAlert('error', '未找到该商品数据，请刷新页面后重试');
+                return;
+            }
+            document.getElementById('modalTitle').textContent = '编辑商品';
+            document.getElementById('bookId').value = item.id;
+            document.getElementById('name').value = item.name || '';
+            document.getElementById('type').value = item.type || '';
+            document.getElementById('description').value = item.description || '';
+            document.getElementById('aa').value = item.aa || '';
+            document.getElementById('bd').value = item.bd || '';
+            document.getElementById('ac').value = item.ac || '';
+            document.getElementById('ab').value = item.ab || '';
+            document.getElementById('ax').value = item.ax || '';
+            document.getElementById('bookModal').classList.add('active');
         }
         // 关闭弹窗
         function closeModal() {
@@ -357,7 +357,9 @@
             };
             var saveBtn = document.getElementById('saveBtn');
             var originalText = saveBtn.textContent;
-            AuthUtils.setButtonLoading(saveBtn, true);
+            // 设置加载状态
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
             var promise;
             if (id) {
                 data.id = parseInt(id);
@@ -366,7 +368,9 @@
                 promise = Api.addBook(data);
             }
             promise.then(function (res) {
-                AuthUtils.setButtonLoading(saveBtn, false, originalText);
+                // 恢复按钮状态
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
                 if (res.code === 20011 || res.code === 20031) {
                     AuthUtils.showAlert('success', id ? '修改成功！' : '新增成功！');
                     closeModal();
@@ -374,6 +378,12 @@
                 } else {
                     AuthUtils.showAlert('error', res.msg || '保存失败，请稍后重试');
                 }
+            }).catch(function (err) {
+                // 恢复按钮状态
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+                AuthUtils.showAlert('error', '网络请求失败，请检查后端服务');
+                console.error('保存失败:', err);
             });
         }
         // 打开删除确认弹窗
@@ -397,6 +407,9 @@
                     } else {
                         AuthUtils.showAlert('error', res.msg || '删除失败，请稍后重试');
                     }
+                }).catch(function (err) {
+                    AuthUtils.showAlert('error', '网络请求失败，请检查后端服务');
+                    console.error('删除失败:', err);
                 });
             }
         }
