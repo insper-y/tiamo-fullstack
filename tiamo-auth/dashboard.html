@@ -181,8 +181,29 @@
             <div class="data-card">
                 <div class="data-card-header">
                     <h2>用户列表（仅管理员可见）</h2>
-                    <button class="btn-primary" onclick="loadUserList()">刷新</button>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="userQuickSearch" class="form-input" placeholder="搜索用户名/昵称/邮箱/手机号..." style="max-width:260px;" onkeyup="if(event.key==='Enter')quickSearchUsers()">
+                        <button class="btn-primary btn-sm" onclick="quickSearchUsers()">搜索</button>
+                        <button class="btn-primary btn-sm" id="userAdvBtn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="toggleUserAdvanced()">高级查询</button>
+                        <button class="btn-primary" onclick="loadUserList()">刷新</button>
+                    </div>
                 </div>
+                <!-- 用户高级查询面板 -->
+                <div id="userAdvancedPanel" style="display:none;margin-bottom:16px;padding:16px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border);">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">用户名</label><input type="text" id="advUserUsername" class="form-input" placeholder="用户名"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">昵称</label><input type="text" id="advUserNickname" class="form-input" placeholder="昵称"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">邮箱</label><input type="text" id="advUserEmail" class="form-input" placeholder="邮箱"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">手机号</label><input type="text" id="advUserPhone" class="form-input" placeholder="手机号"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">角色</label><select id="advUserRole" class="form-input"><option value="">全部</option><option value="1">管理员</option><option value="0">普通用户</option></select></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">状态</label><select id="advUserStatus" class="form-input"><option value="">全部</option><option value="1">启用</option><option value="0">禁用</option></select></div>
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button class="btn-primary btn-sm" onclick="advancedSearchUsers()">查询</button>
+                        <button class="btn-primary btn-sm" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);" onclick="resetUserSearch()">重置</button>
+                    </div>
+                </div>
+                <div id="userSearchInfo" style="display:none;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"></div>
                 <div class="table-wrapper">
                     <div id="userList">
                         <div class="empty-state">加载中...</div>
@@ -195,8 +216,29 @@
             <div class="data-card">
                 <div class="data-card-header">
                     <h2>商品数据列表</h2>
-                    <button class="btn-primary" onclick="openAddModal()">+ 新增商品</button>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="bookQuickSearch" class="form-input" placeholder="搜索分销软件/微信账号/商品标题..." style="max-width:260px;" onkeyup="if(event.key==='Enter')quickSearchBooks()">
+                        <button class="btn-primary btn-sm" onclick="quickSearchBooks()">搜索</button>
+                        <button class="btn-primary btn-sm" id="bookAdvBtn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="toggleBookAdvanced()">高级查询</button>
+                        <button class="btn-primary" onclick="openAddModal()">+ 新增商品</button>
+                    </div>
                 </div>
+                <!-- 商品高级查询面板 -->
+                <div id="bookAdvancedPanel" style="display:none;margin-bottom:16px;padding:16px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border);">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">分销软件</label><input type="text" id="advBookName" class="form-input" placeholder="分销软件名称"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">微信账号</label><input type="text" id="advBookType" class="form-input" placeholder="微信账号"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">软件账号</label><input type="text" id="advBookDesc" class="form-input" placeholder="软件账号"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">微信备注</label><input type="text" id="advBookAa" class="form-input" placeholder="微信备注"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">商品ID</label><input type="text" id="advBookBd" class="form-input" placeholder="商品ID"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">商品标题</label><input type="text" id="advBookAx" class="form-input" placeholder="商品标题"></div>
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button class="btn-primary btn-sm" onclick="advancedSearchBooks()">查询</button>
+                        <button class="btn-primary btn-sm" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);" onclick="resetBookSearch()">重置</button>
+                    </div>
+                </div>
+                <div id="bookSearchInfo" style="display:none;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"></div>
                 <div class="table-wrapper">
                     <div id="bookList">
                         <div class="empty-state">加载中...</div>
@@ -209,8 +251,8 @@
             <h2>当前 Token 信息</h2>
             <div class="token-info" id="tokenInfo">加载中...</div>
         </div>
-        <!-- 数据导出 -->
-        <div class="data-card">
+        <!-- 数据导出（仅管理员可见） -->
+        <div class="data-card" id="exportCard">
             <div class="data-card-header">
                 <h2>数据导出（CSV格式）</h2>
             </div>
@@ -380,6 +422,7 @@
         var user = Auth.getUser();
         var currentDeleteId = null;
         var bookList = [];
+        var userList = [];
         var isAdmin = user && user.role === 1;
         // 显示用户信息
         document.getElementById('userNickname').textContent = user ? (user.nickname || user.username) : '未知';
@@ -403,9 +446,10 @@
             roleBadge.textContent = '普通用户';
             roleBadge.className = 'role-badge role-user';
             roleStat.textContent = '普通用户';
-            // 普通用户只显示商品数据
+            // 普通用户只显示商品数据，隐藏数据导出和邮件配置
             document.getElementById('tabsNav').style.display = 'none';
             document.getElementById('logBtn').style.display = 'none';
+            document.getElementById('exportCard').style.display = 'none';
             switchTab('books');
         }
         // 加载邮件配置（仅管理员可见）
@@ -435,33 +479,109 @@
             Api.getUserList().then(function(res) {
                 var listEl = document.getElementById('userList');
                 if (res.code === 200 && res.data) {
+                    userList = res.data;
                     if (res.data.length === 0) {
                         listEl.innerHTML = '<div class="empty-state">暂无用户</div>';
                         return;
                     }
-                    var html = '<table class="data-table"><thead><tr>' +
-                        '<th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>手机号</th><th>角色</th><th>状态</th><th>注册时间</th>' +
-                        '</tr></thead><tbody>';
-                    res.data.forEach(function(item) {
-                        html += '<tr>' +
-                            '<td>' + item.id + '</td>' +
-                            '<td>' + (item.username || '-') + '</td>' +
-                            '<td>' + (item.nickname || '-') + '</td>' +
-                            '<td>' + (item.email || '-') + '</td>' +
-                            '<td>' + (item.phone || '-') + '</td>' +
-                            '<td><span class="role-badge ' + (item.role === 1 ? 'role-admin' : 'role-user') + '">' + (item.roleName || '普通用户') + '</span></td>' +
-                            '<td>' + (item.statusName || '-') + '</td>' +
-                            '<td>' + (item.createTime || '-') + '</td>' +
-                            '</tr>';
-                    });
-                    html += '</tbody></table>';
-                    listEl.innerHTML = html;
+                    renderUserList(userList);
+                    document.getElementById('userSearchInfo').style.display = 'none';
                 } else if (res.code === 403) {
                     listEl.innerHTML = '<div class="empty-state" style="color:var(--error);">无权限访问</div>';
                 } else {
                     listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
                 }
             });
+        }
+        // 渲染用户列表
+        function renderUserList(list) {
+            var listEl = document.getElementById('userList');
+            if (!list || list.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">暂无匹配用户</div>';
+                return;
+            }
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>手机号</th><th>角色</th><th>状态</th><th>注册时间</th>' +
+                '</tr></thead><tbody>';
+            list.forEach(function(item) {
+                html += '<tr>' +
+                    '<td>' + item.id + '</td>' +
+                    '<td>' + (item.username || '-') + '</td>' +
+                    '<td>' + (item.nickname || '-') + '</td>' +
+                    '<td>' + (item.email || '-') + '</td>' +
+                    '<td>' + (item.phone || '-') + '</td>' +
+                    '<td><span class="role-badge ' + (item.role === 1 ? 'role-admin' : 'role-user') + '">' + (item.roleName || '普通用户') + '</span></td>' +
+                    '<td>' + (item.statusName || '-') + '</td>' +
+                    '<td>' + (item.createTime || '-') + '</td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            listEl.innerHTML = html;
+        }
+        // 用户快速搜索
+        function quickSearchUsers() {
+            var keyword = document.getElementById('userQuickSearch').value.trim().toLowerCase();
+            if (!keyword) {
+                renderUserList(userList);
+                document.getElementById('userSearchInfo').style.display = 'none';
+                return;
+            }
+            var filtered = userList.filter(function (item) {
+                return (item.username || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.nickname || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.email || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.phone || '').toLowerCase().indexOf(keyword) !== -1;
+            });
+            renderUserList(filtered);
+            var info = document.getElementById('userSearchInfo');
+            info.style.display = 'block';
+            info.textContent = '搜索 "' + keyword + '"，共找到 ' + filtered.length + ' 条（共 ' + userList.length + ' 条）';
+        }
+        // 切换用户高级查询面板
+        function toggleUserAdvanced() {
+            var panel = document.getElementById('userAdvancedPanel');
+            var btn = document.getElementById('userAdvBtn');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                btn.textContent = '收起高级查询';
+            } else {
+                panel.style.display = 'none';
+                btn.textContent = '高级查询';
+            }
+        }
+        // 用户高级查询（多条件组合，AND关系）
+        function advancedSearchUsers() {
+            var username = document.getElementById('advUserUsername').value.trim().toLowerCase();
+            var nickname = document.getElementById('advUserNickname').value.trim().toLowerCase();
+            var email = document.getElementById('advUserEmail').value.trim().toLowerCase();
+            var phone = document.getElementById('advUserPhone').value.trim().toLowerCase();
+            var role = document.getElementById('advUserRole').value;
+            var status = document.getElementById('advUserStatus').value;
+            var filtered = userList.filter(function (item) {
+                if (username && (item.username || '').toLowerCase().indexOf(username) === -1) return false;
+                if (nickname && (item.nickname || '').toLowerCase().indexOf(nickname) === -1) return false;
+                if (email && (item.email || '').toLowerCase().indexOf(email) === -1) return false;
+                if (phone && (item.phone || '').toLowerCase().indexOf(phone) === -1) return false;
+                if (role !== '' && String(item.role) !== role) return false;
+                if (status !== '' && String(item.status) !== status) return false;
+                return true;
+            });
+            renderUserList(filtered);
+            var info = document.getElementById('userSearchInfo');
+            info.style.display = 'block';
+            info.textContent = '高级查询完成，共找到 ' + filtered.length + ' 条（共 ' + userList.length + ' 条）';
+        }
+        // 重置用户搜索
+        function resetUserSearch() {
+            document.getElementById('userQuickSearch').value = '';
+            document.getElementById('advUserUsername').value = '';
+            document.getElementById('advUserNickname').value = '';
+            document.getElementById('advUserEmail').value = '';
+            document.getElementById('advUserPhone').value = '';
+            document.getElementById('advUserRole').value = '';
+            document.getElementById('advUserStatus').value = '';
+            renderUserList(userList);
+            document.getElementById('userSearchInfo').style.display = 'none';
         }
         // 加载商品列表
         function loadBooks() {
@@ -474,27 +594,8 @@
                         listEl.innerHTML = '<div class="empty-state">暂无数据，点击右上角"新增商品"添加</div>';
                         return;
                     }
-                    var html = '<table class="data-table"><thead><tr>' +
-                        '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
-                        '<th>微信备注</th><th>商品ID</th><th>商品标题</th><th>操作</th>' +
-                        '</tr></thead><tbody>';
-                    res.data.forEach(function (item) {
-                        html += '<tr>' +
-                            '<td>' + item.id + '</td>' +
-                            '<td>' + (item.name || '-') + '</td>' +
-                            '<td>' + (item.type || '-') + '</td>' +
-                            '<td>' + (item.description || '-') + '</td>' +
-                            '<td>' + (item.aa || '-') + '</td>' +
-                            '<td>' + (item.bd || '-') + '</td>' +
-                            '<td title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
-                            '<td style="white-space:nowrap;">' +
-                                '<button class="btn-primary btn-sm btn-edit" onclick="openEditModal(' + item.id + ')">编辑</button>' +
-                                '<button class="btn-primary btn-sm btn-delete" onclick="openDeleteModal(' + item.id + ')">删除</button>' +
-                            '</td>' +
-                            '</tr>';
-                    });
-                    html += '</tbody></table>';
-                    listEl.innerHTML = html;
+                    renderBooks(bookList);
+                    document.getElementById('bookSearchInfo').style.display = 'none';
                 } else if (res.httpStatus === 401) {
                     listEl.innerHTML = '<div class="empty-state" style="color:var(--error);">Token已过期，请重新登录</div>';
                     AuthUtils.showAlert('error', 'Token已过期，请重新登录');
@@ -503,6 +604,102 @@
                     listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
                 }
             });
+        }
+        // 渲染商品列表
+        function renderBooks(list) {
+            var listEl = document.getElementById('bookList');
+            if (!list || list.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">暂无匹配数据</div>';
+                return;
+            }
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
+                '<th>微信备注</th><th>商品ID</th><th>商品标题</th><th>操作</th>' +
+                '</tr></thead><tbody>';
+            list.forEach(function (item) {
+                html += '<tr>' +
+                    '<td>' + item.id + '</td>' +
+                    '<td>' + (item.name || '-') + '</td>' +
+                    '<td>' + (item.type || '-') + '</td>' +
+                    '<td>' + (item.description || '-') + '</td>' +
+                    '<td>' + (item.aa || '-') + '</td>' +
+                    '<td>' + (item.bd || '-') + '</td>' +
+                    '<td title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
+                    '<td style="white-space:nowrap;">' +
+                        '<button class="btn-primary btn-sm btn-edit" onclick="openEditModal(' + item.id + ')">编辑</button>' +
+                        '<button class="btn-primary btn-sm btn-delete" onclick="openDeleteModal(' + item.id + ')">删除</button>' +
+                    '</td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            listEl.innerHTML = html;
+        }
+        // 商品快速搜索
+        function quickSearchBooks() {
+            var keyword = document.getElementById('bookQuickSearch').value.trim().toLowerCase();
+            if (!keyword) {
+                renderBooks(bookList);
+                document.getElementById('bookSearchInfo').style.display = 'none';
+                return;
+            }
+            var filtered = bookList.filter(function (item) {
+                return (item.name || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.type || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.description || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.aa || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.bd || '').toLowerCase().indexOf(keyword) !== -1 ||
+                       (item.ax || '').toLowerCase().indexOf(keyword) !== -1;
+            });
+            renderBooks(filtered);
+            var info = document.getElementById('bookSearchInfo');
+            info.style.display = 'block';
+            info.textContent = '搜索 "' + keyword + '"，共找到 ' + filtered.length + ' 条（共 ' + bookList.length + ' 条）';
+        }
+        // 切换商品高级查询面板
+        function toggleBookAdvanced() {
+            var panel = document.getElementById('bookAdvancedPanel');
+            var btn = document.getElementById('bookAdvBtn');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                btn.textContent = '收起高级查询';
+            } else {
+                panel.style.display = 'none';
+                btn.textContent = '高级查询';
+            }
+        }
+        // 商品高级查询（多条件组合，AND关系）
+        function advancedSearchBooks() {
+            var name = document.getElementById('advBookName').value.trim().toLowerCase();
+            var type = document.getElementById('advBookType').value.trim().toLowerCase();
+            var desc = document.getElementById('advBookDesc').value.trim().toLowerCase();
+            var aa = document.getElementById('advBookAa').value.trim().toLowerCase();
+            var bd = document.getElementById('advBookBd').value.trim().toLowerCase();
+            var ax = document.getElementById('advBookAx').value.trim().toLowerCase();
+            var filtered = bookList.filter(function (item) {
+                if (name && (item.name || '').toLowerCase().indexOf(name) === -1) return false;
+                if (type && (item.type || '').toLowerCase().indexOf(type) === -1) return false;
+                if (desc && (item.description || '').toLowerCase().indexOf(desc) === -1) return false;
+                if (aa && (item.aa || '').toLowerCase().indexOf(aa) === -1) return false;
+                if (bd && (item.bd || '').toLowerCase().indexOf(bd) === -1) return false;
+                if (ax && (item.ax || '').toLowerCase().indexOf(ax) === -1) return false;
+                return true;
+            });
+            renderBooks(filtered);
+            var info = document.getElementById('bookSearchInfo');
+            info.style.display = 'block';
+            info.textContent = '高级查询完成，共找到 ' + filtered.length + ' 条（共 ' + bookList.length + ' 条）';
+        }
+        // 重置商品搜索
+        function resetBookSearch() {
+            document.getElementById('bookQuickSearch').value = '';
+            document.getElementById('advBookName').value = '';
+            document.getElementById('advBookType').value = '';
+            document.getElementById('advBookDesc').value = '';
+            document.getElementById('advBookAa').value = '';
+            document.getElementById('advBookBd').value = '';
+            document.getElementById('advBookAx').value = '';
+            renderBooks(bookList);
+            document.getElementById('bookSearchInfo').style.display = 'none';
         }
         // 打开新增弹窗
         function openAddModal() {
