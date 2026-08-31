@@ -7,6 +7,28 @@
     <title>操作日志 - Tiamo AI 数据管理</title>
     <link rel="stylesheet" href="css/auth.css">
     <style>
+        /* 亮色主题变量覆盖 */
+        body.light-theme {
+            --bg-primary: #f5f7fa;
+            --bg-card: #ffffff;
+            --bg-input: #f0f2f5;
+            --bg-input-focus: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border: #e2e8f0;
+            --border-focus: #6366f1;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --accent: #06b6d4;
+            --accent-light: #22d3ee;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+        body.light-theme .ai-bg { background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 50%, #f0fdf4 100%); }
+        body.light-theme .stat-card, body.light-theme .filter-bar, body.light-theme .data-card { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .dashboard-container { max-width: 1100px; margin: 0 auto; padding: 20px; }
         .dashboard-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -124,6 +146,7 @@
         <div class="dashboard-header">
             <h1>操作日志</h1>
             <div class="header-actions">
+                <button class="btn-secondary" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
                 <button class="btn-secondary" onclick="loadLogs()">刷新</button>
                 <button class="btn-secondary" onclick="window.location.href='dashboard.html'">返回控制台</button>
             </div>
@@ -387,6 +410,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            initTheme();
             loadStats();
             loadLogs();
             // 管理员显示管理栏
@@ -396,6 +420,23 @@
                 loadLogRetention();
             }
         });
+
+        /* ==================== 主题切换 ==================== */
+        function initTheme() {
+            var savedTheme = localStorage.getItem('tiamo_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                document.getElementById('themeToggleBtn').textContent = '☀️';
+            } else {
+                document.body.classList.remove('light-theme');
+                document.getElementById('themeToggleBtn').textContent = '🌙';
+            }
+        }
+        function toggleTheme() {
+            var isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('tiamo_theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeToggleBtn').textContent = isLight ? '☀️' : '🌙';
+        }
 
         /* ==================== 批量删除和定期清理 ==================== */
         function toggleSelectAllLogs(checkbox) {

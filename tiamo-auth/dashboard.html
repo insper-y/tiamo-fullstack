@@ -200,6 +200,7 @@
             <button class="tab-btn active" id="tabUsersBtn" onclick="switchTab('users')">用户列表</button>
             <button class="tab-btn" id="tabBooksBtn" onclick="switchTab('books')">商品数据</button>
             <button class="tab-btn" id="tabRecycleBtn" onclick="switchTab('recycle')">回收站</button>
+            <button class="tab-btn" id="tabMyApprovalBtn" onclick="switchTab('myApproval')" style="display:none;">我的申请</button>
             <button class="tab-btn" id="tabApprovalBtn" onclick="switchTab('approval')" style="display:none;">待审批 <span id="pendingBadge" style="background:#ef4444;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
         </div>
         <!-- 用户列表标签页（仅管理员可见） -->
@@ -318,6 +319,20 @@
                 </div>
                 <div class="table-wrapper">
                     <div id="approvalList">
+                        <div class="empty-state">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 我的申请标签页（普通用户可见） -->
+        <div class="tab-content" id="myApprovalTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>我的申请记录</h2>
+                    <button class="btn-primary" onclick="loadMyApprovals()">刷新</button>
+                </div>
+                <div class="table-wrapper">
+                    <div id="myApprovalList">
                         <div class="empty-state">加载中...</div>
                     </div>
                 </div>
@@ -523,10 +538,11 @@
             roleBadge.textContent = '普通用户';
             roleBadge.className = 'role-badge role-user';
             roleStat.textContent = '普通用户';
-            // 普通用户显示商品数据和回收站，隐藏用户列表和待审批
+            // 普通用户显示商品数据、回收站、我的申请，隐藏用户列表和待审批
             document.getElementById('tabsNav').style.display = 'flex';
             document.getElementById('tabUsersBtn').style.display = 'none';
             document.getElementById('tabApprovalBtn').style.display = 'none';
+            document.getElementById('tabMyApprovalBtn').style.display = 'inline-block';
             document.getElementById('tabBooksBtn').classList.add('active');
             document.getElementById('logBtn').style.display = 'none';
             document.getElementById('exportCard').style.display = 'none';
@@ -562,6 +578,8 @@
                 loadRecycleList();
             } else if (tabName === 'approval' && isAdmin) {
                 loadPendingApprovals();
+            } else if (tabName === 'myApproval') {
+                loadMyApprovals();
             }
         }
         // 加载用户列表（仅管理员）
@@ -1311,9 +1329,56 @@
                     var badge = document.getElementById('pendingBadge');
                     var btn = document.getElementById('tabApprovalBtn');
                     if (badge) badge.textContent = count;
-                    if (btn) btn.style.display = count > 0 ? 'inline-block' : 'none';
+                    if (btn) btn.style.display = 'inline-block'; // 管理员一直显示待审批标签
                 }
             }).catch(function () {});
+        }
+
+        /* ==================== 普通用户我的申请 ==================== */
+        function loadMyApprovals() {
+            Api.getMyApprovals().then(function (res) {
+                var listEl = document.getElementById('myApprovalList');
+                if (res.code === 200 && res.data) {
+                    renderMyApprovals(res.data);
+                } else {
+                    listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
+                }
+            }).catch(function () {
+                document.getElementById('myApprovalList').innerHTML = '<div class="empty-state">网络请求失败</div>';
+            });
+        }
+
+        function renderMyApprovals(list) {
+            var listEl = document.getElementById('myApprovalList');
+            if (!list || list.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">暂无申请记录</div>';
+                return;
+            }
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th>ID</th><th>商品ID</th><th>商品名称</th><th>申请类型</th>' +
+                '<th>申请时间</th><th>状态</th><th>审批人</th><th>审批时间</th><th>拒绝原因</th>' +
+                '</tr></thead><tbody>';
+            list.forEach(function (item) {
+                var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
+                var typeColor = item.approvalType === 'RESTORE' ? '#10b981' : '#ef4444';
+                var statusText, statusColor;
+                if (item.status === 'PENDING') { statusText = '待审批'; statusColor = '#f59e0b'; }
+                else if (item.status === 'APPROVED') { statusText = '已通过'; statusColor = '#10b981'; }
+                else { statusText = '已拒绝'; statusColor = '#ef4444'; }
+                html += '<tr>' +
+                    '<td>' + item.id + '</td>' +
+                    '<td>' + item.bookId + '</td>' +
+                    '<td>' + (item.bookName || '-') + '</td>' +
+                    '<td><span style="color:' + typeColor + ';font-weight:600;">' + typeName + '</span></td>' +
+                    '<td style="white-space:nowrap;font-size:12px;">' + (item.applyTime || '-') + '</td>' +
+                    '<td><span style="color:' + statusColor + ';font-weight:600;">' + statusText + '</span></td>' +
+                    '<td>' + (item.approverName || '-') + '</td>' +
+                    '<td style="white-space:nowrap;font-size:12px;">' + (item.approveTime || '-') + '</td>' +
+                    '<td style="max-width:200px;word-break:break-all;color:' + (item.status === 'REJECTED' ? '#ef4444' : 'var(--text-muted)') + ';">' + (item.remark || '-') + '</td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            listEl.innerHTML = html;
         }
 
         /* ==================== 主题切换 ==================== */
