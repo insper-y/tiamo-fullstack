@@ -128,15 +128,13 @@ public class BooksController {
     }
 
     /**
-     * 查询回收站（仅管理员）
+     * 查询回收站（所有登录用户可查看，普通用户需提交申请才能恢复/删除）
      */
     @GetMapping("/recycle")
     @OperationLog(module = "商品管理", description = "查看回收站", operationType = "QUERY")
     public Result<List<Books>> getRecycleList(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        if (!isAdmin(authHeader)) {
-            return new Result<>(403, null, "无权限访问，仅管理员可操作");
-        }
+        // 所有登录用户都可查看回收站
         List<Books> list = booksService.listDeleted();
         return new Result<>(Code.GET_OK, list, "查询成功");
     }

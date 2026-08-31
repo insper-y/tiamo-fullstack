@@ -5,12 +5,19 @@ import com.tiamo.dto.LoginDTO;
 import com.tiamo.dto.LoginResponse;
 import com.tiamo.dto.RegisterDTO;
 import com.tiamo.dto.ResetPasswordDTO;
+import com.tiamo.entity.SysOperationLog;
 import com.tiamo.entity.SysUser;
 import com.tiamo.security.CaptchaService;
 import com.tiamo.security.JwtUtil;
+import com.tiamo.service.SysOperationLogService;
 import com.tiamo.service.impl.SysUserServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -27,6 +34,8 @@ public class AuthController {
     private JwtUtil jwtUtil;
     @Autowired
     private CaptchaService captchaService;
+    @Autowired
+    private SysOperationLogService operationLogService;
     /**
      * 用户登录
      * POST /api/auth/login
@@ -41,17 +50,21 @@ public class AuthController {
         if (loginDTO.getPassword() == null || loginDTO.getPassword().isEmpty()) {
             return new Result<>(400, null, "请输入密码");
         }
+        String username = loginDTO.getUsername().trim();
         // 查询用户
-        SysUser user = userService.getByUsername(loginDTO.getUsername().trim());
+        SysUser user = userService.getByUsername(username);
         if (user == null) {
+            recordLoginFail(username, "用户不存在", null);
             return new Result<>(401, null, "用户名或密码错误");
         }
         // 检查状态
         if (user.getStatus() != null && user.getStatus() == 0) {
+            recordLoginFail(username, "账号已被禁用", user.getId());
             return new Result<>(403, null, "账号已被禁用，请联系管理员");
         }
         // 校验密码
         if (!userService.checkPassword(loginDTO.getPassword(), user.getPassword())) {
+            recordLoginFail(username, "密码错误", user.getId());
             return new Result<>(401, null, "用户名或密码错误");
         }
         // 生成 Token
@@ -66,6 +79,36 @@ public class AuthController {
                 user.getRole() != null ? user.getRole() : 0
         );
         return new Result<>(200, response, "登录成功");
+    }
+
+    /**
+     * 记录登录失败日志
+     */
+    private void recordLoginFail(String username, String reason, Long userId) {
+        try {
+            SysOperationLog log = new SysOperationLog();
+            log.setUserId(userId);
+            log.setUsername(username);
+            log.setModule("认证管理");
+            log.setDescription("登录失败: " + reason);
+            log.setOperationType("LOGIN");
+            log.setStatus("FAIL");
+            log.setErrorMsg(reason);
+            log.setCreateTime(LocalDateTime.now());
+            // 获取请求IP
+            try {
+                ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                if (attrs != null) {
+                    HttpServletRequest request = attrs.getRequest();
+                    log.setIp(request.getRemoteAddr());
+                    log.setUrl(request.getRequestURI());
+                    log.setMethod("AuthController.login");
+                }
+            } catch (Exception ignored) {}
+            operationLogService.save(log);
+        } catch (Exception e) {
+            System.out.println("[登录日志] 记录失败: " + e.getMessage());
+        }
     }
     /**
      * 用户注册
