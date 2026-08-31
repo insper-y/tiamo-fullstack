@@ -33,6 +33,20 @@ spring:
             enable: true
             required: true
     default-encoding: UTF-8
+  # Redis 缓存配置
+  data:
+    redis:
+      host: ${REDIS_HOST:tiamo-redis-redis.ns-j6uaqkx1.svc}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 3000ms
 
 # MyBatis-Plus 配置
 mybatis-plus:

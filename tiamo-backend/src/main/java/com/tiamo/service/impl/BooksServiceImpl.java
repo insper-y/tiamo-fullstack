@@ -1,12 +1,14 @@
 package com.tiamo.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tiamo.entity.Books;
 import com.tiamo.mapper.BooksMapper;
 import com.tiamo.service.BooksService;
+import com.tiamo.service.CacheService;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,9 +16,15 @@ import java.util.List;
 
 /**
  * 分销商品数据 Service 实现
+ * 加入Redis缓存，查询优先走缓存，数据变更时清除缓存
  */
 @Service
 public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements BooksService {
+
+    private static final Logger log = LoggerFactory.getLogger(BooksServiceImpl.class);
+
+    @Autowired
+    private CacheService cacheService;
 
     /**
      * 启动时确保软删除相关列存在
@@ -25,7 +33,7 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
     public void ensureColumns() {
         try {
             baseMapper.addDeletedColumn();
-            System.out.println("[Books] 已添加 deleted 列");
+            log.info("[Books] 已添加 deleted 列");
         } catch (Exception e) {
             // 列已存在，忽略
         }
@@ -43,8 +51,19 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
 
     @Override
     public List<Books> listAll() {
-        // 优化：使用原生SQL只查询需要的字段，走覆盖索引 idx_deleted_id
-        return baseMapper.selectAllOptimized();
+        // 先查缓存
+        String cacheKey = CacheServiceImpl.BOOKS_KEY;
+        List<Books> cachedList = cacheService.getList(cacheKey, Books.class);
+        if (cachedList != null) {
+            log.debug("从缓存获取商品列表，数量: {}", cachedList.size());
+            return cachedList;
+        }
+        // 缓存未命中，查数据库
+        log.debug("缓存未命中，从数据库查询商品列表");
+        List<Books> list = baseMapper.selectAllOptimized();
+        // 写入缓存（5分钟过期）
+        cacheService.set(cacheKey, list);
+        return list;
     }
 
     @Override
@@ -57,18 +76,34 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
         if (books.getDeleted() == null) {
             books.setDeleted(0);
         }
-        return this.save(books);
+        boolean result = this.save(books);
+        if (result) {
+            cacheService.clearBooksCache();
+            log.info("新增商品成功，已清除商品缓存");
+        }
+        return result;
     }
 
     @Override
     public boolean update(Books books) {
-        return this.updateById(books);
+        boolean result = this.updateById(books);
+        if (result) {
+            cacheService.clearBooksCache();
+            log.info("修改商品成功，已清除商品缓存");
+        }
+        return result;
     }
 
     @Override
     public boolean softDelete(Integer id, String operator) {
         // 用原生SQL绕过MyBatis-Plus逻辑删除插件拦截
-        return baseMapper.softDeleteById(id, LocalDateTime.now(), operator != null ? operator : "unknown") > 0;
+        boolean result = baseMapper.softDeleteById(id, LocalDateTime.now(), operator != null ? operator : "unknown") > 0;
+        if (result) {
+            cacheService.clearBooksCache();
+            cacheService.clearRecycleCache();
+            log.info("软删除商品成功，已清除商品和回收站缓存");
+        }
+        return result;
     }
 
     @Override
@@ -77,19 +112,43 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
             return false;
         }
         // 用原生SQL绕过MyBatis-Plus逻辑删除插件拦截
-        return baseMapper.batchSoftDeleteByIds(ids, LocalDateTime.now(), operator != null ? operator : "unknown") > 0;
+        boolean result = baseMapper.batchSoftDeleteByIds(ids, LocalDateTime.now(), operator != null ? operator : "unknown") > 0;
+        if (result) {
+            cacheService.clearBooksCache();
+            cacheService.clearRecycleCache();
+            log.info("批量软删除商品成功，已清除商品和回收站缓存");
+        }
+        return result;
     }
 
     @Override
     public List<Books> listDeleted() {
+        // 先查缓存
+        String cacheKey = CacheServiceImpl.RECYCLE_KEY;
+        List<Books> cachedList = cacheService.getList(cacheKey, Books.class);
+        if (cachedList != null) {
+            log.debug("从缓存获取回收站列表，数量: {}", cachedList.size());
+            return cachedList;
+        }
+        // 缓存未命中，查数据库
+        log.debug("缓存未命中，从数据库查询回收站列表");
         // 用原生SQL绕过MyBatis-Plus逻辑删除过滤
-        return baseMapper.selectDeletedList();
+        List<Books> list = baseMapper.selectDeletedList();
+        // 写入缓存（5分钟过期）
+        cacheService.set(cacheKey, list);
+        return list;
     }
 
     @Override
     public boolean restore(Integer id) {
         // 用原生SQL绕过MyBatis-Plus逻辑删除过滤
-        return baseMapper.restoreById(id) > 0;
+        boolean result = baseMapper.restoreById(id) > 0;
+        if (result) {
+            cacheService.clearBooksCache();
+            cacheService.clearRecycleCache();
+            log.info("恢复商品成功，已清除商品和回收站缓存");
+        }
+        return result;
     }
 
     @Override
@@ -98,11 +157,23 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
             return false;
         }
         // 用原生SQL绕过MyBatis-Plus逻辑删除过滤
-        return baseMapper.batchRestoreByIds(ids) > 0;
+        boolean result = baseMapper.batchRestoreByIds(ids) > 0;
+        if (result) {
+            cacheService.clearBooksCache();
+            cacheService.clearRecycleCache();
+            log.info("批量恢复商品成功，已清除商品和回收站缓存");
+        }
+        return result;
     }
 
     @Override
     public boolean hardDelete(Integer id) {
-        return this.removeById(id);
+        boolean result = this.removeById(id);
+        if (result) {
+            cacheService.clearBooksCache();
+            cacheService.clearRecycleCache();
+            log.info("彻底删除商品成功，已清除商品和回收站缓存");
+        }
+        return result;
     }
 }
