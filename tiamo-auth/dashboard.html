@@ -7,6 +7,29 @@
     <title>控制台 - Tiamo AI 数据管理</title>
     <link rel="stylesheet" href="css/auth.css">
     <style>
+        /* 亮色主题变量覆盖 */
+        body.light-theme {
+            --bg-primary: #f5f7fa;
+            --bg-card: #ffffff;
+            --bg-input: #f0f2f5;
+            --bg-input-focus: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border: #e2e8f0;
+            --border-focus: #6366f1;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --accent: #06b6d4;
+            --accent-light: #22d3ee;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+        body.light-theme .ai-bg { background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 50%, #f0fdf4 100%); }
+        body.light-theme .data-card { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        body.light-theme .modal { box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
         .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .dashboard-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -148,6 +171,7 @@
                 </div>
                 <span class="role-badge" id="roleBadge">普通用户</span>
                 <button class="logout-btn" id="logBtn" style="color:var(--primary-light);display:none;">操作日志</button>
+                <button class="logout-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
                 <button class="logout-btn" onclick="logout()">退出登录</button>
             </div>
         </div>
@@ -173,9 +197,10 @@
         </div>
         <!-- 标签页导航（仅管理员可见） -->
         <div class="tabs-nav" id="tabsNav" style="display:none;">
-            <button class="tab-btn active" onclick="switchTab('users')">用户列表</button>
-            <button class="tab-btn" onclick="switchTab('books')">商品数据</button>
-            <button class="tab-btn" onclick="switchTab('recycle')">回收站</button>
+            <button class="tab-btn active" id="tabUsersBtn" onclick="switchTab('users')">用户列表</button>
+            <button class="tab-btn" id="tabBooksBtn" onclick="switchTab('books')">商品数据</button>
+            <button class="tab-btn" id="tabRecycleBtn" onclick="switchTab('recycle')">回收站</button>
+            <button class="tab-btn" id="tabApprovalBtn" onclick="switchTab('approval')" style="display:none;">待审批 <span id="pendingBadge" style="background:#ef4444;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
         </div>
         <!-- 用户列表标签页（仅管理员可见） -->
         <div class="tab-content" id="usersTab">
@@ -258,6 +283,24 @@
                         <button class="btn-primary" onclick="loadRecycleList()">刷新</button>
                     </div>
                 </div>
+                <!-- 回收站高级查询 -->
+                <div id="recycleAdvancedPanel" style="display:none;margin-bottom:16px;padding:16px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border);">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">分销软件</label><input type="text" id="advRecycleName" class="form-input" placeholder="分销软件"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">微信账号</label><input type="text" id="advRecycleType" class="form-input" placeholder="微信账号"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">商品标题</label><input type="text" id="advRecycleTitle" class="form-input" placeholder="商品标题"></div>
+                        <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">删除人</label><input type="text" id="advRecycleDeletedBy" class="form-input" placeholder="删除人"></div>
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button class="btn-primary btn-sm" onclick="advancedSearchRecycle()">查询</button>
+                        <button class="btn-primary btn-sm" style="background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);" onclick="resetRecycleSearch()">重置</button>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="recycleQuickSearch" class="form-input" placeholder="快速搜索：分销软件/微信账号/商品标题" style="max-width:300px;" onkeyup="if(event.key==='Enter')quickSearchRecycle()">
+                    <button class="btn-primary btn-sm" onclick="quickSearchRecycle()">搜索</button>
+                    <button class="btn-primary btn-sm" id="recycleAdvBtn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="toggleRecycleAdvanced()">高级查询</button>
+                </div>
                 <div id="recycleSearchInfo" style="display:none;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"></div>
                 <div class="table-wrapper">
                     <div id="recycleList">
@@ -266,10 +309,19 @@
                 </div>
             </div>
         </div>
-        <!-- Token 信息 -->
-        <div class="data-card">
-            <h2>当前 Token 信息</h2>
-            <div class="token-info" id="tokenInfo">加载中...</div>
+        <!-- 待审批标签页（仅管理员可见） -->
+        <div class="tab-content" id="approvalTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>待审批申请</h2>
+                    <button class="btn-primary" onclick="loadPendingApprovals()">刷新</button>
+                </div>
+                <div class="table-wrapper">
+                    <div id="approvalList">
+                        <div class="empty-state">加载中...</div>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- 数据导出（仅管理员可见） -->
         <div class="data-card" id="exportCard">
@@ -344,6 +396,11 @@
             <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
                 提示：修改发送时间后，系统将在每天指定时间自动发送操作日志日报邮件。
             </p>
+        </div>
+        <!-- Token 信息（移到底部） -->
+        <div class="data-card" style="margin-top:20px;">
+            <h2>当前 Token 信息</h2>
+            <div class="token-info" id="tokenInfo">加载中...</div>
         </div>
         <div class="copyright" style="margin-top:24px;">
             &copy; 2026 Tiamo AI. All rights reserved.
@@ -466,14 +523,24 @@
             roleBadge.textContent = '普通用户';
             roleBadge.className = 'role-badge role-user';
             roleStat.textContent = '普通用户';
-            // 普通用户只显示商品数据，隐藏数据导出和邮件配置
-            document.getElementById('tabsNav').style.display = 'none';
+            // 普通用户显示商品数据和回收站，隐藏用户列表和待审批
+            document.getElementById('tabsNav').style.display = 'flex';
+            document.getElementById('tabUsersBtn').style.display = 'none';
+            document.getElementById('tabApprovalBtn').style.display = 'none';
+            document.getElementById('tabBooksBtn').classList.add('active');
             document.getElementById('logBtn').style.display = 'none';
             document.getElementById('exportCard').style.display = 'none';
             switchTab('books');
         }
         // 加载邮件配置（仅管理员可见）
         loadEmailConfig();
+        // 加载待审批数量（管理员）
+        if (isAdmin) {
+            updatePendingBadge();
+            setInterval(updatePendingBadge, 30000); // 每30秒刷新一次
+        }
+        // 主题切换初始化
+        initTheme();
         // 显示 Token
         var token = Auth.getToken();
         document.getElementById('tokenInfo').innerHTML =
@@ -491,8 +558,10 @@
                 loadUserList();
             } else if (tabName === 'books') {
                 loadBooks();
-            } else if (tabName === 'recycle' && isAdmin) {
+            } else if (tabName === 'recycle') {
                 loadRecycleList();
+            } else if (tabName === 'approval' && isAdmin) {
+                loadPendingApprovals();
             }
         }
         // 加载用户列表（仅管理员）
@@ -933,7 +1002,6 @@
 
         // 加载回收站列表
         function loadRecycleList() {
-            if (!isAdmin) return;
             Api.getRecycleBooks().then(function (res) {
                 var listEl = document.getElementById('recycleList');
                 if (res.code === 20041 && res.data) {
@@ -958,29 +1026,98 @@
                 listEl.innerHTML = '<div class="empty-state">回收站为空</div>';
                 return;
             }
-            var html = '<table class="data-table"><thead><tr>' +
-                '<th style="width:40px;"><input type="checkbox" id="selectAllRecycle" onchange="toggleSelectAllRecycle(this)"></th>' +
-                '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
+            var html = '<table class="data-table"><thead><tr>';
+            if (isAdmin) {
+                html += '<th style="width:40px;"><input type="checkbox" id="selectAllRecycle" onchange="toggleSelectAllRecycle(this)"></th>';
+            }
+            html += '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
                 '<th>商品标题</th><th>删除时间</th><th>删除人</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             list.forEach(function (item) {
-                html += '<tr>' +
-                    '<td><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>' +
-                    '<td>' + item.id + '</td>' +
+                html += '<tr>';
+                if (isAdmin) {
+                    html += '<td><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>';
+                }
+                html += '<td>' + item.id + '</td>' +
                     '<td>' + (item.name || '-') + '</td>' +
                     '<td>' + (item.type || '-') + '</td>' +
                     '<td>' + (item.description || '-') + '</td>' +
                     '<td title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
                     '<td>' + (item.deletedTime || '-') + '</td>' +
                     '<td>' + (item.deletedBy || '-') + '</td>' +
-                    '<td style="white-space:nowrap;">' +
-                        '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="restoreBook(' + item.id + ')">恢复</button>' +
-                        '<button class="btn-primary btn-sm btn-delete" onclick="hardDeleteBook(' + item.id + ')">彻底删除</button>' +
-                    '</td>' +
-                    '</tr>';
+                    '<td style="white-space:nowrap;">';
+                if (isAdmin) {
+                    html += '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="restoreBook(' + item.id + ')">恢复</button>' +
+                        '<button class="btn-primary btn-sm btn-delete" onclick="hardDeleteBook(' + item.id + ')">彻底删除</button>';
+                } else {
+                    html += '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="submitApproval(' + item.id + ', \'RESTORE\')">申请恢复</button>' +
+                        '<button class="btn-primary btn-sm btn-delete" onclick="submitApproval(' + item.id + ', \'DELETE\')">申请彻底删除</button>';
+                }
+                html += '</td></tr>';
             });
             html += '</tbody></table>';
             listEl.innerHTML = html;
+            // 普通用户隐藏批量恢复按钮
+            if (!isAdmin) {
+                var batchBtn = document.getElementById('batchRestoreBtn');
+                if (batchBtn) batchBtn.style.display = 'none';
+            }
+        }
+
+        // 回收站快速搜索
+        function quickSearchRecycle() {
+            var keyword = document.getElementById('recycleQuickSearch').value.toLowerCase().trim();
+            if (!keyword) {
+                renderRecycleList(recycleList);
+                document.getElementById('recycleSearchInfo').style.display = 'none';
+                return;
+            }
+            var filtered = recycleList.filter(function(item) {
+                return (item.name && item.name.toLowerCase().indexOf(keyword) >= 0) ||
+                    (item.type && item.type.toLowerCase().indexOf(keyword) >= 0) ||
+                    (item.ax && item.ax.toLowerCase().indexOf(keyword) >= 0) ||
+                    (item.deletedBy && item.deletedBy.toLowerCase().indexOf(keyword) >= 0);
+            });
+            renderRecycleList(filtered);
+            var info = document.getElementById('recycleSearchInfo');
+            info.style.display = 'block';
+            info.textContent = '搜索"' + keyword + '"，共找到' + filtered.length + '条记录';
+        }
+
+        // 切换回收站高级查询面板
+        function toggleRecycleAdvanced() {
+            var panel = document.getElementById('recycleAdvancedPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 回收站高级查询
+        function advancedSearchRecycle() {
+            var name = document.getElementById('advRecycleName').value.toLowerCase().trim();
+            var type = document.getElementById('advRecycleType').value.toLowerCase().trim();
+            var title = document.getElementById('advRecycleTitle').value.toLowerCase().trim();
+            var deletedBy = document.getElementById('advRecycleDeletedBy').value.toLowerCase().trim();
+            var filtered = recycleList.filter(function(item) {
+                if (name && (!item.name || item.name.toLowerCase().indexOf(name) < 0)) return false;
+                if (type && (!item.type || item.type.toLowerCase().indexOf(type) < 0)) return false;
+                if (title && (!item.ax || item.ax.toLowerCase().indexOf(title) < 0)) return false;
+                if (deletedBy && (!item.deletedBy || item.deletedBy.toLowerCase().indexOf(deletedBy) < 0)) return false;
+                return true;
+            });
+            renderRecycleList(filtered);
+            var info = document.getElementById('recycleSearchInfo');
+            info.style.display = 'block';
+            info.textContent = '高级查询完成，共找到' + filtered.length + '条记录';
+        }
+
+        // 重置回收站搜索
+        function resetRecycleSearch() {
+            document.getElementById('recycleQuickSearch').value = '';
+            document.getElementById('advRecycleName').value = '';
+            document.getElementById('advRecycleType').value = '';
+            document.getElementById('advRecycleTitle').value = '';
+            document.getElementById('advRecycleDeletedBy').value = '';
+            document.getElementById('recycleSearchInfo').style.display = 'none';
+            renderRecycleList(recycleList);
         }
 
         // 全选/取消全选回收站
@@ -1064,6 +1201,136 @@
             }).catch(function (err) {
                 AuthUtils.showAlert('error', '网络请求失败');
             });
+        }
+
+        /* ==================== 回收站审批 ==================== */
+        // 普通用户提交审批申请
+        function submitApproval(bookId, approvalType) {
+            var typeName = approvalType === 'RESTORE' ? '恢复' : '彻底删除';
+            if (!confirm('确定要申请' + typeName + '这条商品数据吗？申请后需管理员审批通过才能执行。')) {
+                return;
+            }
+            Api.submitRecycleApproval(bookId, approvalType).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', '申请已提交，等待管理员审批');
+                    loadRecycleList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '提交失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 管理员加载待审批列表
+        function loadPendingApprovals() {
+            if (!isAdmin) return;
+            Api.getPendingApprovals().then(function (res) {
+                var listEl = document.getElementById('approvalList');
+                if (res.code === 200 && res.data) {
+                    renderApprovalList(res.data);
+                } else {
+                    listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
+                }
+            }).catch(function () {
+                document.getElementById('approvalList').innerHTML = '<div class="empty-state">网络请求失败</div>';
+            });
+        }
+
+        // 渲染待审批列表
+        function renderApprovalList(list) {
+            var listEl = document.getElementById('approvalList');
+            if (!list || list.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">暂无待审批申请</div>';
+                return;
+            }
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th>ID</th><th>商品ID</th><th>商品名称</th><th>申请类型</th>' +
+                '<th>申请人</th><th>申请时间</th><th>操作</th>' +
+                '</tr></thead><tbody>';
+            list.forEach(function (item) {
+                var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
+                var typeColor = item.approvalType === 'RESTORE' ? '#10b981' : '#ef4444';
+                html += '<tr>' +
+                    '<td>' + item.id + '</td>' +
+                    '<td>' + item.bookId + '</td>' +
+                    '<td>' + (item.bookName || '-') + '</td>' +
+                    '<td><span style="color:' + typeColor + ';font-weight:600;">' + typeName + '</span></td>' +
+                    '<td>' + (item.applicantName || '-') + '</td>' +
+                    '<td>' + (item.applyTime || '-') + '</td>' +
+                    '<td style="white-space:nowrap;">' +
+                        '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="approveApproval(' + item.id + ')">通过</button>' +
+                        '<button class="btn-primary btn-sm btn-delete" onclick="rejectApproval(' + item.id + ')">拒绝</button>' +
+                    '</td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            listEl.innerHTML = html;
+        }
+
+        // 审批通过
+        function approveApproval(id) {
+            if (!confirm('确定要通过这个申请吗？通过后将立即执行对应操作。')) {
+                return;
+            }
+            Api.approveApproval(id, '').then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', '审批通过，操作已执行');
+                    loadPendingApprovals();
+                    updatePendingBadge();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '操作失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 审批拒绝
+        function rejectApproval(id) {
+            var remark = prompt('请输入拒绝原因（可选）：');
+            Api.rejectApproval(id, remark || '').then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', '已拒绝申请');
+                    loadPendingApprovals();
+                    updatePendingBadge();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '操作失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 更新待审批数量角标
+        function updatePendingBadge() {
+            if (!isAdmin) return;
+            Api.getPendingApprovalCount().then(function (res) {
+                if (res.code === 200 && res.data) {
+                    var count = res.data.count || 0;
+                    var badge = document.getElementById('pendingBadge');
+                    var btn = document.getElementById('tabApprovalBtn');
+                    if (badge) badge.textContent = count;
+                    if (btn) btn.style.display = count > 0 ? 'inline-block' : 'none';
+                }
+            }).catch(function () {});
+        }
+
+        /* ==================== 主题切换 ==================== */
+        function initTheme() {
+            var savedTheme = localStorage.getItem('tiamo_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                document.getElementById('themeToggleBtn').textContent = '☀️';
+            } else {
+                document.body.classList.remove('light-theme');
+                document.getElementById('themeToggleBtn').textContent = '🌙';
+            }
+        }
+        function toggleTheme() {
+            var isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('tiamo_theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeToggleBtn').textContent = isLight ? '☀️' : '🌙';
         }
 
         // 退出登录

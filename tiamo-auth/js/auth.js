@@ -215,6 +215,50 @@
         /** 导出操作日志到邮箱（仅管理员） */
         exportLogsToEmail: function (email) {
             return this.post('/api/export/logs/email', { email: email });
+        },
+
+        /* ---- 回收站审批接口 ---- */
+        /** 提交审批申请（恢复或彻底删除） */
+        submitRecycleApproval: function (bookId, approvalType) {
+            return this.post('/api/recycle-approval/submit', { bookId: bookId, approvalType: approvalType });
+        },
+        /** 查询待审批列表（管理员） */
+        getPendingApprovals: function () {
+            return this.get('/api/recycle-approval/pending');
+        },
+        /** 查询我的申请 */
+        getMyApprovals: function () {
+            return this.get('/api/recycle-approval/my');
+        },
+        /** 获取待审批数量（管理员） */
+        getPendingApprovalCount: function () {
+            return this.get('/api/recycle-approval/pending-count');
+        },
+        /** 审批通过（管理员） */
+        approveApproval: function (id, remark) {
+            return this.put('/api/recycle-approval/' + id + '/approve', { remark: remark });
+        },
+        /** 审批拒绝（管理员） */
+        rejectApproval: function (id, remark) {
+            return this.put('/api/recycle-approval/' + id + '/reject', { remark: remark });
+        },
+
+        /* ---- 操作日志管理接口 ---- */
+        /** 批量删除操作日志（管理员） */
+        batchDeleteLogs: function (ids) {
+            return this.post('/api/logs/batch-delete', { ids: ids });
+        },
+        /** 按条件清理操作日志（管理员） */
+        cleanLogs: function (params) {
+            return this.post('/api/logs/clean', params);
+        },
+        /** 获取日志保留天数配置（管理员） */
+        getLogRetention: function () {
+            return this.get('/api/logs/retention-days');
+        },
+        /** 设置日志保留天数配置（管理员） */
+        setLogRetention: function (params) {
+            return this.put('/api/logs/retention-days', params);
         }
     };
 

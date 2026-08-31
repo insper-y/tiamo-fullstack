@@ -195,6 +195,29 @@
                 <button class="btn-secondary" onclick="resetFilter()">重置</button>
             </div>
         </div>
+        <!-- 批量操作和清理设置（管理员可见） -->
+        <div class="filter-bar" id="logAdminBar" style="display:none;">
+            <div class="filter-item">
+                <button class="btn-primary" id="batchDeleteLogsBtn" style="background:linear-gradient(135deg,#ef4444,#dc2626);display:none;" onclick="batchDeleteLogs()">批量删除选中</button>
+            </div>
+            <div class="filter-item">
+                <label>日志保留天数</label>
+                <input type="number" id="logRetentionDays" value="30" min="1" style="width:80px;">
+            </div>
+            <div class="filter-item">
+                <label>定期清理</label>
+                <select id="logRetentionEnabled">
+                    <option value="true">开启</option>
+                    <option value="false">关闭</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <button class="btn-primary" onclick="saveLogRetention()">保存设置</button>
+            </div>
+            <div class="filter-item">
+                <button class="btn-secondary" onclick="cleanLogsByDays()">清理超过保留天数的日志</button>
+            </div>
+        </div>
 
         <!-- 日志列表 -->
         <div class="data-card">
@@ -366,7 +389,78 @@
         document.addEventListener('DOMContentLoaded', function () {
             loadStats();
             loadLogs();
+            // 管理员显示管理栏
+            var user = Auth.getUser();
+            if (user && user.role === 1) {
+                document.getElementById('logAdminBar').style.display = 'flex';
+                loadLogRetention();
+            }
         });
+
+        /* ==================== 批量删除和定期清理 ==================== */
+        function toggleSelectAllLogs(checkbox) {
+            document.querySelectorAll('.log-checkbox').forEach(function(cb) { cb.checked = checkbox.checked; });
+            updateLogBatchBtnState();
+        }
+        function getSelectedLogIds() {
+            var ids = [];
+            document.querySelectorAll('.log-checkbox:checked').forEach(function(cb) { ids.push(parseInt(cb.value)); });
+            return ids;
+        }
+        function updateLogBatchBtnState() {
+            var selected = getSelectedLogIds();
+            var btn = document.getElementById('batchDeleteLogsBtn');
+            if (btn) {
+                btn.style.display = selected.length > 0 ? 'inline-block' : 'none';
+                btn.textContent = '批量删除(' + selected.length + ')';
+            }
+        }
+        function batchDeleteLogs() {
+            var ids = getSelectedLogIds();
+            if (ids.length === 0) { alert('请先选择要删除的日志'); return; }
+            if (!confirm('确定要批量删除选中的 ' + ids.length + ' 条日志吗？此操作不可恢复！')) return;
+            Api.batchDeleteLogs(ids).then(function(res) {
+                if (res.code === 200) {
+                    alert('批量删除成功');
+                    loadLogs();
+                    loadStats();
+                } else {
+                    alert(res.msg || '删除失败');
+                }
+            }).catch(function() { alert('网络请求失败'); });
+        }
+        function loadLogRetention() {
+            Api.getLogRetention().then(function(res) {
+                if (res.code === 200 && res.data) {
+                    document.getElementById('logRetentionDays').value = res.data.days || 30;
+                    document.getElementById('logRetentionEnabled').value = res.data.enabled ? 'true' : 'false';
+                }
+            }).catch(function() {});
+        }
+        function saveLogRetention() {
+            var days = parseInt(document.getElementById('logRetentionDays').value);
+            var enabled = document.getElementById('logRetentionEnabled').value === 'true';
+            Api.setLogRetention({ days: days, enabled: enabled }).then(function(res) {
+                if (res.code === 200) {
+                    alert('日志保留策略已保存');
+                } else {
+                    alert(res.msg || '保存失败');
+                }
+            }).catch(function() { alert('网络请求失败'); });
+        }
+        function cleanLogsByDays() {
+            var days = parseInt(document.getElementById('logRetentionDays').value);
+            if (!confirm('确定要清理超过 ' + days + ' 天的所有日志吗？此操作不可恢复！')) return;
+            Api.cleanLogs({ days: days }).then(function(res) {
+                if (res.code === 200) {
+                    alert(res.msg || '清理成功');
+                    loadLogs();
+                    loadStats();
+                } else {
+                    alert(res.msg || '清理失败');
+                }
+            }).catch(function() { alert('网络请求失败'); });
+        }
     </script>
 </body>
 </html>
