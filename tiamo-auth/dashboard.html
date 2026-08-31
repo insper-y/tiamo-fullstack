@@ -174,7 +174,7 @@
                 <h3 id="modalTitle">新增商品</h3>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <form id="bookForm" onsubmit="saveBook(event)">
+            <form id="bookForm">
                 <input type="hidden" id="bookId">
                 <div class="form-grid">
                     <div class="form-group">
@@ -228,7 +228,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal()">取消</button>
-                    <button type="submit" class="btn-primary" id="saveBtn">保存</button>
+                    <button type="button" class="btn-primary" id="saveBtn" onclick="saveBook()">保存</button>
                 </div>
             </form>
         </div>
@@ -342,8 +342,7 @@
             document.getElementById('bookModal').classList.remove('active');
         }
         // 保存商品
-        function saveBook(e) {
-            e.preventDefault();
+        function saveBook() {
             var id = document.getElementById('bookId').value;
             var data = {
                 name: document.getElementById('name').value,
