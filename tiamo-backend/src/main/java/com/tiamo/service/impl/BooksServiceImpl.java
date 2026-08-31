@@ -43,11 +43,8 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
 
     @Override
     public List<Books> listAll() {
-        // 只查询未删除的数据
-        return this.list(new LambdaQueryWrapper<Books>()
-                .eq(Books::getDeleted, 0)
-                .or().isNull(Books::getDeleted)
-                .orderByDesc(Books::getId));
+        // MyBatis-Plus逻辑删除自动过滤已删除数据，只需排序
+        return this.list(new LambdaQueryWrapper<Books>().orderByDesc(Books::getId));
     }
 
     @Override
@@ -93,19 +90,14 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
 
     @Override
     public List<Books> listDeleted() {
-        return this.list(new LambdaQueryWrapper<Books>()
-                .eq(Books::getDeleted, 1)
-                .orderByDesc(Books::getDeletedTime));
+        // 用原生SQL绕过MyBatis-Plus逻辑删除过滤
+        return baseMapper.selectDeletedList();
     }
 
     @Override
     public boolean restore(Integer id) {
-        LambdaUpdateWrapper<Books> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(Books::getId, id)
-                .set(Books::getDeleted, 0)
-                .set(Books::getDeletedTime, null)
-                .set(Books::getDeletedBy, null);
-        return this.update(wrapper);
+        // 用原生SQL绕过MyBatis-Plus逻辑删除过滤
+        return baseMapper.restoreById(id) > 0;
     }
 
     @Override
@@ -113,12 +105,8 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
         if (ids == null || ids.isEmpty()) {
             return false;
         }
-        LambdaUpdateWrapper<Books> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.in(Books::getId, ids)
-                .set(Books::getDeleted, 0)
-                .set(Books::getDeletedTime, null)
-                .set(Books::getDeletedBy, null);
-        return this.update(wrapper);
+        // 用原生SQL绕过MyBatis-Plus逻辑删除过滤
+        return baseMapper.batchRestoreByIds(ids) > 0;
     }
 
     @Override

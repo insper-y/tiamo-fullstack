@@ -3,7 +3,11 @@ package com.tiamo.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.tiamo.entity.Books;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 /**
  * 分销商品数据 Mapper
@@ -22,4 +26,27 @@ public interface BooksMapper extends BaseMapper<Books> {
 
     @Update("ALTER TABLE books ADD COLUMN deleted_by VARCHAR(100) NULL COMMENT '删除操作人'")
     void addDeletedByColumn();
+
+    /**
+     * 查询已删除的数据（回收站）- 原生SQL绕过逻辑删除过滤
+     */
+    @Select("SELECT * FROM books WHERE deleted = 1 ORDER BY deleted_time DESC")
+    List<Books> selectDeletedList();
+
+    /**
+     * 恢复已删除的数据 - 原生SQL绕过逻辑删除过滤
+     */
+    @Update("UPDATE books SET deleted = 0, deleted_time = NULL, deleted_by = NULL WHERE id = #{id}")
+    int restoreById(@Param("id") Integer id);
+
+    /**
+     * 批量恢复已删除的数据 - 原生SQL绕过逻辑删除过滤
+     */
+    @Update({
+            "<script>",
+            "UPDATE books SET deleted = 0, deleted_time = NULL, deleted_by = NULL WHERE id IN",
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>",
+            "</script>"
+    })
+    int batchRestoreByIds(@Param("ids") List<Integer> ids);
 }
