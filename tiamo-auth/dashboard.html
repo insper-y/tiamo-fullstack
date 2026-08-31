@@ -7,7 +7,7 @@
     <title>控制台 - Tiamo AI 数据管理</title>
     <link rel="stylesheet" href="css/auth.css">
     <style>
-        .dashboard-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .dashboard-header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 20px 0; margin-bottom: 24px;
@@ -42,10 +42,22 @@
             background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--border);
             border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px;
         }
-        .data-card h2 { font-size: 18px; margin-bottom: 16px; color: var(--text-primary); }
+        .data-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .data-card h2 { font-size: 18px; color: var(--text-primary); margin: 0; }
+        .btn-primary {
+            padding: 10px 20px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none; border-radius: var(--radius-md); color: white; cursor: pointer;
+            font-size: 14px; font-weight: 500; transition: var(--transition); font-family: inherit;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-edit { background: linear-gradient(135deg, #0ea5e9, #0284c7); margin-right: 6px; }
+        .btn-edit:hover { box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4); }
+        .btn-delete { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .btn-delete:hover { box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
         .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .data-table th { text-align: left; padding: 12px; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .data-table td { padding: 12px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+        .data-table th { text-align: left; padding: 12px; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        .data-table td { padding: 12px; border-bottom: 1px solid var(--border); color: var(--text-primary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .data-table tr:hover { background: var(--bg-input); }
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
         .token-info {
@@ -54,10 +66,39 @@
             font-family: monospace; margin-top: 16px;
         }
         .token-info strong { color: var(--primary-light); }
+        /* 弹窗样式 */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 1000;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 18px; color: var(--text-primary); margin: 0; }
+        .modal-close {
+            background: none; border: none; color: var(--text-secondary); cursor: pointer;
+            font-size: 24px; line-height: 1; padding: 4px; transition: var(--transition);
+        }
+        .modal-close:hover { color: var(--error); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group-full { grid-column: 1 / -1; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+        .btn-cancel {
+            padding: 10px 20px; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer;
+            font-size: 14px; transition: var(--transition); font-family: inherit;
+        }
+        .btn-cancel:hover { background: var(--bg-input-focus); }
+        .table-wrapper { overflow-x: auto; }
         @media (max-width: 600px) {
             .dashboard-header { flex-direction: column; gap: 16px; text-align: center; }
             .data-table { font-size: 12px; }
             .data-table th, .data-table td { padding: 8px; }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -70,7 +111,6 @@
         <div class="orb orb-3"></div>
         <canvas id="particles"></canvas>
     </div>
-
     <div class="dashboard-container">
         <!-- 顶部导航 -->
         <div class="dashboard-header">
@@ -85,13 +125,11 @@
                 <button class="logout-btn" onclick="logout()">退出登录</button>
             </div>
         </div>
-
         <!-- 提示消息 -->
         <div class="alert" id="alert">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
             <span class="alert-text"></span>
         </div>
-
         <!-- 统计卡片 -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -107,23 +145,107 @@
                 <div class="stat-label">认证方式</div>
             </div>
         </div>
-
         <!-- 商品数据列表 -->
         <div class="data-card">
-            <h2>商品数据列表（受保护接口）</h2>
-            <div id="bookList">
-                <div class="empty-state">加载中...</div>
+            <div class="data-card-header">
+                <h2>商品数据列表（受保护接口）</h2>
+                <button class="btn-primary" onclick="openAddModal()">+ 新增商品</button>
+            </div>
+            <div class="table-wrapper">
+                <div id="bookList">
+                    <div class="empty-state">加载中...</div>
+                </div>
             </div>
         </div>
-
         <!-- Token 信息 -->
         <div class="data-card">
             <h2>当前 Token 信息</h2>
             <div class="token-info" id="tokenInfo">加载中...</div>
         </div>
-
         <div class="copyright" style="margin-top:24px;">
             &copy; 2026 Tiamo AI. All rights reserved.
+        </div>
+    </div>
+
+    <!-- 新增/编辑弹窗 -->
+    <div class="modal-overlay" id="bookModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">新增商品</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="bookForm" onsubmit="saveBook(event)">
+                <input type="hidden" id="bookId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="name">分销软件</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="name" name="name" placeholder="请输入分销软件名称">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="type">微信账号</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="type" name="type" placeholder="请输入微信账号">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="description">软件账号</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="description" name="description" placeholder="请输入软件账号">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="aa">微信备注名</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="aa" name="aa" placeholder="请输入微信备注名">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bd">商品ID</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="bd" name="bd" placeholder="请输入商品ID">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ax">商品标题</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="ax" name="ax" placeholder="请输入商品标题">
+                        </div>
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label class="form-label" for="ac">商品链接</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="ac" name="ac" placeholder="请输入商品链接">
+                        </div>
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label class="form-label" for="ab">商品主图</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input" id="ab" name="ab" placeholder="请输入商品主图URL">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn-primary" id="saveBtn">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-header">
+                <h3>确认删除</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <p style="color:var(--text-secondary);margin-bottom:20px;">确定要删除这条商品数据吗？此操作不可恢复。</p>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeDeleteModal()">取消</button>
+                <button type="button" class="btn-primary btn-delete" onclick="confirmDelete()">确认删除</button>
+            </div>
         </div>
     </div>
 
@@ -134,41 +256,46 @@
         if (!Auth.requireAuth()) {
             throw new Error('未登录');
         }
-
         var user = Auth.getUser();
-
+        var currentDeleteId = null;
         // 显示用户信息
         document.getElementById('userNickname').textContent = user ? (user.nickname || user.username) : '未知';
         document.getElementById('userEmail').textContent = user ? (user.email || '') : '';
         document.getElementById('userAvatar').textContent = user ? (user.nickname || user.username).charAt(0).toUpperCase() : '?';
         document.getElementById('userCount').textContent = user ? user.userId : '--';
-
         // 显示 Token
         var token = Auth.getToken();
         document.getElementById('tokenInfo').innerHTML =
             '<strong>Token:</strong> ' + token.substring(0, 50) + '...' +
             '<br><br><strong>长度:</strong> ' + token.length + ' 字符' +
             '<br><strong>存储位置:</strong> localStorage';
-
-        // 加载商品列表（调用受保护接口）
+        // 加载商品列表
         function loadBooks() {
             Api.getBooks().then(function (res) {
                 var listEl = document.getElementById('bookList');
                 if (res.code === 20041 && res.data) {
                     document.getElementById('bookCount').textContent = res.data.length;
                     if (res.data.length === 0) {
-                        listEl.innerHTML = '<div class="empty-state">暂无数据</div>';
+                        listEl.innerHTML = '<div class="empty-state">暂无数据，点击右上角"新增商品"添加</div>';
                         return;
                     }
                     var html = '<table class="data-table"><thead><tr>' +
-                        '<th>ID</th><th>分销软件</th><th>微信账号</th><th>商品标题</th>' +
+                        '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
+                        '<th>微信备注</th><th>商品ID</th><th>商品标题</th><th>操作</th>' +
                         '</tr></thead><tbody>';
                     res.data.forEach(function (item) {
                         html += '<tr>' +
                             '<td>' + item.id + '</td>' +
                             '<td>' + (item.name || '-') + '</td>' +
                             '<td>' + (item.type || '-') + '</td>' +
-                            '<td>' + (item.ax || '-') + '</td>' +
+                            '<td>' + (item.description || '-') + '</td>' +
+                            '<td>' + (item.aa || '-') + '</td>' +
+                            '<td>' + (item.bd || '-') + '</td>' +
+                            '<td title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
+                            '<td style="white-space:nowrap;">' +
+                                '<button class="btn-primary btn-sm btn-edit" onclick="openEditModal(' + item.id + ')">编辑</button>' +
+                                '<button class="btn-primary btn-sm btn-delete" onclick="openDeleteModal(' + item.id + ')">删除</button>' +
+                            '</td>' +
                             '</tr>';
                     });
                     html += '</tbody></table>';
@@ -182,13 +309,109 @@
                 }
             });
         }
-
+        // 打开新增弹窗
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = '新增商品';
+            document.getElementById('bookForm').reset();
+            document.getElementById('bookId').value = '';
+            document.getElementById('bookModal').classList.add('active');
+        }
+        // 打开编辑弹窗
+        function openEditModal(id) {
+            Api.getBooks().then(function (res) {
+                if (res.code === 20041 && res.data) {
+                    var item = res.data.find(function (b) { return b.id === id; });
+                    if (item) {
+                        document.getElementById('modalTitle').textContent = '编辑商品';
+                        document.getElementById('bookId').value = item.id;
+                        document.getElementById('name').value = item.name || '';
+                        document.getElementById('type').value = item.type || '';
+                        document.getElementById('description').value = item.description || '';
+                        document.getElementById('aa').value = item.aa || '';
+                        document.getElementById('bd').value = item.bd || '';
+                        document.getElementById('ac').value = item.ac || '';
+                        document.getElementById('ab').value = item.ab || '';
+                        document.getElementById('ax').value = item.ax || '';
+                        document.getElementById('bookModal').classList.add('active');
+                    }
+                }
+            });
+        }
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('bookModal').classList.remove('active');
+        }
+        // 保存商品
+        function saveBook(e) {
+            e.preventDefault();
+            var id = document.getElementById('bookId').value;
+            var data = {
+                name: document.getElementById('name').value,
+                type: document.getElementById('type').value,
+                description: document.getElementById('description').value,
+                aa: document.getElementById('aa').value,
+                bd: document.getElementById('bd').value,
+                ac: document.getElementById('ac').value,
+                ab: document.getElementById('ab').value,
+                ax: document.getElementById('ax').value
+            };
+            var saveBtn = document.getElementById('saveBtn');
+            var originalText = saveBtn.textContent;
+            AuthUtils.setButtonLoading(saveBtn, true);
+            var promise;
+            if (id) {
+                data.id = parseInt(id);
+                promise = Api.updateBook(data);
+            } else {
+                promise = Api.addBook(data);
+            }
+            promise.then(function (res) {
+                AuthUtils.setButtonLoading(saveBtn, false, originalText);
+                if (res.code === 20011 || res.code === 20031) {
+                    AuthUtils.showAlert('success', id ? '修改成功！' : '新增成功！');
+                    closeModal();
+                    loadBooks();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '保存失败，请稍后重试');
+                }
+            });
+        }
+        // 打开删除确认弹窗
+        function openDeleteModal(id) {
+            currentDeleteId = id;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        // 关闭删除弹窗
+        function closeDeleteModal() {
+            currentDeleteId = null;
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+        // 确认删除
+        function confirmDelete() {
+            if (currentDeleteId) {
+                Api.deleteBook(currentDeleteId).then(function (res) {
+                    if (res.code === 20021) {
+                        AuthUtils.showAlert('success', '删除成功！');
+                        closeDeleteModal();
+                        loadBooks();
+                    } else {
+                        AuthUtils.showAlert('error', res.msg || '删除失败，请稍后重试');
+                    }
+                });
+            }
+        }
         // 退出登录
         function logout() {
             Auth.logout();
             window.location.href = 'login.html';
         }
-
+        // 点击弹窗外部关闭
+        document.getElementById('bookModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+        document.getElementById('deleteModal').addEventListener('click', function (e) {
+            if (e.target === this) closeDeleteModal();
+        });
         // 页面加载完成后加载数据
         document.addEventListener('DOMContentLoaded', function () {
             loadBooks();
