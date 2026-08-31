@@ -3,6 +3,7 @@ package com.tiamo.scheduler;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tiamo.entity.SysOperationLog;
 import com.tiamo.service.EmailService;
+import com.tiamo.service.SysConfigService;
 import com.tiamo.service.SysOperationLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,9 @@ public class OperationLogScheduleTask {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private SysConfigService configService;
+
     @Value("${app.log-email.to:}")
     private String logEmailTo;
 
@@ -39,21 +43,36 @@ public class OperationLogScheduleTask {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
-     * 每天晚上20:00执行
-     * cron: 秒 分 时 日 月 周
+     * 每分钟检查一次，如果当前时间匹配配置的发送时间，则发送日报
+     * 发送时间从数据库配置读取，管理员可在界面修改
      */
-    @Scheduled(cron = "0 0 20 * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     public void sendDailyOperationLogReport() {
-        if (!logEmailEnabled || logEmailTo == null || logEmailTo.isEmpty()) {
-            System.out.println("[定时任务] 操作日志邮件推送未开启，跳过发送");
-            return;
-        }
-
         try {
+            // 从数据库读取配置
+            String sendTime = configService.getConfigValue("email.send.time", "20:00");
+            boolean enabled = "true".equalsIgnoreCase(configService.getConfigValue("email.send.enabled", "true"));
+            String toEmail = configService.getConfigValue("email.send.to", "");
+
+            if (!enabled) {
+                return;
+            }
+            if (toEmail == null || toEmail.isEmpty()) {
+                System.out.println("[定时任务] 收件邮箱未配置，跳过发送");
+                return;
+            }
+
+            // 检查当前时间是否匹配配置的发送时间
+            LocalDateTime now = LocalDateTime.now();
+            String currentTime = String.format("%02d:%02d", now.getHour(), now.getMinute());
+            if (!currentTime.equals(sendTime)) {
+                return;
+            }
+
             System.out.println("[定时任务] 开始发送操作日志日报...");
 
             // 计算时间范围：前天20:00 至 当天20:00
-            LocalDateTime endTime = LocalDateTime.now().withHour(20).withMinute(0).withSecond(0).withNano(0);
+            LocalDateTime endTime = now.withHour(20).withMinute(0).withSecond(0).withNano(0);
             LocalDateTime startTime = endTime.minusDays(2).withHour(20).withMinute(0).withSecond(0).withNano(0);
 
             // 查询操作日志
@@ -67,7 +86,7 @@ public class OperationLogScheduleTask {
             String htmlContent = buildHtmlReport(logs, startTime, endTime);
 
             // 发送邮件
-            emailService.sendHtmlEmail(logEmailTo, subject, htmlContent);
+            emailService.sendHtmlEmail(toEmail, subject, htmlContent);
 
             System.out.println("[定时任务] 操作日志日报发送成功，共 " + logs.size() + " 条记录");
 

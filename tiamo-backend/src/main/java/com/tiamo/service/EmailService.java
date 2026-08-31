@@ -21,4 +21,10 @@ public interface EmailService {
      * 发送 HTML 邮件
      */
     void sendHtmlEmail(String to, String subject, String htmlContent);
+
+    /**
+     * 发送带附件的邮件
+     */
+    void sendEmailWithAttachment(String to, String subject, String htmlContent,
+                                   byte[] attachment, String attachmentName);
 }

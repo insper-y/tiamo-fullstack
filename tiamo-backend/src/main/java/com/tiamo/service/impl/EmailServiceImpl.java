@@ -4,6 +4,7 @@ import com.tiamo.entity.SysOperationLog;
 import com.tiamo.service.EmailService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -70,6 +71,25 @@ public class EmailServiceImpl implements EmailService {
             mailSender.send(helper.getMimeMessage());
         } catch (Exception e) {
             throw new RuntimeException("邮件发送失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void sendEmailWithAttachment(String to, String subject, String htmlContent,
+                                          byte[] attachment, String attachmentName) {
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    mailSender.createMimeMessage(), true, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            // 添加附件
+            ByteArrayResource resource = new ByteArrayResource(attachment);
+            helper.addAttachment(attachmentName, resource);
+            mailSender.send(helper.getMimeMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("带附件邮件发送失败: " + e.getMessage(), e);
         }
     }
 

@@ -165,6 +165,28 @@
         /** 获取用户列表（仅管理员） */
         getUserList: function () {
             return this.get('/api/admin/users');
+        },
+        /* ---- 系统配置接口 ---- */
+        /** 获取邮件配置（仅管理员） */
+        getEmailConfig: function () {
+            return this.get('/api/admin/config/email');
+        },
+        /** 更新邮件配置（仅管理员） */
+        updateEmailConfig: function (config) {
+            return this.put('/api/admin/config/email', config);
+        },
+        /* ---- 导出数据到邮箱接口 ---- */
+        /** 导出用户列表到邮箱（仅管理员） */
+        exportUsersToEmail: function (email) {
+            return this.post('/api/export/users/email', { email: email });
+        },
+        /** 导出商品数据到邮箱 */
+        exportBooksToEmail: function (email) {
+            return this.post('/api/export/books/email', { email: email });
+        },
+        /** 导出操作日志到邮箱（仅管理员） */
+        exportLogsToEmail: function (email) {
+            return this.post('/api/export/logs/email', { email: email });
         }
     };
 

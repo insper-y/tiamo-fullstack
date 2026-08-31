@@ -214,7 +214,11 @@
             <div class="data-card-header">
                 <h2>数据导出（CSV格式）</h2>
             </div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="margin-bottom:16px;">
+                <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">接收邮箱</label>
+                <input type="email" id="exportEmail" class="form-input" placeholder="请输入接收邮箱" style="max-width:400px;">
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
                 <button class="btn-primary" onclick="downloadUsers()" style="background:linear-gradient(135deg,#10b981,#059669);">
                     下载用户列表
                 </button>
@@ -225,8 +229,58 @@
                     下载操作日志
                 </button>
             </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn-primary" onclick="sendUsersToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                    发送用户列表到邮箱
+                </button>
+                <button class="btn-primary" onclick="sendBooksToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                    发送商品数据到邮箱
+                </button>
+                <button class="btn-primary" onclick="sendLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                    发送操作日志到邮箱
+                </button>
+            </div>
             <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
-                提示：用户列表和操作日志仅管理员可下载；CSV文件可用Excel打开，UTF-8编码。
+                提示：用户列表和操作日志仅管理员可操作；CSV文件可用Excel打开，UTF-8编码。
+            </p>
+        </div>
+
+        <!-- 邮件配置（仅管理员可见） -->
+        <div class="data-card" id="emailConfigCard" style="display:none;">
+            <div class="data-card-header">
+                <h2>邮件通知配置</h2>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div>
+                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">日报发送时间（HH:mm）</label>
+                    <input type="time" id="configSendTime" class="form-input">
+                </div>
+                <div>
+                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">收件邮箱</label>
+                    <input type="email" id="configToEmail" class="form-input">
+                </div>
+                <div>
+                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">日报邮件通知</label>
+                    <select id="configDailyEnabled" class="form-input">
+                        <option value="true">开启</option>
+                        <option value="false">关闭</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">实时操作日志邮件</label>
+                    <select id="configRealTimeEnabled" class="form-input">
+                        <option value="true">开启</option>
+                        <option value="false">关闭</option>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-top:16px;">
+                <button class="btn-primary" onclick="saveEmailConfig()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
+                    保存配置
+                </button>
+            </div>
+            <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
+                提示：修改发送时间后，系统将在每天指定时间自动发送操作日志日报邮件。
             </p>
         </div>
         <div class="copyright" style="margin-top:24px;">
@@ -354,6 +408,8 @@
             document.getElementById('logBtn').style.display = 'none';
             switchTab('books');
         }
+        // 加载邮件配置（仅管理员可见）
+        loadEmailConfig();
         // 显示 Token
         var token = Auth.getToken();
         document.getElementById('tokenInfo').innerHTML =
@@ -581,6 +637,98 @@
                     AuthUtils.showAlert('success', '操作日志下载成功: ' + res.filename);
                 } else {
                     AuthUtils.showAlert('error', res.msg || '下载失败，可能无管理员权限');
+                }
+            });
+        }
+
+        // 获取邮箱地址
+        function getExportEmail() {
+            var email = document.getElementById('exportEmail').value.trim();
+            if (!email) {
+                AuthUtils.showAlert('error', '请先输入接收邮箱');
+                return null;
+            }
+            return email;
+        }
+
+        // 发送用户列表到邮箱
+        function sendUsersToEmail() {
+            var email = getExportEmail();
+            if (!email) return;
+            AuthUtils.showAlert('success', '正在发送用户列表到邮箱...');
+            Api.exportUsersToEmail(email).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '发送成功');
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '发送失败，可能无管理员权限');
+                }
+            });
+        }
+
+        // 发送商品数据到邮箱
+        function sendBooksToEmail() {
+            var email = getExportEmail();
+            if (!email) return;
+            AuthUtils.showAlert('success', '正在发送商品数据到邮箱...');
+            Api.exportBooksToEmail(email).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '发送成功');
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '发送失败');
+                }
+            });
+        }
+
+        // 发送操作日志到邮箱
+        function sendLogsToEmail() {
+            var email = getExportEmail();
+            if (!email) return;
+            AuthUtils.showAlert('success', '正在发送操作日志到邮箱...');
+            Api.exportLogsToEmail(email).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '发送成功');
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '发送失败，可能无管理员权限');
+                }
+            });
+        }
+
+        // 加载邮件配置（仅管理员）
+        function loadEmailConfig() {
+            var userInfo = Auth.getUser();
+            if (!userInfo || userInfo.role !== 1) {
+                return;
+            }
+            // 显示邮件配置面板
+            document.getElementById('emailConfigCard').style.display = 'block';
+            Api.getEmailConfig().then(function (res) {
+                if (res.code === 200 && res.data) {
+                    document.getElementById('configSendTime').value = res.data.sendTime || '20:00';
+                    document.getElementById('configToEmail').value = res.data.toEmail || '';
+                    document.getElementById('configDailyEnabled').value = res.data.enabled || 'true';
+                    document.getElementById('configRealTimeEnabled').value = res.data.realTimeEnabled || 'true';
+                    // 同时填充导出邮箱
+                    document.getElementById('exportEmail').value = res.data.toEmail || '';
+                }
+            });
+        }
+
+        // 保存邮件配置
+        function saveEmailConfig() {
+            var config = {
+                sendTime: document.getElementById('configSendTime').value,
+                toEmail: document.getElementById('configToEmail').value,
+                enabled: document.getElementById('configDailyEnabled').value,
+                realTimeEnabled: document.getElementById('configRealTimeEnabled').value
+            };
+            AuthUtils.showAlert('success', '正在保存配置...');
+            Api.updateEmailConfig(config).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', '配置保存成功');
+                    // 同步更新导出邮箱
+                    document.getElementById('exportEmail').value = config.toEmail;
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '保存失败');
                 }
             });
         }
