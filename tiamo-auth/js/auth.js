@@ -653,6 +653,99 @@
         }, 3000);
     }
 
+    /* ========== 自定义确认弹窗（居中显示） ========== */
+    function showConfirm(options) {
+        return new Promise(function (resolve) {
+            var title = options.title || '确认操作';
+            var message = options.message || '';
+            var type = options.type || 'warning'; // warning, danger, info
+            var confirmText = options.confirmText || '确定';
+            var cancelText = options.cancelText || '取消';
+
+            // 创建遮罩层
+            var overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+
+            // 创建弹窗
+            var modal = document.createElement('div');
+            modal.className = 'confirm-modal';
+
+            // 图标
+            var iconClass = type;
+            var iconText = '⚠';
+            if (type === 'danger') iconText = '✕';
+            else if (type === 'info') iconText = 'ℹ';
+            var iconEl = document.createElement('div');
+            iconEl.className = 'confirm-icon ' + iconClass;
+            iconEl.textContent = iconText;
+
+            // 标题
+            var titleEl = document.createElement('div');
+            titleEl.className = 'confirm-title';
+            titleEl.textContent = title;
+
+            // 消息
+            var messageEl = document.createElement('div');
+            messageEl.className = 'confirm-message';
+            messageEl.textContent = message;
+
+            // 按钮容器
+            var buttonsEl = document.createElement('div');
+            buttonsEl.className = 'confirm-buttons';
+
+            // 取消按钮
+            var cancelBtn = document.createElement('button');
+            cancelBtn.className = 'confirm-btn confirm-btn-cancel';
+            cancelBtn.textContent = cancelText;
+            cancelBtn.onclick = function () {
+                closeModal(false);
+            };
+
+            // 确认按钮
+            var confirmBtn = document.createElement('button');
+            confirmBtn.className = 'confirm-btn confirm-btn-confirm ' + type;
+            confirmBtn.textContent = confirmText;
+            confirmBtn.onclick = function () {
+                closeModal(true);
+            };
+
+            buttonsEl.appendChild(cancelBtn);
+            buttonsEl.appendChild(confirmBtn);
+
+            modal.appendChild(iconEl);
+            modal.appendChild(titleEl);
+            modal.appendChild(messageEl);
+            modal.appendChild(buttonsEl);
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // 点击遮罩层关闭
+            overlay.onclick = function (e) {
+                if (e.target === overlay) {
+                    closeModal(false);
+                }
+            };
+
+            // ESC键关闭
+            var escHandler = function (e) {
+                if (e.key === 'Escape') {
+                    closeModal(false);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+
+            function closeModal(result) {
+                document.removeEventListener('keydown', escHandler);
+                overlay.style.animation = 'fadeIn 0.2s ease reverse';
+                modal.style.animation = 'modalIn 0.2s ease reverse';
+                setTimeout(function () {
+                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    resolve(result);
+                }, 200);
+            }
+        });
+    }
+
     /* ========== 按钮加载状态 ========== */
     function setButtonLoading(btn, loading, originalText) {
         if (loading) {
@@ -682,6 +775,7 @@
     window.AuthUtils = {
         validateField: validateField,
         showAlert: showAlert,
+        showConfirm: showConfirm,
         showError: showError,
         clearError: clearError,
         setButtonLoading: setButtonLoading,

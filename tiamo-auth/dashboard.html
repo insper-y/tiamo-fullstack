@@ -1179,8 +1179,13 @@
 
         /* ==================== 用户角色与状态管理 ==================== */
         // 设置用户角色
-        function setUserRole(userId, role) {
-            if (!confirm('确定要将该用户设置为' + (role == 1 ? '管理员' : '普通用户') + '吗？')) {
+        async function setUserRole(userId, role) {
+            var confirmed = await AuthUtils.showConfirm({
+                title: '设置用户角色',
+                message: '确定要将该用户设置为' + (role == 1 ? '管理员' : '普通用户') + '吗？',
+                type: 'warning'
+            });
+            if (!confirmed) {
                 loadUserList();
                 return;
             }
@@ -1199,11 +1204,14 @@
         }
 
         // 切换用户状态（启用/禁用）
-        function toggleUserStatus(userId, status) {
+        async function toggleUserStatus(userId, status) {
             var action = status == 1 ? '启用' : '禁用';
-            if (!confirm('确定要' + action + '该用户吗？')) {
-                return;
-            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: action + '用户',
+                message: '确定要' + action + '该用户吗？',
+                type: 'warning'
+            });
+            if (!confirmed) return;
             Api.updateUserStatus(userId, status).then(function (res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', res.msg || '操作成功');
@@ -1217,10 +1225,14 @@
         }
 
         // 删除用户（仅管理员，只能删除普通用户）
-        function deleteUser(userId, username) {
-            if (!confirm('确定要删除用户 "' + username + '" 吗？\n\n删除后不可恢复，该用户的所有数据将被永久删除！')) {
-                return;
-            }
+        async function deleteUser(userId, username) {
+            var confirmed = await AuthUtils.showConfirm({
+                title: '删除用户',
+                message: '确定要删除用户 "' + username + '" 吗？\n\n删除后不可恢复，该用户的所有数据将被永久删除！',
+                type: 'danger',
+                confirmText: '确认删除'
+            });
+            if (!confirmed) return;
             Api.deleteUser(userId).then(function (res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', res.msg || '删除成功');
@@ -1262,15 +1274,18 @@
         }
 
         // 批量删除商品
-        function batchDeleteBooks() {
+        async function batchDeleteBooks() {
             var ids = getSelectedBookIds();
             if (ids.length === 0) {
                 AuthUtils.showAlert('error', '请先选择要删除的数据');
                 return;
             }
-            if (!confirm('确定要批量删除选中的 ' + ids.length + ' 条数据吗？删除后可在回收站恢复。')) {
-                return;
-            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量删除',
+                message: '确定要批量删除选中的 ' + ids.length + ' 条数据吗？删除后可在回收站恢复。',
+                type: 'warning'
+            });
+            if (!confirmed) return;
             Api.batchDeleteBooks(ids).then(function (res) {
                 if (res.code === 20021) {
                     AuthUtils.showAlert('success', res.msg || '批量删除成功');
@@ -1466,10 +1481,14 @@
         }
 
         // 恢复单个商品
-        function restoreBook(id) {
-            if (!confirm('确定要恢复这条商品数据吗？')) {
-                return;
-            }
+        async function restoreBook(id) {
+            var confirmed = await AuthUtils.showConfirm({
+                title: '恢复数据',
+                message: '确定要恢复这条商品数据吗？',
+                type: 'info',
+                confirmText: '确认恢复'
+            });
+            if (!confirmed) return;
             Api.restoreBook(id).then(function (res) {
                 if (res.code === 20031) {
                     AuthUtils.showAlert('success', '恢复成功');
@@ -1483,15 +1502,19 @@
         }
 
         // 批量恢复
-        function batchRestoreBooks() {
+        async function batchRestoreBooks() {
             var ids = getSelectedRecycleIds();
             if (ids.length === 0) {
                 AuthUtils.showAlert('error', '请先选择要恢复的数据');
                 return;
             }
-            if (!confirm('确定要批量恢复选中的 ' + ids.length + ' 条数据吗？')) {
-                return;
-            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量恢复',
+                message: '确定要批量恢复选中的 ' + ids.length + ' 条数据吗？',
+                type: 'info',
+                confirmText: '确认恢复'
+            });
+            if (!confirmed) return;
             Api.batchRestoreBooks(ids).then(function (res) {
                 if (res.code === 20031) {
                     AuthUtils.showAlert('success', res.msg || '批量恢复成功');
@@ -1505,15 +1528,19 @@
         }
 
         // 批量彻底删除（不可恢复）
-        function batchHardDeleteBooks() {
+        async function batchHardDeleteBooks() {
             var ids = getSelectedRecycleIds();
             if (ids.length === 0) {
                 AuthUtils.showAlert('error', '请先选择要删除的数据');
                 return;
             }
-            if (!confirm('警告：批量彻底删除后不可恢复！确定要彻底删除选中的 ' + ids.length + ' 条数据吗？')) {
-                return;
-            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量彻底删除',
+                message: '警告：批量彻底删除后不可恢复！确定要彻底删除选中的 ' + ids.length + ' 条数据吗？',
+                type: 'danger',
+                confirmText: '确认删除'
+            });
+            if (!confirmed) return;
             Api.batchHardDeleteBooks(ids).then(function (res) {
                 if (res.code === 20021) {
                     AuthUtils.showAlert('success', res.msg || '批量彻底删除成功');
@@ -1527,10 +1554,14 @@
         }
 
         // 彻底删除（不可恢复）
-        function hardDeleteBook(id) {
-            if (!confirm('警告：彻底删除后不可恢复！确定要彻底删除这条数据吗？')) {
-                return;
-            }
+        async function hardDeleteBook(id) {
+            var confirmed = await AuthUtils.showConfirm({
+                title: '彻底删除',
+                message: '警告：彻底删除后不可恢复！确定要彻底删除这条数据吗？',
+                type: 'danger',
+                confirmText: '确认删除'
+            });
+            if (!confirmed) return;
             Api.hardDeleteBook(id).then(function (res) {
                 if (res.code === 20021) {
                     AuthUtils.showAlert('success', '已彻底删除');
@@ -1545,11 +1576,15 @@
 
         /* ==================== 回收站审批 ==================== */
         // 普通用户提交审批申请
-        function submitApproval(bookId, approvalType) {
+        async function submitApproval(bookId, approvalType) {
             var typeName = approvalType === 'RESTORE' ? '恢复' : '彻底删除';
-            if (!confirm('确定要申请' + typeName + '这条商品数据吗？申请后需管理员审批通过才能执行。')) {
-                return;
-            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '提交申请',
+                message: '确定要申请' + typeName + '这条商品数据吗？申请后需管理员审批通过才能执行。',
+                type: 'info',
+                confirmText: '提交申请'
+            });
+            if (!confirmed) return;
             Api.submitRecycleApproval(bookId, approvalType).then(function (res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', '申请已提交，等待管理员审批');
@@ -1624,10 +1659,14 @@
         function approvalChangePageSize(size) { approvalPageSize = parseInt(size); approvalCurrentPage = 1; renderApprovalList(approvalList); }
 
         // 审批通过
-        function approveApproval(id) {
-            if (!confirm('确定要通过这个申请吗？通过后将立即执行对应操作。')) {
-                return;
-            }
+        async function approveApproval(id) {
+            var confirmed = await AuthUtils.showConfirm({
+                title: '审批通过',
+                message: '确定要通过这个申请吗？通过后将立即执行对应操作。',
+                type: 'success',
+                confirmText: '确认通过'
+            });
+            if (!confirmed) return;
             Api.approveApproval(id, '').then(function (res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', '审批通过，操作已执行');
@@ -1744,10 +1783,14 @@
         function myApprovalChangePageSize(size) { myApprovalPageSize = parseInt(size); myApprovalCurrentPage = 1; renderMyApprovals(myApprovalList); }
 
         // 删除我的申请记录
-        function deleteMyApproval(id) {
-            if (!confirm('确定要删除这条申请记录吗？此操作不可恢复！')) {
-                return;
-            }
+        async function deleteMyApproval(id) {
+            var confirmed = await AuthUtils.showConfirm({
+                title: '删除申请记录',
+                message: '确定要删除这条申请记录吗？此操作不可恢复！',
+                type: 'danger',
+                confirmText: '确认删除'
+            });
+            if (!confirmed) return;
             Api.deleteApproval(id).then(function (res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', '删除成功');

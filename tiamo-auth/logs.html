@@ -495,10 +495,16 @@
                 btn.textContent = '批量删除(' + selected.length + ')';
             }
         }
-        function batchDeleteLogs() {
+        async function batchDeleteLogs() {
             var ids = getSelectedLogIds();
             if (ids.length === 0) { AuthUtils.showAlert('warning', '请先选择要删除的日志'); return; }
-            if (!confirm('确定要批量删除选中的 ' + ids.length + ' 条日志吗？此操作不可恢复！')) return;
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量删除日志',
+                message: '确定要批量删除选中的 ' + ids.length + ' 条日志吗？此操作不可恢复！',
+                type: 'danger',
+                confirmText: '确认删除'
+            });
+            if (!confirmed) return;
             Api.batchDeleteLogs(ids).then(function(res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', '批量删除成功');
@@ -528,9 +534,15 @@
                 }
             }).catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
         }
-        function cleanLogsByDays() {
+        async function cleanLogsByDays() {
             var days = parseInt(document.getElementById('logRetentionDays').value);
-            if (!confirm('确定要清理超过 ' + days + ' 天的所有日志吗？此操作不可恢复！')) return;
+            var confirmed = await AuthUtils.showConfirm({
+                title: '清理过期日志',
+                message: '确定要清理超过 ' + days + ' 天的所有日志吗？此操作不可恢复！',
+                type: 'danger',
+                confirmText: '确认清理'
+            });
+            if (!confirmed) return;
             Api.cleanLogs({ days: days }).then(function(res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', res.msg || '清理成功');
