@@ -7,7 +7,10 @@ import com.tiamo.entity.Books;
 import com.tiamo.entity.SysUser;
 import com.tiamo.security.JwtUtil;
 import com.tiamo.service.BooksService;
+import com.tiamo.service.RecycleApprovalService;
 import com.tiamo.service.impl.SysUserServiceImpl;
+import com.tiamo.entity.RecycleApproval;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,6 +46,9 @@ public class BooksController {
 
     @Autowired
     private SysUserServiceImpl userService;
+
+    @Autowired
+    private RecycleApprovalService recycleApprovalService;
 
     /**
      * 查询全部未删除数据
@@ -136,6 +142,39 @@ public class BooksController {
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         // 所有登录用户都可查看回收站
         List<Books> list = booksService.listDeleted();
+        
+        // 查询当前用户的申请记录，设置申请状态
+        Long userId = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                userId = jwtUtil.getUserIdFromToken(token);
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        
+        if (userId != null && list != null && !list.isEmpty()) {
+            List<RecycleApproval> approvals = recycleApprovalService.list(
+                new LambdaQueryWrapper<RecycleApproval>()
+                    .eq(RecycleApproval::getApplicantId, userId)
+            );
+            // 构建bookId -> approval的映射
+            Map<Integer, RecycleApproval> approvalMap = new java.util.HashMap<>();
+            for (RecycleApproval approval : approvals) {
+                // 只保留最新的申请记录
+                approvalMap.put(approval.getBookId().intValue(), approval);
+            }
+            // 设置申请状态
+            for (Books book : list) {
+                RecycleApproval approval = approvalMap.get(book.getId());
+                if (approval != null) {
+                    book.setApprovalStatus(approval.getStatus());
+                    book.setApprovalType(approval.getApprovalType());
+                }
+            }
+        }
+        
         return new Result<>(Code.GET_OK, list, "查询成功");
     }
 

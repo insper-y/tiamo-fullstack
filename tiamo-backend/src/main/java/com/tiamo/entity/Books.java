@@ -65,4 +65,12 @@ public class Books implements Serializable {
     /** 删除操作人 */
     @TableField("deleted_by")
     private String deletedBy;
+
+    /** 申请状态（非数据库字段）：PENDING-待审批 APPROVED-已通过 REJECTED-已拒绝 */
+    @TableField(exist = false)
+    private String approvalStatus;
+
+    /** 申请类型（非数据库字段）：RESTORE-恢复 DELETE-彻底删除 */
+    @TableField(exist = false)
+    private String approvalType;
 }

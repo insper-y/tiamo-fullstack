@@ -411,6 +411,8 @@
                     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                         <button class="btn-primary btn-sm" id="batchRestoreBtn" style="background:linear-gradient(135deg,#10b981,#059669);display:none;" onclick="batchRestoreBooks()">批量恢复</button>
                         <button class="btn-primary btn-sm" id="batchHardDeleteBtn" style="background:linear-gradient(135deg,#ef4444,#dc2626);display:none;" onclick="batchHardDeleteBooks()">批量删除</button>
+                        <button class="btn-primary btn-sm" id="batchApplyRestoreBtn" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);display:none;" onclick="batchApplyRestore()">批量申请恢复</button>
+                        <button class="btn-primary btn-sm" id="batchApplyDeleteBtn" style="background:linear-gradient(135deg,#f59e0b,#d97706);display:none;" onclick="batchApplyDelete()">批量申请删除</button>
                         <button class="btn-primary" onclick="loadRecycleList()">刷新</button>
                     </div>
                 </div>
@@ -1686,12 +1688,25 @@
             // 分页控件
             html += buildPaginationHtml(list.length, recycleCurrentPage, totalPages, recyclePageSize, 'recycle');
             listEl.innerHTML = html;
-            // 普通用户隐藏批量操作按钮
-            if (!isAdmin) {
+            // 根据角色显示批量操作按钮
+            if (isAdmin) {
                 var restoreBtn = document.getElementById('batchRestoreBtn');
                 var deleteBtn = document.getElementById('batchHardDeleteBtn');
-                if (restoreBtn) restoreBtn.style.display = 'none';
-                if (deleteBtn) deleteBtn.style.display = 'none';
+                if (restoreBtn) restoreBtn.style.display = '';
+                if (deleteBtn) deleteBtn.style.display = '';
+                var applyRestoreBtn = document.getElementById('batchApplyRestoreBtn');
+                var applyDeleteBtn = document.getElementById('batchApplyDeleteBtn');
+                if (applyRestoreBtn) applyRestoreBtn.style.display = 'none';
+                if (applyDeleteBtn) applyDeleteBtn.style.display = 'none';
+            } else {
+                var restoreBtn2 = document.getElementById('batchRestoreBtn');
+                var deleteBtn2 = document.getElementById('batchHardDeleteBtn');
+                if (restoreBtn2) restoreBtn2.style.display = 'none';
+                if (deleteBtn2) deleteBtn2.style.display = 'none';
+                var applyRestoreBtn2 = document.getElementById('batchApplyRestoreBtn');
+                var applyDeleteBtn2 = document.getElementById('batchApplyDeleteBtn');
+                if (applyRestoreBtn2) applyRestoreBtn2.style.display = '';
+                if (applyDeleteBtn2) applyDeleteBtn2.style.display = '';
             }
         }
         
