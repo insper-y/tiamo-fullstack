@@ -183,13 +183,17 @@
 
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <h1>操作日志</h1>
+            <h1>日志管理</h1>
             <div class="header-actions">
                 <button class="btn-secondary" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
-                <button class="btn-secondary" onclick="loadLogs()">刷新</button>
-                <button class="btn-secondary" onclick="window.location.href='run-log.html'">系统运行日志</button>
                 <button class="btn-secondary" onclick="window.location.href='dashboard.html'">返回控制台</button>
             </div>
+        </div>
+
+        <!-- 标签页切换 -->
+        <div class="tab-nav" style="display:flex;gap:8px;margin-bottom:16px;">
+            <button class="tab-btn active" id="tabOperationBtn" onclick="switchTab('operation')" style="padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-size:14px;font-family:inherit;">操作日志</button>
+            <button class="tab-btn" id="tabRunBtn" onclick="switchTab('run')" style="padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-size:14px;font-family:inherit;">系统运行日志</button>
         </div>
 
         <div class="alert" id="alert">
@@ -282,6 +286,8 @@
             </div>
         </div>
 
+        <!-- 操作日志标签页内容 -->
+        <div id="operationTabContent">
         <!-- 日志列表 -->
         <div class="data-card">
             <div id="logList">
@@ -295,6 +301,11 @@
                 <div class="pagination-info" id="paginationInfo"></div>
                 <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
+        </div>
+        </div>
+        <!-- 系统运行日志标签页内容 -->
+        <div id="runTabContent" style="display:none;">
+            <iframe src="run-log.html" style="width:100%;min-height:800px;border:none;border-radius:var(--radius-lg);background:transparent;" onload="this.style.minHeight = this.contentWindow.document.body.scrollHeight + 'px';"></iframe>
         </div>
 
         <div class="copyright" style="margin-top:20px;">
@@ -449,8 +460,54 @@
             loadLogs();
         }
 
+        /* ==================== 标签页切换 ==================== */
+        function switchTab(tab) {
+            var opBtn = document.getElementById('tabOperationBtn');
+            var runBtn = document.getElementById('tabRunBtn');
+            var opContent = document.getElementById('operationTabContent');
+            var runContent = document.getElementById('runTabContent');
+
+            if (tab === 'operation') {
+                opBtn.classList.add('active');
+                opBtn.style.background = 'var(--primary)';
+                opBtn.style.color = '#fff';
+                opBtn.style.borderColor = 'var(--primary)';
+                runBtn.classList.remove('active');
+                runBtn.style.background = 'var(--bg-card)';
+                runBtn.style.color = 'var(--text-secondary)';
+                runBtn.style.borderColor = 'var(--border)';
+                opContent.style.display = 'block';
+                runContent.style.display = 'none';
+            } else {
+                runBtn.classList.add('active');
+                runBtn.style.background = 'var(--primary)';
+                runBtn.style.color = '#fff';
+                runBtn.style.borderColor = 'var(--primary)';
+                opBtn.classList.remove('active');
+                opBtn.style.background = 'var(--bg-card)';
+                opBtn.style.color = 'var(--text-secondary)';
+                opBtn.style.borderColor = 'var(--border)';
+                opContent.style.display = 'none';
+                runContent.style.display = 'block';
+                // 调整iframe高度
+                setTimeout(function() {
+                    var iframe = runContent.querySelector('iframe');
+                    if (iframe && iframe.contentWindow && iframe.contentWindow.document) {
+                        iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
+                    }
+                }, 500);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             initTheme();
+            // 初始化操作日志标签页样式
+            var opBtn = document.getElementById('tabOperationBtn');
+            if (opBtn) {
+                opBtn.style.background = 'var(--primary)';
+                opBtn.style.color = '#fff';
+                opBtn.style.borderColor = 'var(--primary)';
+            }
             loadStats();
             loadLogs();
             // 管理员显示管理栏
