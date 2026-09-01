@@ -431,7 +431,7 @@
             localStorage.setItem('tiamo_server_autorefresh', serverAutoRefreshEnabled ? '1' : '0');
             applyServerAutoRefreshState();
             if (serverAutoRefreshEnabled) {
-                AuthUtils.showAlert('success', '已开启服务器状态实时刷新，每秒刷新一次');
+                AuthUtils.showAlert('success', '已开启服务器状态实时刷新，每0.9秒刷新一次');
             } else {
                 AuthUtils.showAlert('info', '已关闭服务器状态实时刷新');
             }
@@ -446,7 +446,7 @@
                 if (!serverAutoRefreshTimer) {
                     serverAutoRefreshTimer = setInterval(function() {
                         loadServerStatus();
-                    }, 1000);
+                    }, 900);
                 }
             } else {
                 btn.textContent = '实时刷新:关';
