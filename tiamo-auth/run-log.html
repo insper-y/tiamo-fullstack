@@ -292,7 +292,10 @@
         <div class="data-card">
             <div class="data-card-header">
                 <h2>服务器状态监控</h2>
-                <button class="btn-secondary btn-sm" onclick="loadServerStatus()">刷新</button>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn-secondary btn-sm" id="serverAutoRefreshBtn" onclick="toggleServerAutoRefresh()">实时刷新:关</button>
+                    <button class="btn-secondary btn-sm" onclick="loadServerStatus()">刷新</button>
+                </div>
             </div>
             <div id="serverStatus">
                 <div class="loading-state"><div class="loading-spinner"></div>加载中...</div>
@@ -417,6 +420,43 @@
             .finally(function() {
                 if (btn) { btn.textContent = '刷新统计'; btn.disabled = false; }
             });
+        }
+
+        // 服务器状态实时刷新
+        var serverAutoRefreshEnabled = false;
+        var serverAutoRefreshTimer = null;
+
+        function toggleServerAutoRefresh() {
+            serverAutoRefreshEnabled = !serverAutoRefreshEnabled;
+            localStorage.setItem('tiamo_server_autorefresh', serverAutoRefreshEnabled ? '1' : '0');
+            applyServerAutoRefreshState();
+            if (serverAutoRefreshEnabled) {
+                AuthUtils.showAlert('success', '已开启服务器状态实时刷新，每10秒刷新一次');
+            } else {
+                AuthUtils.showAlert('info', '已关闭服务器状态实时刷新');
+            }
+        }
+
+        function applyServerAutoRefreshState() {
+            var btn = document.getElementById('serverAutoRefreshBtn');
+            if (serverAutoRefreshEnabled) {
+                btn.textContent = '实时刷新:开';
+                btn.style.background = 'var(--primary)';
+                btn.style.color = '#fff';
+                if (!serverAutoRefreshTimer) {
+                    serverAutoRefreshTimer = setInterval(function() {
+                        loadServerStatus();
+                    }, 10000);
+                }
+            } else {
+                btn.textContent = '实时刷新:关';
+                btn.style.background = '';
+                btn.style.color = '';
+                if (serverAutoRefreshTimer) {
+                    clearInterval(serverAutoRefreshTimer);
+                    serverAutoRefreshTimer = null;
+                }
+            }
         }
 
         // 加载服务器状态
@@ -827,6 +867,12 @@
             if (savedAutoRefresh === '1') {
                 autoRefreshEnabled = true;
                 applyAutoRefreshState();
+            }
+            // 从localStorage恢复服务器状态实时刷新状态
+            var savedServerAutoRefresh = localStorage.getItem('tiamo_server_autorefresh');
+            if (savedServerAutoRefresh === '1') {
+                serverAutoRefreshEnabled = true;
+                applyServerAutoRefreshState();
             }
             loadStats();
             loadRunLogs();
