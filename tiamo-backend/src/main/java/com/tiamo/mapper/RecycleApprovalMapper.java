@@ -1,17 +1,14 @@
 package com.tiamo.mapper;
-
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.tiamo.entity.RecycleApproval;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
-
 /**
  * 回收站审批 Mapper
  */
 @Mapper
 public interface RecycleApprovalMapper extends BaseMapper<RecycleApproval> {
-
     /**
      * 自动建表
      */
@@ -39,11 +36,26 @@ public interface RecycleApprovalMapper extends BaseMapper<RecycleApproval> {
     void createTableIfNotExists();
 
     /**
-     * 添加is_read和read_time字段（兼容旧表）
+     * 检查is_read字段是否存在
      */
-    @Update("ALTER TABLE recycle_approval ADD COLUMN IF NOT EXISTS is_read TINYINT DEFAULT 0 COMMENT '0-未阅读 1-已阅读'")
+    @Select("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'recycle_approval' AND COLUMN_NAME = 'is_read'")
+    int checkIsReadColumnExists();
+
+    /**
+     * 检查read_time字段是否存在
+     */
+    @Select("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'recycle_approval' AND COLUMN_NAME = 'read_time'")
+    int checkReadTimeColumnExists();
+
+    /**
+     * 添加is_read字段
+     */
+    @Update("ALTER TABLE recycle_approval ADD COLUMN is_read TINYINT DEFAULT 0 COMMENT '0-未阅读 1-已阅读'")
     void addIsReadColumn();
 
-    @Update("ALTER TABLE recycle_approval ADD COLUMN IF NOT EXISTS read_time DATETIME")
+    /**
+     * 添加read_time字段
+     */
+    @Update("ALTER TABLE recycle_approval ADD COLUMN read_time DATETIME")
     void addReadTimeColumn();
 }
