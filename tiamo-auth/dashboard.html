@@ -728,10 +728,14 @@
         initTheme();
         // 显示 Token
         var token = Auth.getToken();
-        document.getElementById('tokenInfo').innerHTML =
-            '<strong>Token:</strong> ' + token.substring(0, 50) + '...' +
-            '<br><br><strong>长度:</strong> ' + token.length + ' 字符' +
-            '<br><strong>存储位置:</strong> localStorage';
+        if (token) {
+            document.getElementById('tokenInfo').innerHTML =
+                '<strong>Token:</strong> ' + token.substring(0, 50) + '...' +
+                '<br><br><strong>长度:</strong> ' + token.length + ' 字符' +
+                '<br><strong>存储位置:</strong> localStorage';
+        } else {
+            document.getElementById('tokenInfo').innerHTML = '<strong>Token:</strong> 未登录';
+        }
         // 切换标签页
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
