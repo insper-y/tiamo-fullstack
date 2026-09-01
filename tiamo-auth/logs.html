@@ -186,9 +186,11 @@
             <h1>日志管理</h1>
             <div class="header-actions">
                 <button class="btn-secondary" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
+                <button class="btn-secondary" id="autoRefreshBtn" onclick="toggleAutoRefresh()" title="自动刷新">🔄 自动刷新:关</button>
                 <button class="btn-secondary" onclick="window.location.href='dashboard.html'">返回控制台</button>
             </div>
         </div>
+        <div style="text-align:right;font-size:12px;color:var(--text-muted);margin-bottom:10px;" id="lastRefreshTime">最后刷新: --</div>
 
         <!-- 操作日志区域标题 -->
         <h2 style="font-size:18px;color:var(--text-primary);margin:20px 0 12px;padding-left:12px;border-left:4px solid var(--primary);">操作日志</h2>
@@ -327,6 +329,7 @@
                     document.getElementById('statSuccess').textContent = res.data.success;
                     document.getElementById('statFail').textContent = res.data.fail;
                     document.getElementById('statRate').textContent = res.data.successRate;
+                    updateLastRefreshTime();
                 }
             });
         }
@@ -360,6 +363,7 @@
                 if (res.code === 200 && res.data) {
                     renderLogs(res.data.records || []);
                     renderPagination(res.data);
+                    updateLastRefreshTime();
                 } else {
                     listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
                 }
@@ -457,6 +461,54 @@
             currentPage = 1;
             loadLogs();
         }
+
+        // ==================== 实时刷新 ====================
+        var autoRefreshTimer = null;
+        var autoRefreshEnabled = false;
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            var btn = document.getElementById('autoRefreshBtn');
+            if (autoRefreshEnabled) {
+                btn.textContent = '🔄 自动刷新:开';
+                btn.style.background = 'var(--primary)';
+                btn.style.color = '#fff';
+                // 每30秒自动刷新
+                autoRefreshTimer = setInterval(function() {
+                    loadStats();
+                    loadLogs();
+                }, 30000);
+                AuthUtils.showAlert('success', '已开启自动刷新，每30秒刷新一次');
+            } else {
+                btn.textContent = '🔄 自动刷新:关';
+                btn.style.background = '';
+                btn.style.color = '';
+                if (autoRefreshTimer) {
+                    clearInterval(autoRefreshTimer);
+                    autoRefreshTimer = null;
+                }
+                AuthUtils.showAlert('info', '已关闭自动刷新');
+            }
+        }
+
+        function updateLastRefreshTime() {
+            var now = new Date();
+            var timeStr = now.getFullYear() + '-' +
+                String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                String(now.getDate()).padStart(2, '0') + ' ' +
+                String(now.getHours()).padStart(2, '0') + ':' +
+                String(now.getMinutes()).padStart(2, '0') + ':' +
+                String(now.getSeconds()).padStart(2, '0');
+            var el = document.getElementById('lastRefreshTime');
+            if (el) el.textContent = '最后刷新: ' + timeStr;
+        }
+
+        // 页面关闭时清除定时器
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function () {
             initTheme();
