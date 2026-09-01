@@ -518,14 +518,6 @@
                     <div class="loading-state">加载中...</div>
                 </div>
             </div>
-            <!-- 表结构详情 -->
-            <div class="data-card" id="tableStructureCard" style="display:none;">
-                <div class="data-card-header">
-                    <h2 id="tableStructureTitle">表结构</h2>
-                    <button class="btn-secondary btn-sm" onclick="closeTableStructure()">关闭</button>
-                </div>
-                <div id="tableStructureContent"></div>
-            </div>
             <!-- SQL查询执行器 -->
             <div class="data-card">
                 <div class="data-card-header">
@@ -671,6 +663,17 @@
         </div>
     </div>
 
+    <!-- 表结构弹窗 -->
+    <div class="modal-overlay" id="tableStructureModal" onclick="if(event.target===this)closeTableStructure()">
+        <div class="modal" style="max-width:900px;max-height:80vh;">
+            <div class="modal-header">
+                <h3 id="tableStructureTitle">表结构</h3>
+                <button class="modal-close" onclick="closeTableStructure()">&times;</button>
+            </div>
+            <div class="modal-body" id="tableStructureContent" style="max-height:60vh;overflow-y:auto;"></div>
+        </div>
+    </div>
+
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
@@ -808,7 +811,7 @@
 
         // 显示表结构
         function showTableStructure(tableName) {
-            document.getElementById('tableStructureCard').style.display = 'block';
+            document.getElementById('tableStructureModal').classList.add('active');
             document.getElementById('tableStructureTitle').textContent = '表结构 - ' + tableName;
             document.getElementById('tableStructureContent').innerHTML = '<div class="loading-state">加载中...</div>';
             fetch(window.API_BASE + '/api/db/tables/' + tableName + '/structure', {
@@ -864,7 +867,7 @@
 
         // 关闭表结构
         function closeTableStructure() {
-            document.getElementById('tableStructureCard').style.display = 'none';
+            document.getElementById('tableStructureModal').classList.remove('active');
         }
 
         // 执行SQL查询
