@@ -86,6 +86,10 @@ public class AdminController {
         if (user == null) {
             return new Result<>(404, null, "用户不存在");
         }
+        // 不允许修改admin账号的权限
+        if ("admin".equals(user.getUsername())) {
+            return new Result<>(400, null, "不能修改admin账号的权限");
+        }
         user.setRole(role);
         user.setUpdateTime(LocalDateTime.now());
         boolean flag = userService.updateById(user);
@@ -123,6 +127,10 @@ public class AdminController {
         if (user == null) {
             return new Result<>(404, null, "用户不存在");
         }
+        // 不允许禁用admin账号
+        if ("admin".equals(user.getUsername()) && status == 0) {
+            return new Result<>(400, null, "不能禁用admin账号");
+        }
         user.setStatus(status);
         user.setUpdateTime(LocalDateTime.now());
         boolean flag = userService.updateById(user);
@@ -153,6 +161,10 @@ public class AdminController {
         SysUser user = userService.getById(id);
         if (user == null) {
             return new Result<>(404, null, "用户不存在");
+        }
+        // 不允许删除admin账号
+        if ("admin".equals(user.getUsername())) {
+            return new Result<>(400, null, "不能删除admin账号");
         }
         // 不允许删除管理员
         if (user.getRole() != null && user.getRole() == 1) {

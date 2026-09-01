@@ -759,12 +759,13 @@
                 '</tr></thead><tbody>';
             pageData.forEach(function(item) {
                 var isSelf = String(item.id) === String(currentUserId);
-                var roleSelect = '<select onchange="setUserRole(' + item.id + ', this.value)" style="padding:4px 8px;border-radius:6px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);font-size:12px;"' + (isSelf ? ' disabled title="不能修改自己"' : '') + '>' +
+                var isAdminAccount = item.username === 'admin';
+                var roleSelect = '<select onchange="setUserRole(' + item.id + ', this.value)" style="padding:4px 8px;border-radius:6px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);font-size:12px;"' + (isSelf || isAdminAccount ? ' disabled title="' + (isAdminAccount ? '不能修改admin账号权限' : '不能修改自己') + '"' : '') + '>' +
                     '<option value="0"' + (item.role === 0 ? ' selected' : '') + '>普通用户</option>' +
                     '<option value="1"' + (item.role === 1 ? ' selected' : '') + '>管理员</option>' +
                     '</select>';
                 var statusBtn = item.status === 1
-                    ? '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);margin-right:6px;" onclick="toggleUserStatus(' + item.id + ', 0)"' + (isSelf ? ' disabled title="不能禁用自己"' : '') + '>禁用</button>'
+                    ? '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);margin-right:6px;" onclick="toggleUserStatus(' + item.id + ', 0)"' + (isSelf || isAdminAccount ? ' disabled title="' + (isAdminAccount ? '不能禁用admin账号' : '不能禁用自己') + '"' : '') + '>禁用</button>'
                     : '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="toggleUserStatus(' + item.id + ', 1)">启用</button>';
                 // 删除按钮：只能删除普通用户，不能删除自己和管理员
                 var canDelete = !isSelf && item.role === 0;
