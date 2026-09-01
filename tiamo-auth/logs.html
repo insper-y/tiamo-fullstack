@@ -497,17 +497,17 @@
         }
         function batchDeleteLogs() {
             var ids = getSelectedLogIds();
-            if (ids.length === 0) { alert('请先选择要删除的日志'); return; }
+            if (ids.length === 0) { AuthUtils.showAlert('warning', '请先选择要删除的日志'); return; }
             if (!confirm('确定要批量删除选中的 ' + ids.length + ' 条日志吗？此操作不可恢复！')) return;
             Api.batchDeleteLogs(ids).then(function(res) {
                 if (res.code === 200) {
-                    alert('批量删除成功');
+                    AuthUtils.showAlert('success', '批量删除成功');
                     loadLogs();
                     loadStats();
                 } else {
-                    alert(res.msg || '删除失败');
+                    AuthUtils.showAlert('error', res.msg || '删除失败');
                 }
-            }).catch(function() { alert('网络请求失败'); });
+            }).catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
         }
         function loadLogRetention() {
             Api.getLogRetention().then(function(res) {
@@ -522,24 +522,24 @@
             var enabled = document.getElementById('logRetentionEnabled').value === 'true';
             Api.setLogRetention({ days: days, enabled: enabled }).then(function(res) {
                 if (res.code === 200) {
-                    alert('日志保留策略已保存');
+                    AuthUtils.showAlert('success', '日志保留策略已保存');
                 } else {
-                    alert(res.msg || '保存失败');
+                    AuthUtils.showAlert('error', res.msg || '保存失败');
                 }
-            }).catch(function() { alert('网络请求失败'); });
+            }).catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
         }
         function cleanLogsByDays() {
             var days = parseInt(document.getElementById('logRetentionDays').value);
             if (!confirm('确定要清理超过 ' + days + ' 天的所有日志吗？此操作不可恢复！')) return;
             Api.cleanLogs({ days: days }).then(function(res) {
                 if (res.code === 200) {
-                    alert(res.msg || '清理成功');
+                    AuthUtils.showAlert('success', res.msg || '清理成功');
                     loadLogs();
                     loadStats();
                 } else {
-                    alert(res.msg || '清理失败');
+                    AuthUtils.showAlert('error', res.msg || '清理失败');
                 }
-            }).catch(function() { alert('网络请求失败'); });
+            }).catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
         }
     </script>
 </body>
