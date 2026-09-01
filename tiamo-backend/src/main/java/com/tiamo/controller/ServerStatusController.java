@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
+import com.sun.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
@@ -27,9 +27,16 @@ public class ServerStatusController {
 
         try {
             // CPU信息
-            OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-            double systemCpuLoad = getDoubleFromBean(osBean, "getSystemCpuLoad", 0.0) * 100;
-            double processCpuLoad = getDoubleFromBean(osBean, "getProcessCpuLoad", 0.0) * 100;
+            OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            double systemCpuLoad = osBean.getSystemCpuLoad() * 100;
+            double processCpuLoad = osBean.getProcessCpuLoad() * 100;
+            // 如果进程CPU使用率为-1（不可用），尝试通过CPU时间计算
+            if (processCpuLoad < 0) {
+                processCpuLoad = calculateProcessCpuLoad(osBean);
+            }
+            if (systemCpuLoad < 0) {
+                systemCpuLoad = 0;
+            }
             int availableProcessors = osBean.getAvailableProcessors();
 
             Map<String, Object> cpu = new HashMap<>();
@@ -128,6 +135,35 @@ public class ServerStatusController {
         } catch (Exception e) {
             e.printStackTrace();
             return new Result<>(500, null, "获取服务器状态失败: " + e.getMessage());
+        }
+    }
+
+    // 用于计算CPU使用率的静态变量
+    private static long lastCpuTime = 0;
+    private static long lastUpTime = 0;
+
+    /**
+     * 通过CPU时间计算进程CPU使用率
+     */
+    private double calculateProcessCpuLoad(OperatingSystemMXBean osBean) {
+        try {
+            long currentCpuTime = osBean.getProcessCpuTime();
+            long currentUpTime = ManagementFactory.getRuntimeMXBean().getUptime();
+            if (lastCpuTime == 0 || lastUpTime == 0) {
+                lastCpuTime = currentCpuTime;
+                lastUpTime = currentUpTime;
+                return 0;
+            }
+            long cpuTimeDiff = currentCpuTime - lastCpuTime;
+            long upTimeDiff = currentUpTime - lastUpTime;
+            lastCpuTime = currentCpuTime;
+            lastUpTime = currentUpTime;
+            if (upTimeDiff <= 0) return 0;
+            // CPU时间单位是纳秒，运行时间单位是毫秒
+            double cpuUsage = (cpuTimeDiff / 1000000.0) / (upTimeDiff * osBean.getAvailableProcessors()) * 100;
+            return Math.min(cpuUsage, 100.0);
+        } catch (Exception e) {
+            return 0;
         }
     }
 
