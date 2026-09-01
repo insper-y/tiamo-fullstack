@@ -621,12 +621,36 @@
 
     /* ========== 提示消息 ========== */
     function showAlert(type, message) {
+        // 兼容旧版页面顶部alert
         var alertEl = document.querySelector('.alert');
-        if (!alertEl) return;
-        alertEl.className = 'alert alert-' + type + ' show';
-        var textEl = alertEl.querySelector('.alert-text');
-        if (textEl) textEl.textContent = message;
-        setTimeout(function () { alertEl.classList.remove('show'); }, 5000);
+        if (alertEl) {
+            alertEl.className = 'alert alert-' + type + ' show';
+            var textEl = alertEl.querySelector('.alert-text');
+            if (textEl) textEl.textContent = message;
+            setTimeout(function () { alertEl.classList.remove('show'); }, 5000);
+        }
+        // 居中弹窗提示（Toast）
+        var container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        var toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        var icon = '✓';
+        if (type === 'error') icon = '✕';
+        else if (type === 'info') icon = 'ℹ';
+        else if (type === 'warning') icon = '⚠';
+        toast.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + message + '</span>';
+        container.appendChild(toast);
+        // 3秒后自动消失
+        setTimeout(function () {
+            toast.classList.add('toast-out');
+            setTimeout(function () {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }, 3000);
     }
 
     /* ========== 按钮加载状态 ========== */
