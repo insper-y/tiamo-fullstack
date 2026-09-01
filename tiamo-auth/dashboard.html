@@ -1639,6 +1639,30 @@
             });
         }
 
+        // 获取申请状态HTML
+        function getApprovalStatusHtml(item) {
+            if (!item.approvalStatus) {
+                return '<span style="color:var(--text-secondary);font-size:12px;">无</span>';
+            }
+            var typeText = item.approvalType === 'RESTORE' ? '恢复' : '删除';
+            var statusText = '';
+            var color = '';
+            if (item.approvalStatus === 'PENDING') {
+                statusText = '待审批';
+                color = '#f59e0b';
+            } else if (item.approvalStatus === 'APPROVED') {
+                statusText = '已通过';
+                color = '#10b981';
+            } else if (item.approvalStatus === 'REJECTED') {
+                statusText = '已拒绝';
+                color = '#ef4444';
+            } else {
+                statusText = item.approvalStatus;
+                color = 'var(--text-secondary)';
+            }
+            return '<span style="color:' + color + ';font-size:12px;font-weight:500;">已申请' + typeText + '(' + statusText + ')</span>';
+        }
+
         // 渲染回收站列表（带分页）
         function renderRecycleList(list) {
             var listEl = document.getElementById('recycleList');
@@ -1659,7 +1683,7 @@
                 html += '<th style="width:40px;"><input type="checkbox" id="selectAllRecycle" onchange="toggleSelectAllRecycle(this)"></th>';
             }
             html += '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
-                '<th>商品标题</th><th>删除时间</th><th>删除人</th><th>操作</th>' +
+                '<th>商品标题</th><th>删除时间</th><th>删除人</th><th>申请状态</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             pageData.forEach(function (item) {
                 html += '<tr>';
@@ -1673,6 +1697,7 @@
                     '<td data-label="商品标题" title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
                     '<td data-label="删除时间">' + (item.deletedTime || '-') + '</td>' +
                     '<td data-label="删除人">' + (item.deletedBy || '-') + '</td>' +
+                    '<td data-label="申请状态">' + getApprovalStatusHtml(item) + '</td>' +
                     '<td data-label="操作" style="white-space:nowrap;">';
                 if (isAdmin) {
                     html += '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="restoreBook(' + item.id + ')">恢复</button>' +
