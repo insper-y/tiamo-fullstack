@@ -775,32 +775,49 @@
         }
         // 切换标签页
         function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
-            document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            var activeBtn = document.querySelector('.tab-btn[onclick="switchTab(\'' + tabName + '\')"]');
-            if (activeBtn) activeBtn.classList.add('active');
-            if (tabName === 'users' && isAdmin) {
-                loadUserList();
-            } else if (tabName === 'books') {
-                loadBooks();
-            } else if (tabName === 'recycle') {
-                loadRecycleList();
-            } else if (tabName === 'approval' && isAdmin) {
-                loadPendingApprovals();
-            } else if (tabName === 'myApproval') {
-                loadMyApprovals();
-            } else if (tabName === 'runLog') {
-                var iframe = document.getElementById('runLogIframe');
-                if (iframe) iframe.src = 'run-log.html';
-            } else if (tabName === 'database') {
-                if (!isAdmin) { switchTab('books'); return; }
-                loadDatabaseTables();
-            } else if (tabName === 'export') {
-                // 数据导出标签页，所有用户可见（普通用户仅商品数据）
-            } else if (tabName === 'emailConfig') {
-                if (!isAdmin) { switchTab('books'); return; }
-                // 邮件配置标签页，无需额外加载
+            try {
+                document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+                document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+                var tabEl = document.getElementById(tabName + 'Tab');
+                if (tabEl) tabEl.classList.add('active');
+                // 通过id查找按钮，避免属性选择器的引号转义问题
+                var btnIdMap = {
+                    'users': 'tabUsersBtn',
+                    'books': 'tabBooksBtn',
+                    'recycle': 'tabRecycleBtn',
+                    'database': 'tabDatabaseBtn',
+                    'export': 'tabExportBtn',
+                    'emailConfig': 'tabEmailConfigBtn',
+                    'myApproval': 'tabMyApprovalBtn',
+                    'approval': 'tabApprovalBtn'
+                };
+                var btnId = btnIdMap[tabName];
+                var activeBtn = btnId ? document.getElementById(btnId) : null;
+                if (activeBtn) activeBtn.classList.add('active');
+                if (tabName === 'users' && isAdmin) {
+                    loadUserList();
+                } else if (tabName === 'books') {
+                    loadBooks();
+                } else if (tabName === 'recycle') {
+                    loadRecycleList();
+                } else if (tabName === 'approval' && isAdmin) {
+                    loadPendingApprovals();
+                } else if (tabName === 'myApproval') {
+                    loadMyApprovals();
+                } else if (tabName === 'runLog') {
+                    var iframe = document.getElementById('runLogIframe');
+                    if (iframe) iframe.src = 'run-log.html';
+                } else if (tabName === 'database') {
+                    if (!isAdmin) { switchTab('books'); return; }
+                    loadDatabaseTables();
+                } else if (tabName === 'export') {
+                    // 数据导出标签页，所有用户可见（普通用户仅商品数据）
+                } else if (tabName === 'emailConfig') {
+                    if (!isAdmin) { switchTab('books'); return; }
+                    // 邮件配置标签页，无需额外加载
+                }
+            } catch (e) {
+                console.error('switchTab error:', e);
             }
         }
 
