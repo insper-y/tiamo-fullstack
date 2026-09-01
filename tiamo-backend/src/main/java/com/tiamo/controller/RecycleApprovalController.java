@@ -254,10 +254,14 @@ public class RecycleApprovalController {
         }
         try {
             @SuppressWarnings("unchecked")
-            List<Long> ids = (List<Long>) request.get("ids");
+            List<Object> rawIds = (List<Object>) request.get("ids");
             String remark = request.get("remark") != null ? request.get("remark").toString() : null;
-            if (ids == null || ids.isEmpty()) {
+            if (rawIds == null || rawIds.isEmpty()) {
                 return new Result<>(400, null, "请选择要处理的申请");
+            }
+            List<Long> ids = new java.util.ArrayList<>();
+            for (Object id : rawIds) {
+                ids.add(Long.valueOf(id.toString()));
             }
             int count = approvalService.batchApprove(ids, user.getId(), user.getUsername(), remark);
             Map<String, Object> data = new java.util.HashMap<>();
@@ -283,10 +287,14 @@ public class RecycleApprovalController {
         }
         try {
             @SuppressWarnings("unchecked")
-            List<Long> ids = (List<Long>) request.get("ids");
+            List<Object> rawIds = (List<Object>) request.get("ids");
             String remark = request.get("remark") != null ? request.get("remark").toString() : null;
-            if (ids == null || ids.isEmpty()) {
+            if (rawIds == null || rawIds.isEmpty()) {
                 return new Result<>(400, null, "请选择要处理的申请");
+            }
+            List<Long> ids = new java.util.ArrayList<>();
+            for (Object id : rawIds) {
+                ids.add(Long.valueOf(id.toString()));
             }
             int count = approvalService.batchReject(ids, user.getId(), user.getUsername(), remark);
             Map<String, Object> data = new java.util.HashMap<>();
