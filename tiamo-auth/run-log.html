@@ -151,13 +151,11 @@
             .stat-card { padding: 14px; }
             .stat-value { font-size: 24px; }
             .data-card { padding: 16px; }
-        }
-        @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
+            .data-table { min-width: 0 !important; }
             .data-table thead { display: none; }
             .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100% !important; box-sizing: border-box; }
             .data-table tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg-card); }
-            .data-table td { border: none; padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; max-width: 100% !important; white-space: normal !important; word-break: break-word; }
+            .data-table td { border: none; padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; max-width: 100% !important; white-space: normal !important; word-break: break-word; overflow: visible !important; text-overflow: clip !important; }
             .data-table td::before { content: attr(data-label); font-weight: 500; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; min-width: 55px; flex-shrink: 0; padding-top: 2px; }
         }
     </style>
