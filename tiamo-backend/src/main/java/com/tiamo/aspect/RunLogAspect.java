@@ -114,10 +114,23 @@ public class RunLogAspect {
                 log.setResult("返回值解析失败: " + e.getMessage());
             }
 
-            // 记录成功
+            // 记录成功/失败（返回错误码也记录为失败）
             long costTime = System.currentTimeMillis() - startTime;
             log.setCostTime(costTime);
-            log.setStatus("SUCCESS");
+            boolean isBusinessError = false;
+            if (result instanceof com.tiamo.common.Result) {
+                com.tiamo.common.Result<?> res = (com.tiamo.common.Result<?>) result;
+                if (res.getCode() != null && res.getCode() != 200) {
+                    isBusinessError = true;
+                    log.setStatus("FAIL");
+                    log.setException(res.getMsg() != null ?
+                            (res.getMsg().length() > 500 ? res.getMsg().substring(0, 500) : res.getMsg())
+                            : "业务错误，错误码: " + res.getCode());
+                }
+            }
+            if (!isBusinessError) {
+                log.setStatus("SUCCESS");
+            }
             log.setCreateTime(LocalDateTime.now());
 
             // 异步保存日志
