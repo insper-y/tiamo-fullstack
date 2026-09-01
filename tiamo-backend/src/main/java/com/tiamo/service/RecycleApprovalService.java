@@ -44,4 +44,29 @@ public interface RecycleApprovalService extends IService<RecycleApproval> {
      * 删除申请记录（仅申请人本人或管理员）
      */
     boolean deleteById(Long id, Long userId, Integer userRole);
+
+    /**
+     * 标记为已阅读（申请人本人）
+     */
+    boolean markAsRead(Long id, Long userId);
+
+    /**
+     * 一键阅读所有（申请人本人的已处理申请）
+     */
+    int markAllAsRead(Long applicantId);
+
+    /**
+     * 一键清理所有已阅读的记录（申请人本人）
+     */
+    int deleteAllRead(Long applicantId);
+
+    /**
+     * 批量通过申请（管理员）
+     */
+    int batchApprove(List<Long> ids, Long approverId, String approverName, String remark);
+
+    /**
+     * 批量拒绝申请（管理员）
+     */
+    int batchReject(List<Long> ids, Long approverId, String approverName, String remark);
 }
