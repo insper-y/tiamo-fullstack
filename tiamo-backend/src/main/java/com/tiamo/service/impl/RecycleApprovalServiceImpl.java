@@ -29,6 +29,8 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
     private BooksMapper booksMapper;
     @Autowired
     private CacheService cacheService;
+    @Autowired
+    private RecycleApprovalMapper recycleApprovalMapper;
 
     // 待审批列表缓存key
     private static final String PENDING_CACHE_KEY = "tiamo:approval:pending:list";
@@ -36,19 +38,19 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
     @PostConstruct
     public void init() {
         try {
-            baseMapper.createTableIfNotExists();
+            recycleApprovalMapper.createTableIfNotExists();
             // 兼容旧表，添加新字段（先检查是否存在）
             try {
-                if (baseMapper.checkIsReadColumnExists() == 0) {
-                    baseMapper.addIsReadColumn();
+                if (recycleApprovalMapper.checkIsReadColumnExists() == 0) {
+                    recycleApprovalMapper.addIsReadColumn();
                     System.out.println("[审批] 已添加 is_read 字段");
                 }
             } catch (Exception e) {
                 System.out.println("[审批] 添加 is_read 字段失败: " + e.getMessage());
             }
             try {
-                if (baseMapper.checkReadTimeColumnExists() == 0) {
-                    baseMapper.addReadTimeColumn();
+                if (recycleApprovalMapper.checkReadTimeColumnExists() == 0) {
+                    recycleApprovalMapper.addReadTimeColumn();
                     System.out.println("[审批] 已添加 read_time 字段");
                 }
             } catch (Exception e) {
