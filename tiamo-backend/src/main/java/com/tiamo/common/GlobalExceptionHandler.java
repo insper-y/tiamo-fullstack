@@ -18,6 +18,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Result<String> handleException(Exception e) {
         e.printStackTrace();
-        return new Result<>(Code.SYSTEM_ERR, null, "系统繁忙，请稍后重试");
+        String msg = "系统繁忙，请稍后重试: " + e.getClass().getSimpleName() + " - " + e.getMessage();
+        if (e.getCause() != null) {
+            msg += " | Cause: " + e.getCause().getClass().getSimpleName() + " - " + e.getCause().getMessage();
+        }
+        return new Result<>(Code.SYSTEM_ERR, null, msg);
     }
 }
