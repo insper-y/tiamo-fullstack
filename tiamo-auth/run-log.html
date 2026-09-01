@@ -279,7 +279,7 @@
 
         // 加载统计数据
         function loadStats() {
-            fetch(Api.baseUrl + '/api/run-log/stats', {
+            fetch(APP_CONFIG.API_BASE + '/api/run-log/stats', {
                 headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
             })
             .then(function(res) { return res.json(); })
@@ -367,7 +367,7 @@
 
             document.getElementById('runLogList').innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>加载中...</div>';
 
-            fetch(Api.baseUrl + '/api/run-log/list?' + params.toString(), {
+            fetch(APP_CONFIG.API_BASE + '/api/run-log/list?' + params.toString(), {
                 headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
             })
             .then(function(res) { return res.json(); })
@@ -451,7 +451,7 @@
 
         // 显示详情
         function showDetail(id) {
-            fetch(Api.baseUrl + '/api/run-log/' + id, {
+            fetch(APP_CONFIG.API_BASE + '/api/run-log/' + id, {
                 headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
             })
             .then(function(res) { return res.json(); })
@@ -500,7 +500,7 @@
                 confirmText: '确认清理'
             }).then(function(confirmed) {
                 if (!confirmed) return;
-                fetch(Api.baseUrl + '/api/run-log/clean?days=30', {
+                fetch(APP_CONFIG.API_BASE + '/api/run-log/clean?days=30', {
                     method: 'DELETE',
                     headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
                 })
@@ -520,8 +520,13 @@
 
         // 初始化
         initTheme();
-        loadStats();
-        loadRunLogs();
+        // 登录验证
+        if (!Auth.isLoggedIn()) {
+            window.location.href = 'login.html';
+        } else {
+            loadStats();
+            loadRunLogs();
+        }
     </script>
 </body>
 </html>
