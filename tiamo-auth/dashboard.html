@@ -539,43 +539,45 @@
             </div>
         </div>
 
-        <!-- 邮件配置（仅管理员可见） -->
-        <div class="data-card" id="emailConfigCard" style="display:none;">
-            <div class="data-card-header">
-                <h2>邮件通知配置</h2>
+        <!-- 邮件配置标签页（仅管理员可见） -->
+        <div class="tab-content" id="emailConfigTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>邮件通知配置</h2>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div>
+                        <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">日报发送时间（HH:mm）</label>
+                        <input type="time" id="configSendTime" class="form-input">
+                    </div>
+                    <div>
+                        <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">收件邮箱</label>
+                        <input type="email" id="configToEmail" class="form-input">
+                    </div>
+                    <div>
+                        <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">日报邮件通知</label>
+                        <select id="configDailyEnabled" class="form-input">
+                            <option value="true">开启</option>
+                            <option value="false">关闭</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">实时操作日志邮件</label>
+                        <select id="configRealTimeEnabled" class="form-input">
+                            <option value="true">开启</option>
+                            <option value="false">关闭</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top:16px;">
+                    <button class="btn-primary" onclick="saveEmailConfig()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
+                        保存配置
+                    </button>
+                </div>
+                <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
+                    提示：修改发送时间后，系统将在每天指定时间自动发送操作日志日报邮件。
+                </p>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div>
-                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">日报发送时间（HH:mm）</label>
-                    <input type="time" id="configSendTime" class="form-input">
-                </div>
-                <div>
-                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">收件邮箱</label>
-                    <input type="email" id="configToEmail" class="form-input">
-                </div>
-                <div>
-                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">日报邮件通知</label>
-                    <select id="configDailyEnabled" class="form-input">
-                        <option value="true">开启</option>
-                        <option value="false">关闭</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">实时操作日志邮件</label>
-                    <select id="configRealTimeEnabled" class="form-input">
-                        <option value="true">开启</option>
-                        <option value="false">关闭</option>
-                    </select>
-                </div>
-            </div>
-            <div style="margin-top:16px;">
-                <button class="btn-primary" onclick="saveEmailConfig()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
-                    保存配置
-                </button>
-            </div>
-            <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
-                提示：修改发送时间后，系统将在每天指定时间自动发送操作日志日报邮件。
-            </p>
         </div>
         <!-- Token 信息（移到底部） -->
         <div class="data-card" style="margin-top:20px;">
