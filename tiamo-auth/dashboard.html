@@ -360,6 +360,7 @@
                     <h2>回收站（已删除商品，可恢复）</h2>
                     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                         <button class="btn-primary btn-sm" id="batchRestoreBtn" style="background:linear-gradient(135deg,#10b981,#059669);display:none;" onclick="batchRestoreBooks()">批量恢复</button>
+                        <button class="btn-primary btn-sm" id="batchHardDeleteBtn" style="background:linear-gradient(135deg,#ef4444,#dc2626);display:none;" onclick="batchHardDeleteBooks()">批量删除</button>
                         <button class="btn-primary" onclick="loadRecycleList()">刷新</button>
                     </div>
                 </div>
@@ -1335,10 +1336,12 @@
             // 分页控件
             html += buildPaginationHtml(list.length, recycleCurrentPage, totalPages, recyclePageSize, 'recycle');
             listEl.innerHTML = html;
-            // 普通用户隐藏批量恢复按钮
+            // 普通用户隐藏批量操作按钮
             if (!isAdmin) {
-                var batchBtn = document.getElementById('batchRestoreBtn');
-                if (batchBtn) batchBtn.style.display = 'none';
+                var restoreBtn = document.getElementById('batchRestoreBtn');
+                var deleteBtn = document.getElementById('batchHardDeleteBtn');
+                if (restoreBtn) restoreBtn.style.display = 'none';
+                if (deleteBtn) deleteBtn.style.display = 'none';
             }
         }
         
@@ -1428,10 +1431,15 @@
         // 更新批量恢复按钮状态
         function updateRecycleBatchBtnState() {
             var selected = getSelectedRecycleIds();
-            var btn = document.getElementById('batchRestoreBtn');
-            if (btn) {
-                btn.style.display = selected.length > 0 ? 'inline-block' : 'none';
-                btn.textContent = '批量恢复(' + selected.length + ')';
+            var restoreBtn = document.getElementById('batchRestoreBtn');
+            var deleteBtn = document.getElementById('batchHardDeleteBtn');
+            if (restoreBtn) {
+                restoreBtn.style.display = selected.length > 0 ? 'inline-block' : 'none';
+                restoreBtn.textContent = '批量恢复(' + selected.length + ')';
+            }
+            if (deleteBtn) {
+                deleteBtn.style.display = selected.length > 0 ? 'inline-block' : 'none';
+                deleteBtn.textContent = '批量删除(' + selected.length + ')';
             }
         }
 
@@ -1468,6 +1476,28 @@
                     loadRecycleList();
                 } else {
                     AuthUtils.showAlert('error', res.msg || '批量恢复失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 批量彻底删除（不可恢复）
+        function batchHardDeleteBooks() {
+            var ids = getSelectedRecycleIds();
+            if (ids.length === 0) {
+                AuthUtils.showAlert('error', '请先选择要删除的数据');
+                return;
+            }
+            if (!confirm('警告：批量彻底删除后不可恢复！确定要彻底删除选中的 ' + ids.length + ' 条数据吗？')) {
+                return;
+            }
+            Api.batchHardDeleteBooks(ids).then(function (res) {
+                if (res.code === 20021) {
+                    AuthUtils.showAlert('success', res.msg || '批量彻底删除成功');
+                    loadRecycleList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '批量彻底删除失败');
                 }
             }).catch(function (err) {
                 AuthUtils.showAlert('error', '网络请求失败');

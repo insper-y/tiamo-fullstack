@@ -124,6 +124,10 @@
         hardDeleteBook: function (id) {
             return this.del('/maven/books/hard/' + id);
         },
+        /** 批量彻底删除商品（仅管理员） */
+        batchHardDeleteBooks: function (ids) {
+            return this.post('/maven/books/hard/batch', { ids: ids });
+        },
         /* ---- 数据导出接口 ---- */
         /** 通用文件下载方法 */
         downloadFile: function (url, defaultFilename) {

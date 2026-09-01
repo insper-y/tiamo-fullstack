@@ -176,4 +176,18 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
         }
         return result;
     }
+
+    @Override
+    public boolean batchHardDelete(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return false;
+        }
+        boolean result = baseMapper.batchHardDeleteByIds(ids) > 0;
+        if (result) {
+            cacheService.clearBooksCache();
+            cacheService.clearRecycleCache();
+            log.info("批量彻底删除商品成功，数量: {}，已清除商品和回收站缓存", ids.size());
+        }
+        return result;
+    }
 }

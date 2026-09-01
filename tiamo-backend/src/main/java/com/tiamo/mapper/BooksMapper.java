@@ -2,6 +2,7 @@ package com.tiamo.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.tiamo.entity.Books;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -81,4 +82,15 @@ public interface BooksMapper extends BaseMapper<Books> {
             "</script>"
     })
     int batchSoftDeleteByIds(@Param("ids") List<Integer> ids, @Param("deletedTime") LocalDateTime deletedTime, @Param("deletedBy") String deletedBy);
+
+    /**
+     * 批量彻底删除 - 从数据库物理删除
+     */
+    @Delete({
+            "<script>",
+            "DELETE FROM books WHERE id IN",
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>",
+            "</script>"
+    })
+    int batchHardDeleteByIds(@Param("ids") List<Integer> ids);
 }

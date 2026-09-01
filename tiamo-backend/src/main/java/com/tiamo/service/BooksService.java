@@ -59,4 +59,9 @@ public interface BooksService extends IService<Books> {
      * 彻底删除（从数据库移除）
      */
     boolean hardDelete(Integer id);
+
+    /**
+     * 批量彻底删除（从数据库物理移除）
+     */
+    boolean batchHardDelete(List<Integer> ids);
 }

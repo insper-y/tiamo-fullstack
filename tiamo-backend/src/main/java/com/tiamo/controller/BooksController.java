@@ -194,6 +194,27 @@ public class BooksController {
         return new Result<>(Code.DELETE_ERR, null, "彻底删除失败");
     }
 
+    /**
+     * 批量彻底删除（从数据库物理移除，不可恢复，仅管理员）
+     */
+    @PostMapping("/hard/batch")
+    @OperationLog(module = "商品管理", description = "批量彻底删除商品", operationType = "DELETE")
+    public Result<String> batchHardDelete(@RequestBody Map<String, List<Integer>> request,
+                                           @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if (!isAdmin(authHeader)) {
+            return new Result<>(403, null, "无权限操作，仅管理员可批量彻底删除");
+        }
+        List<Integer> ids = request.get("ids");
+        if (ids == null || ids.isEmpty()) {
+            return new Result<>(Code.DELETE_ERR, null, "请选择要彻底删除的数据");
+        }
+        boolean flag = booksService.batchHardDelete(ids);
+        if (flag) {
+            return new Result<>(Code.DELETE_OK, null, "批量彻底删除成功（共" + ids.size() + "条，不可恢复）");
+        }
+        return new Result<>(Code.DELETE_ERR, null, "批量彻底删除失败");
+    }
+
     /* ==================== 辅助方法 ==================== */
 
     /**
