@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>系统运行日志 - Tiamo AI 数据管理</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%236366f1' d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --bg-input: rgba(255, 255, 255, 0.06);
+            --bg-input-focus: rgba(255, 255, 255, 0.1);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --transition: all 0.3s ease;
+        }
+        body.light-theme {
+            --bg-primary: #f0f2f5;
+            --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
+            --bg-input-focus: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .ai-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .ai-bg .grid {
+            position: absolute; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        .ai-bg .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: float 20s ease-in-out infinite; }
+        .ai-bg .orb-1 { width: 400px; height: 400px; background: #6366f1; top: -100px; left: -100px; }
+        .ai-bg .orb-2 { width: 350px; height: 350px; background: #06b6d4; bottom: -100px; right: -100px; animation-delay: -7s; }
+        .ai-bg .orb-3 { width: 300px; height: 300px; background: #8b5cf6; top: 50%; left: 50%; animation-delay: -14s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(30px, -30px); } }
+        .dashboard-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .dashboard-header h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #f1f5f9, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-secondary {
+            padding: 10px 18px; border-radius: var(--radius-md); border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-primary); cursor: pointer; font-size: 13px;
+            transition: var(--transition); font-family: inherit;
+        }
+        .btn-secondary:hover { background: var(--bg-input); border-color: var(--primary); }
+        .btn-primary {
+            padding: 10px 18px; border-radius: var(--radius-md); border: none;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: var(--transition); font-family: inherit;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
+        .btn-primary.btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .btn-danger:hover { box-shadow: 0 4px 12px rgba(239,68,68,0.4); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            padding: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+        .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .stat-value { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+        .stat-value.primary { color: var(--primary); }
+        .stat-value.success { color: var(--success); }
+        .stat-value.error { color: var(--error); }
+        .stat-value.warning { color: var(--warning); }
+        .stat-label { font-size: 13px; color: var(--text-secondary); }
+        .data-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            padding: 24px; margin-bottom: 24px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .data-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+        .data-card-header h2 { font-size: 18px; font-weight: 600; }
+        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .filter-bar select, .filter-bar input {
+            padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--border);
+            background: var(--bg-input); color: var(--text-primary); font-size: 13px; font-family: inherit;
+        }
+        .filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: var(--primary); background: var(--bg-input-focus); }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1000px; }
+        .data-table th {
+            text-align: left; padding: 12px 10px; color: var(--text-secondary); font-weight: 500;
+            border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+        }
+        .data-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); color: var(--text-primary); vertical-align: top; }
+        .data-table tr:hover { background: var(--bg-input); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
+        .badge-info { background: rgba(59,130,246,0.15); color: var(--info); }
+        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 12px; }
+        .pagination-info { font-size: 13px; color: var(--text-secondary); }
+        .pagination-buttons { display: flex; gap: 6px; }
+        .pagination-buttons button {
+            min-width: 36px; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-primary); cursor: pointer; font-size: 12px; font-family: inherit;
+        }
+        .pagination-buttons button:hover { border-color: var(--primary); }
+        .pagination-buttons button.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .pagination-buttons button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .loading-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .loading-spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .detail-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
+        }
+        .detail-modal.active { display: flex; }
+        .detail-modal-content {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            padding: 24px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        .detail-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .detail-modal-header h3 { font-size: 18px; }
+        .detail-close { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+        .detail-row { margin-bottom: 12px; }
+        .detail-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-value { font-size: 13px; color: var(--text-primary); word-break: break-all; background: var(--bg-input); padding: 8px 12px; border-radius: 8px; max-height: 200px; overflow-y: auto; font-family: monospace; }
+        @media (max-width: 768px) {
+            .dashboard-container { padding: 12px; }
+            .dashboard-header h1 { font-size: 22px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-value { font-size: 24px; }
+            .data-card { padding: 16px; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .data-table thead { display: none; }
+            .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100% !important; box-sizing: border-box; }
+            .data-table tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg-card); }
+            .data-table td { border: none; padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; max-width: 100% !important; white-space: normal !important; word-break: break-word; }
+            .data-table td::before { content: attr(data-label); font-weight: 500; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; min-width: 55px; flex-shrink: 0; padding-top: 2px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ai-bg">
+        <div class="grid"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>系统运行日志</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="toggleTheme()" title="切换主题">🌙</button>
+                <button class="btn-secondary" onclick="loadStats()">刷新统计</button>
+                <button class="btn-secondary" onclick="loadRunLogs()">刷新日志</button>
+                <button class="btn-secondary" onclick="window.location.href='logs.html'">操作日志</button>
+                <button class="btn-secondary" onclick="window.location.href='dashboard.html'">返回控制台</button>
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value primary" id="statTotal">--</div>
+                <div class="stat-label">总调用量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value info" id="statToday">--</div>
+                <div class="stat-label">今日调用量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value error" id="statError">--</div>
+                <div class="stat-label">异常总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value warning" id="statTodayError">--</div>
+                <div class="stat-label">今日异常数</div>
+            </div>
+        </div>
+
+        <!-- 系统运行状态 -->
+        <div class="data-card">
+            <div class="data-card-header">
+                <h2>系统运行状态</h2>
+            </div>
+            <div id="systemStatus">
+                <div class="loading-state"><div class="loading-spinner"></div>加载中...</div>
+            </div>
+        </div>
+
+        <!-- 运行日志列表 -->
+        <div class="data-card">
+            <div class="data-card-header">
+                <h2>运行日志列表</h2>
+                <button class="btn-primary btn-sm btn-danger" onclick="cleanOldLogs()">清理30天前日志</button>
+            </div>
+            <div class="filter-bar">
+                <select id="filterLevel" onchange="loadRunLogs()">
+                    <option value="">全部层级</option>
+                    <option value="CONTROLLER">Controller</option>
+                    <option value="SERVICE">Service</option>
+                </select>
+                <select id="filterStatus" onchange="loadRunLogs()">
+                    <option value="">全部状态</option>
+                    <option value="SUCCESS">成功</option>
+                    <option value="FAIL">失败</option>
+                </select>
+                <input type="text" id="filterKeyword" placeholder="搜索类名/方法名/操作人/异常..." style="flex:1;min-width:200px;" onkeyup="if(event.key==='Enter')loadRunLogs()">
+                <button class="btn-primary btn-sm" onclick="loadRunLogs()">搜索</button>
+            </div>
+            <div class="table-wrapper">
+                <div id="runLogList">
+                    <div class="loading-state"><div class="loading-spinner"></div>加载中...</div>
+                </div>
+            </div>
+            <div class="pagination">
+                <div class="pagination-info" id="paginationInfo">--</div>
+                <div class="pagination-buttons" id="paginationButtons"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="detail-modal" id="detailModal">
+        <div class="detail-modal-content">
+            <div class="detail-modal-header">
+                <h3>运行日志详情</h3>
+                <button class="detail-close" onclick="closeDetail()">&times;</button>
+            </div>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        var currentPage = 1;
+        var pageSize = 20;
+        var totalPages = 1;
+
+        // 主题切换
+        function toggleTheme() {
+            var body = document.body;
+            var isLight = body.classList.toggle('light-theme');
+            localStorage.setItem('tiamo_theme', isLight ? 'light' : 'dark');
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', isLight ? '#f0f2f5' : '#0a0a1a');
+        }
+        function initTheme() {
+            if (localStorage.getItem('tiamo_theme') === 'light') {
+                document.body.classList.add('light-theme');
+                document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f0f2f5');
+            }
+        }
+
+        // 加载统计数据
+        function loadStats() {
+            fetch(Api.baseUrl + '/api/run-log/stats', {
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200 && data.data) {
+                    var d = data.data;
+                    document.getElementById('statTotal').textContent = d.totalCount || 0;
+                    document.getElementById('statToday').textContent = d.todayCount || 0;
+                    document.getElementById('statError').textContent = d.errorCount || 0;
+                    document.getElementById('statTodayError').textContent = d.todayErrorCount || 0;
+                    renderSystemStatus(d);
+                } else {
+                    AuthUtils.showAlert('error', data.msg || '加载统计失败');
+                }
+            })
+            .catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
+        }
+
+        // 渲染系统运行状态
+        function renderSystemStatus(d) {
+            var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">';
+
+            // 各层级调用统计
+            html += '<div><h4 style="font-size:14px;margin-bottom:10px;color:var(--text-secondary);">各层级调用统计（近24小时）</h4>';
+            if (d.levelStats && d.levelStats.length > 0) {
+                d.levelStats.forEach(function(item) {
+                    var avgCost = item.avg_cost ? Math.round(item.avg_cost) : 0;
+                    var maxCost = item.max_cost || 0;
+                    html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">';
+                    html += '<span style="font-size:13px;">' + item.level + '</span>';
+                    html += '<span style="font-size:13px;color:var(--text-secondary);">' + item.count + '次 / 平均' + avgCost + 'ms / 最大' + maxCost + 'ms</span>';
+                    html += '</div>';
+                });
+            } else {
+                html += '<div style="color:var(--text-muted);font-size:13px;">暂无数据</div>';
+            }
+            html += '</div>';
+
+            // 耗时最长的方法TOP5
+            html += '<div><h4 style="font-size:14px;margin-bottom:10px;color:var(--text-secondary);">耗时最长方法TOP5（近24小时）</h4>';
+            if (d.topSlowMethods && d.topSlowMethods.length > 0) {
+                d.topSlowMethods.slice(0, 5).forEach(function(item, index) {
+                    var avgCost = item.avg_cost ? Math.round(item.avg_cost) : 0;
+                    html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">';
+                    html += '<span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + item.full_method + '">' + (index+1) + '. ' + item.full_method + '</span>';
+                    html += '<span style="font-size:12px;color:var(--warning);margin-left:10px;">平均' + avgCost + 'ms</span>';
+                    html += '</div>';
+                });
+            } else {
+                html += '<div style="color:var(--text-muted);font-size:13px;">暂无数据</div>';
+            }
+            html += '</div>';
+
+            // 异常最多的方法TOP5
+            html += '<div><h4 style="font-size:14px;margin-bottom:10px;color:var(--text-secondary);">异常最多方法TOP5（近7天）</h4>';
+            if (d.topErrorMethods && d.topErrorMethods.length > 0) {
+                d.topErrorMethods.slice(0, 5).forEach(function(item, index) {
+                    html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">';
+                    html += '<span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + item.full_method + '">' + (index+1) + '. ' + item.full_method + '</span>';
+                    html += '<span style="font-size:12px;color:var(--error);margin-left:10px;">' + item.error_count + '次</span>';
+                    html += '</div>';
+                });
+            } else {
+                html += '<div style="color:var(--text-muted);font-size:13px;">暂无异常</div>';
+            }
+            html += '</div>';
+
+            html += '</div>';
+            document.getElementById('systemStatus').innerHTML = html;
+        }
+
+        // 加载运行日志列表
+        function loadRunLogs() {
+            var level = document.getElementById('filterLevel').value;
+            var status = document.getElementById('filterStatus').value;
+            var keyword = document.getElementById('filterKeyword').value.trim();
+
+            var params = new URLSearchParams({
+                page: currentPage,
+                size: pageSize
+            });
+            if (level) params.append('level', level);
+            if (status) params.append('status', status);
+            if (keyword) params.append('keyword', keyword);
+
+            document.getElementById('runLogList').innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>加载中...</div>';
+
+            fetch(Api.baseUrl + '/api/run-log/list?' + params.toString(), {
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200 && data.data) {
+                    renderRunLogs(data.data.records || []);
+                    renderPagination(data.data);
+                } else if (data.code === 403) {
+                    document.getElementById('runLogList').innerHTML = '<div class="empty-state" style="color:var(--error);">无权限访问，仅管理员可查看</div>';
+                } else {
+                    document.getElementById('runLogList').innerHTML = '<div class="empty-state">' + (data.msg || '加载失败') + '</div>';
+                }
+            })
+            .catch(function() {
+                document.getElementById('runLogList').innerHTML = '<div class="empty-state">网络请求失败</div>';
+            });
+        }
+
+        // 渲染运行日志列表
+        function renderRunLogs(logs) {
+            if (!logs || logs.length === 0) {
+                document.getElementById('runLogList').innerHTML = '<div class="empty-state">暂无运行日志</div>';
+                return;
+            }
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th>ID</th><th>时间</th><th>层级</th><th>类名</th><th>方法名</th>' +
+                '<th>耗时</th><th>状态</th><th>操作人</th><th>操作</th>' +
+                '</tr></thead><tbody>';
+            logs.forEach(function(log) {
+                var time = log.createTime ? log.createTime.replace('T', ' ') : '-';
+                var levelBadge = log.level === 'CONTROLLER'
+                    ? '<span class="badge badge-info">Controller</span>'
+                    : '<span class="badge badge-warning">Service</span>';
+                var statusBadge = log.status === 'SUCCESS'
+                    ? '<span class="badge badge-success">成功</span>'
+                    : '<span class="badge badge-error">失败</span>';
+                var costColor = log.costTime > 1000 ? 'var(--error)' : (log.costTime > 500 ? 'var(--warning)' : 'var(--text-primary)');
+                html += '<tr>' +
+                    '<td data-label="ID">' + log.id + '</td>' +
+                    '<td data-label="时间" style="white-space:nowrap;font-size:12px;color:var(--text-muted);">' + time + '</td>' +
+                    '<td data-label="层级">' + levelBadge + '</td>' +
+                    '<td data-label="类名" style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (log.className || '') + '">' + (log.className || '-') + '</td>' +
+                    '<td data-label="方法名" style="font-size:12px;">' + (log.methodName || '-') + '</td>' +
+                    '<td data-label="耗时" style="color:' + costColor + ';font-weight:600;">' + (log.costTime != null ? log.costTime + 'ms' : '-') + '</td>' +
+                    '<td data-label="状态">' + statusBadge + '</td>' +
+                    '<td data-label="操作人">' + (log.username || '匿名') + '</td>' +
+                    '<td data-label="操作"><button class="btn-primary btn-sm" onclick="showDetail(' + log.id + ')">详情</button></td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('runLogList').innerHTML = html;
+        }
+
+        // 渲染分页
+        function renderPagination(pageData) {
+            totalPages = pageData.pages || 1;
+            var total = pageData.total || 0;
+            document.getElementById('paginationInfo').textContent = '共 ' + total + ' 条，第 ' + currentPage + '/' + totalPages + ' 页';
+
+            var html = '';
+            html += '<button onclick="goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>首页</button>';
+            html += '<button onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>上一页</button>';
+
+            var start = Math.max(1, currentPage - 2);
+            var end = Math.min(totalPages, currentPage + 2);
+            for (var i = start; i <= end; i++) {
+                html += '<button onclick="goToPage(' + i + ')" class="' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+            }
+
+            html += '<button onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>下一页</button>';
+            html += '<button onclick="goToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>末页</button>';
+
+            document.getElementById('paginationButtons').innerHTML = html;
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadRunLogs();
+        }
+
+        // 显示详情
+        function showDetail(id) {
+            fetch(Api.baseUrl + '/api/run-log/' + id, {
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200 && data.data) {
+                    var log = data.data;
+                    var html = '';
+                    html += '<div class="detail-row"><div class="detail-label">ID</div><div class="detail-value">' + log.id + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">时间</div><div class="detail-value">' + (log.createTime || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">层级</div><div class="detail-value">' + (log.level || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">类名</div><div class="detail-value">' + (log.className || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">方法名</div><div class="detail-value">' + (log.methodName || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">全限定名</div><div class="detail-value">' + (log.fullMethod || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">耗时</div><div class="detail-value">' + (log.costTime != null ? log.costTime + 'ms' : '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">状态</div><div class="detail-value">' + (log.status || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">操作人</div><div class="detail-value">' + (log.username || '匿名') + ' (ID: ' + (log.userId || '-') + ')</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">IP</div><div class="detail-value">' + (log.ip || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">URL</div><div class="detail-value">' + (log.url || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">入参</div><div class="detail-value">' + (log.params || '-') + '</div></div>';
+                    html += '<div class="detail-row"><div class="detail-label">返回值</div><div class="detail-value">' + (log.result || '-') + '</div></div>';
+                    if (log.exception) {
+                        html += '<div class="detail-row"><div class="detail-label">异常信息</div><div class="detail-value" style="color:var(--error);">' + log.exception + '</div></div>';
+                    }
+                    if (log.exceptionStack) {
+                        html += '<div class="detail-row"><div class="detail-label">异常堆栈</div><div class="detail-value" style="color:var(--error);max-height:300px;">' + log.exceptionStack + '</div></div>';
+                    }
+                    document.getElementById('detailContent').innerHTML = html;
+                    document.getElementById('detailModal').classList.add('active');
+                } else {
+                    AuthUtils.showAlert('error', data.msg || '加载详情失败');
+                }
+            })
+            .catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // 清理旧日志
+        function cleanOldLogs() {
+            AuthUtils.showConfirm({
+                title: '清理日志',
+                message: '确定要清理30天之前的所有运行日志吗？此操作不可恢复！',
+                type: 'danger',
+                confirmText: '确认清理'
+            }).then(function(confirmed) {
+                if (!confirmed) return;
+                fetch(Api.baseUrl + '/api/run-log/clean?days=30', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code === 200) {
+                        AuthUtils.showAlert('success', data.msg || '清理成功');
+                        loadRunLogs();
+                        loadStats();
+                    } else {
+                        AuthUtils.showAlert('error', data.msg || '清理失败');
+                    }
+                })
+                .catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
+            });
+        }
+
+        // 初始化
+        initTheme();
+        loadStats();
+        loadRunLogs();
+    </script>
+</body>
+</html>

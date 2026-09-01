@@ -250,6 +250,7 @@
                 </div>
                 <span class="role-badge" id="roleBadge">普通用户</span>
                 <button class="logout-btn" id="logBtn" style="color:var(--primary-light);display:none;">操作日志</button>
+                <button class="logout-btn" id="runLogBtn" style="color:var(--accent-light);display:none;" onclick="window.location.href='run-log.html'">运行日志</button>
                 <button class="logout-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
                 <button class="logout-btn" onclick="logout()">退出登录</button>
             </div>
@@ -617,6 +618,7 @@
             // 管理员显示标签页导航和操作日志按钮
             document.getElementById('tabsNav').style.display = 'flex';
             document.getElementById('logBtn').style.display = 'inline-block';
+            document.getElementById('runLogBtn').style.display = 'inline-block';
             document.getElementById('logBtn').onclick = function() { window.location.href = 'logs.html'; };
             // 默认显示用户列表标签页
             switchTab('users');
@@ -631,6 +633,7 @@
             document.getElementById('tabMyApprovalBtn').style.display = 'inline-block';
             document.getElementById('tabBooksBtn').classList.add('active');
             document.getElementById('logBtn').style.display = 'none';
+            document.getElementById('runLogBtn').style.display = 'none';
             document.getElementById('exportCard').style.display = 'none';
             switchTab('books');
         }

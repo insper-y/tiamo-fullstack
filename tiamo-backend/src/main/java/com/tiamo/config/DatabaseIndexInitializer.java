@@ -21,6 +21,9 @@ public class DatabaseIndexInitializer implements CommandLineRunner {
     public void run(String... args) {
         System.out.println("[索引优化] 开始检查并创建数据库索引...");
 
+        // 创建 sys_run_log 表（系统运行日志）
+        createRunLogTable();
+
         // sys_user 表索引
         createIndexIfNotExists("sys_user", "idx_username", "username");
         createIndexIfNotExists("sys_user", "idx_phone", "phone");
@@ -67,6 +70,50 @@ public class DatabaseIndexInitializer implements CommandLineRunner {
             System.out.println("[索引优化] 已创建索引: " + tableName + "." + indexName + " (" + columns + ")");
         } catch (Exception e) {
             System.out.println("[索引优化] 创建索引失败 " + tableName + "." + indexName + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * 创建 sys_run_log 表（系统运行日志）
+     */
+    private void createRunLogTable() {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'sys_run_log'",
+                    Integer.class);
+            if (count != null && count > 0) {
+                System.out.println("[运行日志] sys_run_log 表已存在，跳过创建");
+                return;
+            }
+            String sql = """
+                    CREATE TABLE sys_run_log (
+                        id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+                        class_name VARCHAR(255) COMMENT '类名',
+                        method_name VARCHAR(100) COMMENT '方法名',
+                        full_method VARCHAR(355) COMMENT '方法全限定名',
+                        params TEXT COMMENT '入参（JSON）',
+                        result TEXT COMMENT '返回值（JSON）',
+                        cost_time BIGINT COMMENT '耗时（毫秒）',
+                        exception VARCHAR(500) COMMENT '异常信息',
+                        exception_stack TEXT COMMENT '异常堆栈',
+                        level VARCHAR(20) COMMENT '调用层级：CONTROLLER/SERVICE',
+                        user_id BIGINT COMMENT '操作人ID',
+                        username VARCHAR(100) COMMENT '操作人用户名',
+                        ip VARCHAR(50) COMMENT '客户端IP',
+                        url VARCHAR(255) COMMENT '请求URL',
+                        status VARCHAR(20) COMMENT '调用状态：SUCCESS/FAIL',
+                        create_time DATETIME COMMENT '创建时间',
+                        INDEX idx_level (level),
+                        INDEX idx_status (status),
+                        INDEX idx_create_time (create_time),
+                        INDEX idx_full_method (full_method),
+                        INDEX idx_user_id (user_id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统运行日志表'
+                    """;
+            jdbcTemplate.execute(sql);
+            System.out.println("[运行日志] sys_run_log 表创建成功");
+        } catch (Exception e) {
+            System.out.println("[运行日志] 创建 sys_run_log 表失败: " + e.getMessage());
         }
     }
 }
