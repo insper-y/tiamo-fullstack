@@ -2,6 +2,7 @@ package com.tiamo.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.tiamo.entity.SysRunLog;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -41,6 +42,6 @@ public interface SysRunLogMapper extends BaseMapper<SysRunLog> {
     /**
      * 清理指定天数之前的日志
      */
-    @Select("DELETE FROM sys_run_log WHERE create_time < DATE_SUB(NOW(), INTERVAL #{days} DAY)")
+    @Delete("DELETE FROM sys_run_log WHERE create_time < DATE_SUB(NOW(), INTERVAL #{days} DAY)")
     int cleanOldLogs(@Param("days") int days);
 }
