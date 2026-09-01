@@ -29,7 +29,10 @@
         }
         body.light-theme .ai-bg { background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 50%, #f0fdf4 100%); }
         body.light-theme .data-card { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        body.light-theme .modal { box-shadow: 0 20px 60px rgba(0,0,0,0.15); background: #ffffff; }
+        body.light-theme .modal { box-shadow: 0 20px 60px rgba(0,0,0,0.15); background: #ffffff !important; }
+        body.light-theme #bookModal .modal,
+        body.light-theme #deleteModal .modal,
+        body.light-theme #tableStructureModal .modal { background: #ffffff !important; }
         /* ========== 简约美观全局样式 ========== */
         * { -webkit-tap-highlight-color: transparent; }
         body { overflow-x: hidden; -webkit-font-smoothing: antialiased; letter-spacing: 0.01em; }
@@ -589,7 +592,7 @@
 
     <!-- 新增/编辑弹窗 -->
     <div class="modal-overlay" id="bookModal">
-        <div class="modal">
+        <div class="modal" style="background:#1e1e2e;">
             <div class="modal-header">
                 <h3 id="modalTitle">新增商品</h3>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -656,7 +659,7 @@
 
     <!-- 删除确认弹窗 -->
     <div class="modal-overlay" id="deleteModal">
-        <div class="modal" style="max-width:400px;">
+        <div class="modal" style="max-width:400px;background:#1e1e2e;">
             <div class="modal-header">
                 <h3>确认删除</h3>
                 <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
@@ -671,7 +674,7 @@
 
     <!-- 表结构弹窗 -->
     <div class="modal-overlay" id="tableStructureModal" onclick="if(event.target===this)closeTableStructure()">
-        <div class="modal" style="max-width:900px;max-height:80vh;">
+        <div class="modal" style="max-width:900px;max-height:80vh;background:#1e1e2e;">
             <div class="modal-header">
                 <h3 id="tableStructureTitle">表结构</h3>
                 <button class="modal-close" onclick="closeTableStructure()">&times;</button>
