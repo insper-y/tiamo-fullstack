@@ -185,6 +185,10 @@
         downloadLogs: function () {
             return this.downloadFile('/api/export/logs', '操作日志.csv');
         },
+        /** 下载运行日志（仅管理员） */
+        downloadRunLogs: function () {
+            return this.downloadFile('/api/export/run-logs', '运行日志.csv');
+        },
         /* ---- 管理员接口 ---- */
         /** 获取用户列表（仅管理员） */
         getUserList: function () {
@@ -223,6 +227,10 @@
         /** 导出操作日志到邮箱（仅管理员） */
         exportLogsToEmail: function (email) {
             return this.post('/api/export/logs/email', { email: email });
+        },
+        /** 导出运行日志到邮箱（仅管理员） */
+        exportRunLogsToEmail: function (email) {
+            return this.post('/api/export/run-logs/email', { email: email });
         },
 
         /* ---- 回收站审批接口 ---- */

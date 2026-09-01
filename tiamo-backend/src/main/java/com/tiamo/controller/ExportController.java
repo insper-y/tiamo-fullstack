@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tiamo.annotation.OperationLog;
 import com.tiamo.entity.Books;
 import com.tiamo.entity.SysOperationLog;
+import com.tiamo.entity.SysRunLog;
 import com.tiamo.entity.SysUser;
 import com.tiamo.security.JwtUtil;
 import com.tiamo.service.BooksService;
 import com.tiamo.service.EmailService;
 import com.tiamo.service.SysOperationLogService;
+import com.tiamo.service.SysRunLogService;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -44,6 +46,9 @@ public class ExportController {
 
     @Autowired
     private SysOperationLogService operationLogService;
+
+    @Autowired
+    private SysRunLogService runLogService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -212,6 +217,45 @@ public class ExportController {
 
             String filename = "操作日志_" + getDateString() + ".csv";
             return createCsvResponse(baos.toByteArray(), filename);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(("导出失败: " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    /**
+     * 导出运行日志（仅管理员）
+     * GET /api/export/run-logs
+     */
+    @GetMapping("/run-logs")
+    @OperationLog(module = "数据导出", description = "导出运行日志", operationType = "EXPORT")
+    public ResponseEntity<byte[]> exportRunLogs(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String username) {
+        // 验证管理员权限
+        SysUser currentUser = getAdminUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(403).body("无权限访问，仅管理员可操作".getBytes(StandardCharsets.UTF_8));
+        }
+
+        try {
+            LambdaQueryWrapper<SysRunLog> wrapper = new LambdaQueryWrapper<>();
+            if (level != null && !level.isEmpty()) {
+                wrapper.eq(SysRunLog::getLevel, level);
+            }
+            if (status != null && !status.isEmpty()) {
+                wrapper.eq(SysRunLog::getStatus, status);
+            }
+            if (username != null && !username.isEmpty()) {
+                wrapper.like(SysRunLog::getUsername, username);
+            }
+            wrapper.orderByDesc(SysRunLog::getCreateTime);
+
+            List<SysRunLog> logs = runLogService.list(wrapper);
+            byte[] csvData = generateRunLogsCsv(logs);
+            String filename = "运行日志_" + getDateString() + ".csv";
+            return createCsvResponse(csvData, filename);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(("导出失败: " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
         }
@@ -410,6 +454,56 @@ public class ExportController {
         }
     }
 
+    /**
+     * 导出运行日志并发送到邮箱（仅管理员）
+     * POST /api/export/run-logs/email
+     */
+    @PostMapping("/run-logs/email")
+    @OperationLog(module = "数据导出", description = "导出运行日志到邮箱", operationType = "EXPORT")
+    public ResponseEntity<java.util.Map<String, Object>> exportRunLogsToEmail(
+            @RequestBody java.util.Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        try {
+            SysUser currentUser = getAdminUser(authHeader);
+            if (currentUser == null) {
+                result.put("code", 403);
+                result.put("msg", "无权限访问，仅管理员可操作");
+                return ResponseEntity.status(403).body(result);
+            }
+
+            String toEmail = request.get("email");
+            if (toEmail == null || toEmail.isEmpty()) {
+                result.put("code", 400);
+                result.put("msg", "邮箱地址不能为空");
+                return ResponseEntity.badRequest().body(result);
+            }
+
+            List<SysRunLog> logs = runLogService.list(
+                    new LambdaQueryWrapper<SysRunLog>().orderByDesc(SysRunLog::getCreateTime));
+            byte[] csvData = generateRunLogsCsv(logs);
+            String filename = "运行日志_" + getDateString() + ".csv";
+
+            String htmlContent = "<div style='font-family: sans-serif; max-width: 600px; margin: 0 auto;'>"
+                    + "<h2 style='color: #6366f1;'>Tiamo AI 数据导出</h2>"
+                    + "<p>您好，附件是您请求导出的运行日志，共 " + logs.size() + " 条记录。</p>"
+                    + "<p>导出时间：" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "</p>"
+                    + "<p style='color: #94a3b8; font-size: 12px; margin-top: 20px;'>此邮件由系统自动发送，请勿直接回复。</p>"
+                    + "</div>";
+
+            emailService.sendEmailWithAttachment(toEmail, "【数据导出】运行日志", htmlContent, csvData, filename);
+
+            result.put("code", 200);
+            result.put("msg", "运行日志已发送到邮箱: " + toEmail);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("msg", "发送失败: " + e.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+
     /* ==================== CSV生成辅助方法 ==================== */
 
     private byte[] generateUsersCsv(List<SysUser> users) throws Exception {
@@ -458,6 +552,33 @@ public class ExportController {
                     escapeCsv(log.getOperationType()), escapeCsv(log.getUsername()),
                     escapeCsv(log.getIp()), escapeCsv(log.getMethod()), escapeCsv(log.getUrl()),
                     escapeCsv(log.getStatus()), log.getCostTime() != null ? log.getCostTime() : 0,
+                    formatDateTime(log.getCreateTime())));
+        }
+        writer.flush();
+        writer.close();
+        return baos.toByteArray();
+    }
+
+    /**
+     * 生成运行日志CSV
+     */
+    private byte[] generateRunLogsCsv(List<SysRunLog> logs) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8));
+        writer.write('\uFEFF');
+        writer.println("ID,类名,方法名,全限定名,调用层级,操作人,IP地址,请求URL,状态,耗时(ms),异常信息,创建时间");
+        for (SysRunLog log : logs) {
+            String exception = log.getException() != null ? log.getException().replace(",", "，").replace("\n", " ") : "";
+            if (exception.length() > 200) {
+                exception = exception.substring(0, 200) + "...";
+            }
+            writer.println(String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s",
+                    log.getId(), escapeCsv(log.getClassName()), escapeCsv(log.getMethodName()),
+                    escapeCsv(log.getFullMethod()), escapeCsv(log.getLevel()),
+                    escapeCsv(log.getUsername()), escapeCsv(log.getIp()),
+                    escapeCsv(log.getUrl()), escapeCsv(log.getStatus()),
+                    log.getCostTime() != null ? log.getCostTime() : 0,
+                    escapeCsv(exception),
                     formatDateTime(log.getCreateTime())));
         }
         writer.flush();
