@@ -213,7 +213,7 @@
         <div class="data-card">
             <div class="data-card-header">
                 <h2>运行日志列表</h2>
-                <button class="btn-primary btn-sm btn-danger" onclick="cleanOldLogs()">清理30天前日志</button>
+                <button class="btn-primary btn-sm btn-danger" onclick="showCleanModal()">清理旧日志</button>
             </div>
             <div class="filter-bar">
                 <select id="filterLevel" onchange="loadRunLogs()">
@@ -249,6 +249,34 @@
                 <button class="detail-close" onclick="closeDetail()">&times;</button>
             </div>
             <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- 清理天数选择弹窗 -->
+    <div class="detail-modal" id="cleanModal">
+        <div class="detail-modal-content" style="max-width:400px;">
+            <div class="detail-modal-header">
+                <h3>清理运行日志</h3>
+                <button class="detail-close" onclick="closeCleanModal()">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">选择要清理多少天之前的运行日志，此操作不可恢复！</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                    <button class="btn-secondary" onclick="setCleanDays(7)" style="flex:1;min-width:80px;">7天前</button>
+                    <button class="btn-secondary" onclick="setCleanDays(15)" style="flex:1;min-width:80px;">15天前</button>
+                    <button class="btn-secondary" onclick="setCleanDays(30)" style="flex:1;min-width:80px;">30天前</button>
+                    <button class="btn-secondary" onclick="setCleanDays(90)" style="flex:1;min-width:80px;">90天前</button>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">自定义天数</label>
+                    <input type="number" id="cleanDaysInput" value="30" min="1" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-size:14px;font-family:inherit;box-sizing:border-box;" oninput="updateCleanDaysPreview()">
+                </div>
+                <p id="cleanPreview" style="color:var(--warning);font-size:13px;margin-bottom:20px;">将清理 30 天之前的所有运行日志</p>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-secondary" onclick="closeCleanModal()" style="flex:1;">取消</button>
+                    <button class="btn-primary" onclick="confirmClean()" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);">确认清理</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -488,31 +516,43 @@
             document.getElementById('detailModal').classList.remove('active');
         }
 
-        // 清理旧日志
-        function cleanOldLogs() {
-            AuthUtils.showConfirm({
-                title: '清理日志',
-                message: '确定要清理30天之前的所有运行日志吗？此操作不可恢复！',
-                type: 'danger',
-                confirmText: '确认清理'
-            }).then(function(confirmed) {
-                if (!confirmed) return;
-                fetch(APP_CONFIG.API_BASE + '/api/run-log/clean?days=30', {
-                    method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
-                })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.code === 200) {
-                        AuthUtils.showAlert('success', data.msg || '清理成功');
-                        loadRunLogs();
-                        loadStats();
-                    } else {
-                        AuthUtils.showAlert('error', data.msg || '清理失败');
-                    }
-                })
-                .catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
-            });
+        // 清理旧日志 - 显示天数选择弹窗
+        function showCleanModal() {
+            document.getElementById('cleanDaysInput').value = 30;
+            updateCleanDaysPreview();
+            document.getElementById('cleanModal').classList.add('active');
+        }
+        function closeCleanModal() {
+            document.getElementById('cleanModal').classList.remove('active');
+        }
+        function setCleanDays(days) {
+            document.getElementById('cleanDaysInput').value = days;
+            updateCleanDaysPreview();
+        }
+        function updateCleanDaysPreview() {
+            var days = parseInt(document.getElementById('cleanDaysInput').value) || 30;
+            if (days < 1) days = 1;
+            document.getElementById('cleanPreview').textContent = '将清理 ' + days + ' 天之前的所有运行日志';
+        }
+        function confirmClean() {
+            var days = parseInt(document.getElementById('cleanDaysInput').value) || 30;
+            if (days < 1) days = 1;
+            closeCleanModal();
+            fetch(APP_CONFIG.API_BASE + '/api/run-log/clean?days=' + days, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200) {
+                    AuthUtils.showAlert('success', data.msg || '清理成功');
+                    loadRunLogs();
+                    loadStats();
+                } else {
+                    AuthUtils.showAlert('error', data.msg || '清理失败');
+                }
+            })
+            .catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
         }
 
         // 初始化
