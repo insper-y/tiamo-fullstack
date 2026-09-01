@@ -323,6 +323,7 @@
             <button class="tab-btn active" id="tabUsersBtn" onclick="switchTab('users')">用户列表</button>
             <button class="tab-btn" id="tabBooksBtn" onclick="switchTab('books')">商品数据</button>
             <button class="tab-btn" id="tabRecycleBtn" onclick="switchTab('recycle')">回收站</button>
+            <button class="tab-btn" id="tabDatabaseBtn" onclick="switchTab('database')">数据库管理</button>
             <button class="tab-btn" id="tabMyApprovalBtn" onclick="switchTab('myApproval')" style="display:none;">我的申请</button>
             <button class="tab-btn" id="tabApprovalBtn" onclick="switchTab('approval')" style="display:none;">待审批 <span id="pendingBadge" style="background:#ef4444;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
         </div>
@@ -496,6 +497,42 @@
             <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
                 提示：用户列表和操作日志仅管理员可操作；CSV文件可用Excel打开，UTF-8编码。
             </p>
+        </div>
+
+        <!-- 数据库管理标签页（仅管理员可见） -->
+        <div class="tab-content" id="databaseTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>数据库管理</h2>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn-primary btn-sm" onclick="loadDatabaseTables()">刷新表列表</button>
+                        <button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="backupDatabase()">备份数据库</button>
+                    </div>
+                </div>
+                <!-- 表列表 -->
+                <div id="dbTablesContainer">
+                    <div class="loading-state">加载中...</div>
+                </div>
+            </div>
+            <!-- 表结构详情 -->
+            <div class="data-card" id="tableStructureCard" style="display:none;">
+                <div class="data-card-header">
+                    <h2 id="tableStructureTitle">表结构</h2>
+                    <button class="btn-secondary btn-sm" onclick="closeTableStructure()">关闭</button>
+                </div>
+                <div id="tableStructureContent"></div>
+            </div>
+            <!-- SQL查询执行器 -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>SQL查询执行器（仅支持SELECT/SHOW/DESC）</h2>
+                    <button class="btn-primary btn-sm" onclick="executeSqlQuery()">执行查询</button>
+                </div>
+                <textarea id="sqlQueryInput" class="form-input" rows="4" placeholder="输入SQL查询语句，例如：SELECT * FROM sys_user LIMIT 10" style="width:100%;font-family:monospace;font-size:13px;margin-bottom:12px;"></textarea>
+                <div id="sqlQueryResult">
+                    <div style="color:var(--text-muted);font-size:13px;">输入SQL语句后点击"执行查询"按钮</div>
+                </div>
+            </div>
         </div>
 
         <!-- 邮件配置（仅管理员可见） -->
@@ -715,7 +752,188 @@
             } else if (tabName === 'runLog') {
                 var iframe = document.getElementById('runLogIframe');
                 if (iframe) iframe.src = 'run-log.html';
+            } else if (tabName === 'database' && isAdmin) {
+                loadDatabaseTables();
             }
+        }
+
+        // ==================== 数据库管理 ====================
+        // 加载数据库表列表
+        function loadDatabaseTables() {
+            if (!isAdmin) return;
+            document.getElementById('dbTablesContainer').innerHTML = '<div class="loading-state">加载中...</div>';
+            fetch(APP_CONFIG.API_BASE + '/api/db/tables', {
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200 && data.data) {
+                    var tables = data.data;
+                    var html = '<div class="table-wrapper"><table class="data-table"><thead><tr>' +
+                        '<th>表名</th><th>记录数</th><th>数据大小(MB)</th><th>索引大小(MB)</th><th>注释</th><th>操作</th>' +
+                        '</tr></thead><tbody>';
+                    tables.forEach(function(table) {
+                        html += '<tr>' +
+                            '<td><strong>' + (table.tableName || '-') + '</strong></td>' +
+                            '<td>' + (table.rowCount != null ? table.rowCount.toLocaleString() : '-') + '</td>' +
+                            '<td>' + (table.dataSizeMB != null ? table.dataSizeMB : '-') + '</td>' +
+                            '<td>' + (table.indexSizeMB != null ? table.indexSizeMB : '-') + '</td>' +
+                            '<td>' + (table.comment || '-') + '</td>' +
+                            '<td><button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);" onclick="showTableStructure('' + table.tableName + '')">查看结构</button></td>' +
+                            '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    document.getElementById('dbTablesContainer').innerHTML = html;
+                } else {
+                    document.getElementById('dbTablesContainer').innerHTML = '<div class="empty-state">' + (data.msg || '加载失败') + '</div>';
+                }
+            })
+            .catch(function() {
+                document.getElementById('dbTablesContainer').innerHTML = '<div class="empty-state">网络请求失败</div>';
+            });
+        }
+
+        // 显示表结构
+        function showTableStructure(tableName) {
+            document.getElementById('tableStructureCard').style.display = 'block';
+            document.getElementById('tableStructureTitle').textContent = '表结构 - ' + tableName;
+            document.getElementById('tableStructureContent').innerHTML = '<div class="loading-state">加载中...</div>';
+            fetch(APP_CONFIG.API_BASE + '/api/db/tables/' + tableName + '/structure', {
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200 && data.data) {
+                    var columns = data.data.columns || [];
+                    var indexes = data.data.indexes || [];
+                    var html = '<h3 style="font-size:14px;margin-bottom:10px;color:var(--text-primary);">字段信息</h3>';
+                    html += '<div class="table-wrapper"><table class="data-table"><thead><tr>' +
+                        '<th>序号</th><th>字段名</th><th>类型</th><th>允许空</th><th>键</th><th>默认值</th><th>额外</th><th>注释</th>' +
+                        '</tr></thead><tbody>';
+                    columns.forEach(function(col) {
+                        html += '<tr>' +
+                            '<td>' + (col.position || '-') + '</td>' +
+                            '<td><strong>' + (col.columnName || '-') + '</strong></td>' +
+                            '<td>' + (col.columnType || '-') + '</td>' +
+                            '<td>' + (col.nullable || '-') + '</td>' +
+                            '<td>' + (col.columnKey || '-') + '</td>' +
+                            '<td>' + (col.defaultValue != null ? col.defaultValue : '-') + '</td>' +
+                            '<td>' + (col.extra || '-') + '</td>' +
+                            '<td>' + (col.comment || '-') + '</td>' +
+                            '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    if (indexes.length > 0) {
+                        html += '<h3 style="font-size:14px;margin:20px 0 10px;color:var(--text-primary);">索引信息</h3>';
+                        html += '<div class="table-wrapper"><table class="data-table"><thead><tr>' +
+                            '<th>索引名</th><th>字段</th><th>是否唯一</th><th>顺序</th><th>类型</th>' +
+                            '</tr></thead><tbody>';
+                        indexes.forEach(function(idx) {
+                            html += '<tr>' +
+                                '<td><strong>' + (idx.indexName || '-') + '</strong></td>' +
+                                '<td>' + (idx.columnName || '-') + '</td>' +
+                                '<td>' + (idx.nonUnique == 0 ? '是' : '否') + '</td>' +
+                                '<td>' + (idx.seqInIndex || '-') + '</td>' +
+                                '<td>' + (idx.indexType || '-') + '</td>' +
+                                '</tr>';
+                        });
+                        html += '</tbody></table></div>';
+                    }
+                    document.getElementById('tableStructureContent').innerHTML = html;
+                } else {
+                    document.getElementById('tableStructureContent').innerHTML = '<div class="empty-state">' + (data.msg || '加载失败') + '</div>';
+                }
+            })
+            .catch(function() {
+                document.getElementById('tableStructureContent').innerHTML = '<div class="empty-state">网络请求失败</div>';
+            });
+        }
+
+        // 关闭表结构
+        function closeTableStructure() {
+            document.getElementById('tableStructureCard').style.display = 'none';
+        }
+
+        // 执行SQL查询
+        function executeSqlQuery() {
+            var sql = document.getElementById('sqlQueryInput').value.trim();
+            if (!sql) {
+                AuthUtils.showAlert('error', '请输入SQL语句');
+                return;
+            }
+            document.getElementById('sqlQueryResult').innerHTML = '<div class="loading-state">执行中...</div>';
+            fetch(APP_CONFIG.API_BASE + '/api/db/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + Auth.getToken()
+                },
+                body: JSON.stringify({ sql: sql })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200 && data.data) {
+                    var results = data.data.results || [];
+                    var columns = data.data.columns || [];
+                    var html = '<div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary);">查询成功，共返回 ' + results.length + ' 条记录</div>';
+                    if (results.length > 0) {
+                        html += '<div class="table-wrapper" style="max-height:400px;overflow:auto;"><table class="data-table"><thead><tr>';
+                        columns.forEach(function(col) {
+                            html += '<th>' + col + '</th>';
+                        });
+                        html += '</tr></thead><tbody>';
+                        results.forEach(function(row) {
+                            html += '<tr>';
+                            columns.forEach(function(col) {
+                                var value = row[col];
+                                html += '<td>' + (value != null ? String(value).substring(0, 100) : 'NULL') + '</td>';
+                            });
+                            html += '</tr>';
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<div class="empty-state">查询结果为空</div>';
+                    }
+                    document.getElementById('sqlQueryResult').innerHTML = html;
+                } else {
+                    document.getElementById('sqlQueryResult').innerHTML = '<div class="empty-state" style="color:var(--error);">' + (data.msg || '查询失败') + '</div>';
+                }
+            })
+            .catch(function(err) {
+                document.getElementById('sqlQueryResult').innerHTML = '<div class="empty-state" style="color:var(--error);">网络请求失败: ' + err.message + '</div>';
+            });
+        }
+
+        // 备份数据库
+        function backupDatabase() {
+            if (!confirm('确定要备份整个数据库吗？这可能需要一些时间。')) {
+                return;
+            }
+            AuthUtils.showAlert('info', '正在备份数据库，请稍候...');
+            fetch(APP_CONFIG.API_BASE + '/api/db/backup', {
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200 && data.data) {
+                    // 下载SQL文件
+                    var blob = new Blob([data.data], { type: 'text/sql;charset=utf-8' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'tiamo_db_backup_' + new Date().toISOString().slice(0,10) + '.sql';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    AuthUtils.showAlert('success', data.msg || '备份成功，文件已开始下载');
+                } else {
+                    AuthUtils.showAlert('error', data.msg || '备份失败');
+                }
+            })
+            .catch(function() {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
         }
         // 加载用户列表（仅管理员）
         function loadUserList() {
