@@ -762,7 +762,7 @@
         function loadDatabaseTables() {
             if (!isAdmin) return;
             document.getElementById('dbTablesContainer').innerHTML = '<div class="loading-state">加载中...</div>';
-            fetch(APP_CONFIG.API_BASE + '/api/db/tables', {
+            fetch(API_BASE + '/api/db/tables', {
                 headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
             })
             .then(function(res) { return res.json(); })
@@ -798,7 +798,7 @@
             document.getElementById('tableStructureCard').style.display = 'block';
             document.getElementById('tableStructureTitle').textContent = '表结构 - ' + tableName;
             document.getElementById('tableStructureContent').innerHTML = '<div class="loading-state">加载中...</div>';
-            fetch(APP_CONFIG.API_BASE + '/api/db/tables/' + tableName + '/structure', {
+            fetch(API_BASE + '/api/db/tables/' + tableName + '/structure', {
                 headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
             })
             .then(function(res) { return res.json(); })
@@ -862,7 +862,7 @@
                 return;
             }
             document.getElementById('sqlQueryResult').innerHTML = '<div class="loading-state">执行中...</div>';
-            fetch(APP_CONFIG.API_BASE + '/api/db/query', {
+            fetch(API_BASE + '/api/db/query', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -910,7 +910,7 @@
                 return;
             }
             AuthUtils.showAlert('info', '正在备份数据库，请稍候...');
-            fetch(APP_CONFIG.API_BASE + '/api/db/backup', {
+            fetch(API_BASE + '/api/db/backup', {
                 headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
             })
             .then(function(res) { return res.json(); })
