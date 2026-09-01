@@ -445,7 +445,7 @@
             <div class="data-card">
                 <div class="data-card-header">
                     <h2>待审批申请</h2>
-                    <button class="btn-primary" onclick="loadPendingApprovals()">刷新</button>
+                    <button class="btn-primary" onclick="loadPendingApprovals(true)">刷新</button>
                 </div>
                 <div class="table-wrapper">
                     <div id="approvalList">
@@ -740,6 +740,8 @@
         if (isAdmin) {
             updatePendingBadge();
             setInterval(updatePendingBadge, 30000); // 每30秒刷新一次
+            // 预加载待审批列表数据，切换标签页时立即显示
+            setTimeout(function() { loadPendingApprovals(); }, 500);
         }
         // 主题切换初始化
         initTheme();
@@ -1895,12 +1897,25 @@
             });
         }
 
-        // 管理员加载待审批列表
-        function loadPendingApprovals() {
+        // 管理员加载待审批列表（带前端缓存，避免重复请求）
+        var pendingApprovalCache = null;
+        var pendingApprovalCacheTime = 0;
+        function loadPendingApprovals(forceRefresh) {
             if (!isAdmin) return;
+            var listEl = document.getElementById('approvalList');
+            // 如果有缓存且未过期（30秒），直接使用缓存
+            if (!forceRefresh && pendingApprovalCache && (Date.now() - pendingApprovalCacheTime) < 30000) {
+                renderApprovalList(pendingApprovalCache);
+                return;
+            }
+            // 显示加载中
+            if (listEl) {
+                listEl.innerHTML = '<div class="loading-state">加载中...</div>';
+            }
             Api.getPendingApprovals().then(function (res) {
-                var listEl = document.getElementById('approvalList');
                 if (res.code === 200 && res.data) {
+                    pendingApprovalCache = res.data;
+                    pendingApprovalCacheTime = Date.now();
                     renderApprovalList(res.data);
                 } else {
                     listEl.innerHTML = '<div class="empty-state">' + (res.msg || '加载失败') + '</div>';
@@ -1968,7 +1983,8 @@
             Api.approveApproval(id, '').then(function (res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', '审批通过，操作已执行');
-                    loadPendingApprovals();
+                    pendingApprovalCache = null;
+                    loadPendingApprovals(true);
                     updatePendingBadge();
                 } else {
                     AuthUtils.showAlert('error', res.msg || '操作失败');
@@ -1984,7 +2000,8 @@
             Api.rejectApproval(id, remark || '').then(function (res) {
                 if (res.code === 200) {
                     AuthUtils.showAlert('success', '已拒绝申请');
-                    loadPendingApprovals();
+                    pendingApprovalCache = null;
+                    loadPendingApprovals(true);
                     updatePendingBadge();
                 } else {
                     AuthUtils.showAlert('error', res.msg || '操作失败');

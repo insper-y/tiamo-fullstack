@@ -7,6 +7,7 @@ import com.tiamo.entity.RecycleApproval;
 import com.tiamo.mapper.BooksMapper;
 import com.tiamo.mapper.RecycleApprovalMapper;
 import com.tiamo.service.BooksService;
+import com.tiamo.service.CacheService;
 import com.tiamo.service.RecycleApprovalService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,11 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
     private BooksService booksService;
     @Autowired
     private BooksMapper booksMapper;
+    @Autowired
+    private CacheService cacheService;
+
+    // 待审批列表缓存key
+    private static final String PENDING_CACHE_KEY = "tiamo:approval:pending:list";
 
     @PostConstruct
     public void init() {
@@ -62,6 +68,8 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
         approval.setStatus("PENDING");
         approval.setApplyTime(LocalDateTime.now());
         this.save(approval);
+        // 清除待审批列表缓存
+        cacheService.delete(PENDING_CACHE_KEY);
         return approval;
     }
 
@@ -89,7 +97,10 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
         approval.setApproverName(approverName);
         approval.setRemark(remark);
         approval.setApproveTime(LocalDateTime.now());
-        return this.updateById(approval);
+        boolean result = this.updateById(approval);
+        // 清除待审批列表缓存
+        cacheService.delete(PENDING_CACHE_KEY);
+        return result;
     }
 
     @Override
@@ -108,14 +119,26 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
         approval.setApproverName(approverName);
         approval.setRemark(remark);
         approval.setApproveTime(LocalDateTime.now());
-        return this.updateById(approval);
+        boolean result = this.updateById(approval);
+        // 清除待审批列表缓存
+        cacheService.delete(PENDING_CACHE_KEY);
+        return result;
     }
 
     @Override
     public List<RecycleApproval> getPendingList() {
-        return this.list(new LambdaQueryWrapper<RecycleApproval>()
+        // 先从缓存获取
+        List<RecycleApproval> cachedList = cacheService.getList(PENDING_CACHE_KEY, RecycleApproval.class);
+        if (cachedList != null) {
+            return cachedList;
+        }
+        // 缓存未命中，查询数据库
+        List<RecycleApproval> list = this.list(new LambdaQueryWrapper<RecycleApproval>()
                 .eq(RecycleApproval::getStatus, "PENDING")
                 .orderByDesc(RecycleApproval::getApplyTime));
+        // 写入缓存，过期时间1分钟
+        cacheService.set(PENDING_CACHE_KEY, list, 1, java.util.concurrent.TimeUnit.MINUTES);
+        return list;
     }
 
     @Override
