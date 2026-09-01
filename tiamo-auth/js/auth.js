@@ -200,7 +200,7 @@
         },
         /** 删除用户（仅管理员，只能删除普通用户） */
         deleteUser: function (userId) {
-            return this.delete('/api/admin/users/' + userId);
+            return this.del('/api/admin/users/' + userId);
         },
         /* ---- 系统配置接口 ---- */
         /** 获取邮件配置（仅管理员） */
