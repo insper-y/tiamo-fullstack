@@ -127,9 +127,39 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 768px) {
+            .dashboard-container { padding: 12px; max-width: 100%; }
             .dashboard-header { flex-direction: column; gap: 12px; text-align: center; }
+            .dashboard-header h1 { font-size: 20px; }
+            .header-actions { flex-wrap: wrap; justify-content: center; gap: 8px; }
             .filter-bar { flex-direction: column; align-items: stretch; }
-            .filter-item select, .filter-item input { width: 100%; }
+            .filter-item select, .filter-item input { width: 100%; min-height: 42px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-card .stat-value { font-size: 22px; }
+            .data-card { padding: 16px; }
+            .btn-secondary { min-height: 40px; padding: 8px 14px; font-size: 13px; }
+            .pagination { flex-wrap: wrap; gap: 4px; justify-content: center; }
+            .pagination button { min-width: 36px; min-height: 36px; padding: 6px 10px; font-size: 12px; }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-container { padding: 8px; }
+            .dashboard-header h1 { font-size: 18px; }
+            .stat-grid { grid-template-columns: 1fr !important; gap: 8px; }
+            .stat-card { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+            .stat-card .stat-value { font-size: 20px; }
+            .data-card { padding: 12px; border-radius: 12px; }
+            /* 表格改为卡片式布局 */
+            .data-table thead { display: none; }
+            .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+            .data-table tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg-card); }
+            .data-table tr:hover { background: var(--bg-input); }
+            .data-table td { border: none; padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 10px; max-width: 100% !important; white-space: normal !important; word-break: break-all; }
+            .data-table td::before { content: attr(data-label); font-weight: 500; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; min-width: 60px; flex-shrink: 0; }
+            .data-table td:last-child { border-bottom: none; }
+            .btn-secondary { min-height: 42px; padding: 10px 14px; font-size: 13px; border-radius: 10px; }
+            .pagination button { min-width: 32px; min-height: 32px; padding: 5px 8px; font-size: 11px; border-radius: 8px; }
+            .pagination-info { font-size: 11px; }
         }
     </style>
 </head>
@@ -344,14 +374,14 @@
                 var time = log.createTime ? log.createTime.replace('T', ' ') : '-';
 
                 html += '<tr>' +
-                    '<td style="white-space:nowrap;font-size:12px;color:var(--text-muted);">' + time + '</td>' +
-                    '<td>' + (log.username || '匿名') + '</td>' +
-                    '<td>' + (log.module || '-') + '</td>' +
-                    '<td>' + (log.description || '-') + '</td>' +
-                    '<td><span class="badge ' + typeClass + '">' + typeText + '</span></td>' +
-                    '<td style="font-family:monospace;font-size:11px;">' + (log.ip || '-') + '</td>' +
-                    '<td>' + (log.costTime != null ? log.costTime + 'ms' : '-') + '</td>' +
-                    '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
+                    '<td data-label="时间" style="white-space:nowrap;font-size:12px;color:var(--text-muted);">' + time + '</td>' +
+                    '<td data-label="操作人">' + (log.username || '匿名') + '</td>' +
+                    '<td data-label="模块">' + (log.module || '-') + '</td>' +
+                    '<td data-label="操作">' + (log.description || '-') + '</td>' +
+                    '<td data-label="类型"><span class="badge ' + typeClass + '">' + typeText + '</span></td>' +
+                    '<td data-label="IP" style="font-family:monospace;font-size:11px;">' + (log.ip || '-') + '</td>' +
+                    '<td data-label="耗时">' + (log.costTime != null ? log.costTime + 'ms' : '-') + '</td>' +
+                    '<td data-label="结果"><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
                     '</tr>';
             });
 

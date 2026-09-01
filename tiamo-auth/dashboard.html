@@ -141,12 +141,91 @@
         }
         .btn-cancel:hover { background: var(--bg-input-focus); }
         .table-wrapper { overflow-x: auto; }
-        @media (max-width: 600px) {
-            .dashboard-header { flex-direction: column; gap: 16px; text-align: center; }
-            .data-table { font-size: 12px; }
-            .data-table th, .data-table td { padding: 8px; }
+        /* ========== 平板适配 (768px) ========== */
+        @media (max-width: 768px) {
+            .dashboard-container { padding: 12px; max-width: 100%; }
+            .dashboard-header { flex-direction: column; gap: 12px; text-align: center; padding: 16px; }
+            .dashboard-header h1 { font-size: 20px; }
+            .user-info { flex-wrap: wrap; justify-content: center; gap: 8px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-card .stat-value { font-size: 22px; }
+            .data-card { padding: 16px; }
+            .data-card-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .tabs-nav { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; }
+            .tabs-nav::-webkit-scrollbar { display: none; }
+            .tabs-nav button { white-space: nowrap; flex-shrink: 0; padding: 10px 16px; font-size: 13px; }
             .form-grid { grid-template-columns: 1fr; }
-            .tabs-nav { flex-wrap: wrap; }
+            .search-bar { flex-direction: column; gap: 8px; }
+            .search-bar .form-input { max-width: 100% !important; width: 100%; }
+            .action-buttons { flex-wrap: wrap; gap: 6px; }
+            .btn-primary, .btn-cancel, .btn-edit, .btn-delete { min-height: 40px; padding: 8px 14px; font-size: 13px; }
+            .btn-sm { min-height: 36px; padding: 6px 10px; font-size: 12px; }
+            .modal { max-width: 90vw !important; max-height: 85vh; padding: 20px; margin: 10px; }
+            .modal-header { margin-bottom: 16px; }
+            .modal-footer { flex-direction: column-reverse; gap: 8px; }
+            .modal-footer button { width: 100%; }
+            .pagination { flex-wrap: wrap; gap: 4px; justify-content: center; }
+            .pagination button { min-width: 36px; min-height: 36px; padding: 6px 10px; font-size: 12px; }
+            .pagination select { min-height: 36px; padding: 6px 8px; font-size: 12px; }
+            .data-table { font-size: 13px; }
+            .data-table th, .data-table td { padding: 10px 8px; }
+        }
+
+        /* ========== 手机适配 (480px) ========== */
+        @media (max-width: 480px) {
+            .dashboard-container { padding: 8px; }
+            .dashboard-header { padding: 12px; gap: 10px; }
+            .dashboard-header h1 { font-size: 18px; }
+            .user-info { font-size: 12px; }
+            .user-avatar { width: 36px; height: 36px; font-size: 14px; }
+            .role-badge { font-size: 11px; padding: 3px 8px; }
+            .stat-grid { grid-template-columns: 1fr !important; gap: 8px; }
+            .stat-card { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+            .stat-card .stat-value { font-size: 20px; }
+            .stat-card .stat-label { font-size: 12px; }
+            .data-card { padding: 12px; border-radius: 12px; }
+            .data-card h2 { font-size: 16px; }
+            .data-card-header { margin-bottom: 12px; }
+            .tabs-nav { gap: 4px; }
+            .tabs-nav button { padding: 8px 12px; font-size: 12px; min-height: 38px; }
+            /* 表格改为卡片式布局 */
+            .data-table thead { display: none; }
+            .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+            .data-table tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg-card); }
+            .data-table tr:hover { background: var(--bg-input); }
+            .data-table td { border: none; padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 10px; max-width: 100% !important; white-space: normal !important; word-break: break-all; }
+            .data-table td::before { content: attr(data-label); font-weight: 500; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; min-width: 70px; flex-shrink: 0; }
+            .data-table td:last-child { border-bottom: none; }
+            .data-table td .action-buttons { width: 100%; justify-content: flex-end; }
+            .form-input, .form-select, textarea { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+            .btn-primary, .btn-cancel, .btn-edit, .btn-delete { min-height: 44px; padding: 10px 16px; font-size: 14px; border-radius: 10px; }
+            .btn-sm { min-height: 38px; padding: 7px 12px; font-size: 12px; border-radius: 8px; }
+            .modal { max-width: 95vw !important; max-height: 90vh; padding: 16px; margin: 8px; border-radius: 16px; }
+            .modal-header h3 { font-size: 16px; }
+            .modal-close { width: 36px; height: 36px; font-size: 18px; }
+            .modal-body { max-height: 60vh; overflow-y: auto; }
+            .pagination { gap: 3px; }
+            .pagination button { min-width: 34px; min-height: 34px; padding: 5px 8px; font-size: 11px; border-radius: 8px; }
+            .pagination .page-info { font-size: 11px; }
+            .pagination select { min-height: 34px; padding: 5px 6px; font-size: 11px; }
+            .logout-btn { min-height: 38px; padding: 8px 12px; font-size: 12px; }
+            .toast { max-width: 90vw; font-size: 13px; padding: 12px 16px; }
+        }
+
+        /* ========== 小屏手机适配 (360px) ========== */
+        @media (max-width: 360px) {
+            .dashboard-container { padding: 6px; }
+            .dashboard-header h1 { font-size: 16px; }
+            .stat-card .stat-value { font-size: 18px; }
+            .data-card { padding: 10px; }
+            .data-card h2 { font-size: 15px; }
+            .tabs-nav button { padding: 7px 10px; font-size: 11px; }
+            .data-table td { font-size: 12px; padding: 5px 0; }
+            .data-table td::before { font-size: 10px; min-width: 60px; }
+            .btn-primary, .btn-cancel, .btn-edit, .btn-delete { min-height: 42px; padding: 8px 12px; font-size: 13px; }
+            .modal { padding: 14px; }
+            .pagination button { min-width: 30px; min-height: 30px; padding: 4px 6px; font-size: 10px; }
         }
     </style>
 </head>
@@ -638,15 +717,15 @@
                     ? '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="toggleUserStatus(' + item.id + ', 0)"' + (isSelf ? ' disabled title="不能禁用自己"' : '') + '>禁用</button>'
                     : '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="toggleUserStatus(' + item.id + ', 1)">启用</button>';
                 html += '<tr>' +
-                    '<td>' + item.id + '</td>' +
-                    '<td>' + (item.username || '-') + '</td>' +
-                    '<td>' + (item.nickname || '-') + '</td>' +
-                    '<td>' + (item.email || '-') + '</td>' +
-                    '<td>' + (item.phone || '-') + '</td>' +
-                    '<td>' + roleSelect + '</td>' +
-                    '<td>' + (item.statusName || '-') + '</td>' +
-                    '<td>' + (item.createTime || '-') + '</td>' +
-                    '<td style="white-space:nowrap;">' + statusBtn + '</td>' +
+                    '<td data-label="ID">' + item.id + '</td>' +
+                    '<td data-label="用户名">' + (item.username || '-') + '</td>' +
+                    '<td data-label="昵称">' + (item.nickname || '-') + '</td>' +
+                    '<td data-label="邮箱">' + (item.email || '-') + '</td>' +
+                    '<td data-label="手机号">' + (item.phone || '-') + '</td>' +
+                    '<td data-label="角色">' + roleSelect + '</td>' +
+                    '<td data-label="状态">' + (item.statusName || '-') + '</td>' +
+                    '<td data-label="注册时间">' + (item.createTime || '-') + '</td>' +
+                    '<td data-label="操作" style="white-space:nowrap;">' + statusBtn + '</td>' +
                     '</tr>';
             });
             html += '</tbody></table>';
@@ -817,15 +896,15 @@
                 '</tr></thead><tbody>';
             pageData.forEach(function (item) {
                 html += '<tr>' +
-                    '<td><input type="checkbox" class="book-checkbox" value="' + item.id + '" onchange="updateBatchBtnState()"></td>' +
-                    '<td>' + item.id + '</td>' +
-                    '<td>' + (item.name || '-') + '</td>' +
-                    '<td>' + (item.type || '-') + '</td>' +
-                    '<td>' + (item.description || '-') + '</td>' +
-                    '<td>' + (item.aa || '-') + '</td>' +
-                    '<td>' + (item.bd || '-') + '</td>' +
-                    '<td title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
-                    '<td style="white-space:nowrap;">' +
+                    '<td data-label="选择"><input type="checkbox" class="book-checkbox" value="' + item.id + '" onchange="updateBatchBtnState()"></td>' +
+                    '<td data-label="ID">' + item.id + '</td>' +
+                    '<td data-label="分销软件">' + (item.name || '-') + '</td>' +
+                    '<td data-label="微信账号">' + (item.type || '-') + '</td>' +
+                    '<td data-label="软件账号">' + (item.description || '-') + '</td>' +
+                    '<td data-label="微信备注">' + (item.aa || '-') + '</td>' +
+                    '<td data-label="商品ID">' + (item.bd || '-') + '</td>' +
+                    '<td data-label="商品标题" title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
+                    '<td data-label="操作" style="white-space:nowrap;">' +
                         '<button class="btn-primary btn-sm btn-edit" onclick="openEditModal(' + item.id + ')">编辑</button>' +
                         '<button class="btn-primary btn-sm btn-delete" onclick="openDeleteModal(' + item.id + ')">删除</button>' +
                     '</td>' +
@@ -1232,16 +1311,16 @@
             pageData.forEach(function (item) {
                 html += '<tr>';
                 if (isAdmin) {
-                    html += '<td><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>';
+                    html += '<td data-label="选择"><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>';
                 }
-                html += '<td>' + item.id + '</td>' +
-                    '<td>' + (item.name || '-') + '</td>' +
-                    '<td>' + (item.type || '-') + '</td>' +
-                    '<td>' + (item.description || '-') + '</td>' +
-                    '<td title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
-                    '<td>' + (item.deletedTime || '-') + '</td>' +
-                    '<td>' + (item.deletedBy || '-') + '</td>' +
-                    '<td style="white-space:nowrap;">';
+                html += '<td data-label="ID">' + item.id + '</td>' +
+                    '<td data-label="分销软件">' + (item.name || '-') + '</td>' +
+                    '<td data-label="微信账号">' + (item.type || '-') + '</td>' +
+                    '<td data-label="软件账号">' + (item.description || '-') + '</td>' +
+                    '<td data-label="商品标题" title="' + (item.ax || '') + '">' + (item.ax || '-') + '</td>' +
+                    '<td data-label="删除时间">' + (item.deletedTime || '-') + '</td>' +
+                    '<td data-label="删除人">' + (item.deletedBy || '-') + '</td>' +
+                    '<td data-label="操作" style="white-space:nowrap;">';
                 if (isAdmin) {
                     html += '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="restoreBook(' + item.id + ')">恢复</button>' +
                         '<button class="btn-primary btn-sm btn-delete" onclick="hardDeleteBook(' + item.id + ')">彻底删除</button>';
@@ -1469,13 +1548,13 @@
                 var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
                 var typeColor = item.approvalType === 'RESTORE' ? '#10b981' : '#ef4444';
                 html += '<tr>' +
-                    '<td>' + item.id + '</td>' +
-                    '<td>' + item.bookId + '</td>' +
-                    '<td>' + (item.bookName || '-') + '</td>' +
-                    '<td><span style="color:' + typeColor + ';font-weight:600;">' + typeName + '</span></td>' +
-                    '<td>' + (item.applicantName || '-') + '</td>' +
-                    '<td>' + (item.applyTime || '-') + '</td>' +
-                    '<td style="white-space:nowrap;">' +
+                    '<td data-label="ID">' + item.id + '</td>' +
+                    '<td data-label="商品ID">' + item.bookId + '</td>' +
+                    '<td data-label="商品名称">' + (item.bookName || '-') + '</td>' +
+                    '<td data-label="申请类型"><span style="color:' + typeColor + ';font-weight:600;">' + typeName + '</span></td>' +
+                    '<td data-label="申请人">' + (item.applicantName || '-') + '</td>' +
+                    '<td data-label="申请时间">' + (item.applyTime || '-') + '</td>' +
+                    '<td data-label="操作" style="white-space:nowrap;">' +
                         '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="approveApproval(' + item.id + ')">通过</button>' +
                         '<button class="btn-primary btn-sm btn-delete" onclick="rejectApproval(' + item.id + ')">拒绝</button>' +
                     '</td>' +
@@ -1587,16 +1666,16 @@
                 else if (item.status === 'APPROVED') { statusText = '已通过'; statusColor = '#10b981'; }
                 else { statusText = '已拒绝'; statusColor = '#ef4444'; }
                 html += '<tr>' +
-                    '<td>' + item.id + '</td>' +
-                    '<td>' + item.bookId + '</td>' +
-                    '<td>' + (item.bookName || '-') + '</td>' +
-                    '<td><span style="color:' + typeColor + ';font-weight:600;">' + typeName + '</span></td>' +
-                    '<td style="white-space:nowrap;font-size:12px;">' + (item.applyTime || '-') + '</td>' +
-                    '<td><span style="color:' + statusColor + ';font-weight:600;">' + statusText + '</span></td>' +
-                    '<td>' + (item.approverName || '-') + '</td>' +
-                    '<td style="white-space:nowrap;font-size:12px;">' + (item.approveTime || '-') + '</td>' +
-                    '<td style="max-width:200px;word-break:break-all;color:' + (item.status === 'REJECTED' ? '#ef4444' : 'var(--text-muted)') + ';">' + (item.remark || '-') + '</td>' +
-                    '<td style="white-space:nowrap;">' +
+                    '<td data-label="ID">' + item.id + '</td>' +
+                    '<td data-label="商品ID">' + item.bookId + '</td>' +
+                    '<td data-label="商品名称">' + (item.bookName || '-') + '</td>' +
+                    '<td data-label="申请类型"><span style="color:' + typeColor + ';font-weight:600;">' + typeName + '</span></td>' +
+                    '<td data-label="申请时间" style="white-space:nowrap;font-size:12px;">' + (item.applyTime || '-') + '</td>' +
+                    '<td data-label="状态"><span style="color:' + statusColor + ';font-weight:600;">' + statusText + '</span></td>' +
+                    '<td data-label="审批人">' + (item.approverName || '-') + '</td>' +
+                    '<td data-label="审批时间" style="white-space:nowrap;font-size:12px;">' + (item.approveTime || '-') + '</td>' +
+                    '<td data-label="拒绝原因" style="max-width:200px;word-break:break-all;color:' + (item.status === 'REJECTED' ? '#ef4444' : 'var(--text-muted)') + ';">' + (item.remark || '-') + '</td>' +
+                    '<td data-label="操作" style="white-space:nowrap;">' +
                         '<button class="btn-primary btn-sm btn-delete" onclick="deleteMyApproval(' + item.id + ')">删除</button>' +
                     '</td>' +
                     '</tr>';
