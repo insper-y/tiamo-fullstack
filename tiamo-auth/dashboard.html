@@ -277,11 +277,22 @@
         </div>
         <!-- 标签页导航（仅管理员可见） -->
         <div class="tabs-nav" id="tabsNav" style="display:none;">
-            <button class="tab-btn active" id="tabUsersBtn" onclick="switchTab('users')">用户列表</button>
+            <button class="tab-btn active" id="tabRunLogBtn" onclick="switchTab('runLog')">运行日志</button>
+            <button class="tab-btn" id="tabUsersBtn" onclick="switchTab('users')">用户列表</button>
             <button class="tab-btn" id="tabBooksBtn" onclick="switchTab('books')">商品数据</button>
             <button class="tab-btn" id="tabRecycleBtn" onclick="switchTab('recycle')">回收站</button>
             <button class="tab-btn" id="tabMyApprovalBtn" onclick="switchTab('myApproval')" style="display:none;">我的申请</button>
             <button class="tab-btn" id="tabApprovalBtn" onclick="switchTab('approval')" style="display:none;">待审批 <span id="pendingBadge" style="background:#ef4444;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
+        </div>
+        <!-- 运行日志标签页（仅管理员可见） -->
+        <div class="tab-content active" id="runLogTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>系统运行日志</h2>
+                    <button class="btn-primary btn-sm" onclick="document.getElementById('runLogIframe').src='run-log.html'">刷新</button>
+                </div>
+                <iframe id="runLogIframe" src="run-log.html" style="width:100%;height:800px;border:none;border-radius:8px;"></iframe>
+            </div>
         </div>
         <!-- 用户列表标签页（仅管理员可见） -->
         <div class="tab-content" id="usersTab">
@@ -620,14 +631,15 @@
             document.getElementById('logBtn').style.display = 'inline-block';
             document.getElementById('runLogBtn').style.display = 'inline-block';
             document.getElementById('logBtn').onclick = function() { window.location.href = 'logs.html'; };
-            // 默认显示用户列表标签页
-            switchTab('users');
+            // 默认显示运行日志标签页
+            switchTab('runLog');
         } else {
             roleBadge.textContent = '普通用户';
             roleBadge.className = 'role-badge role-user';
             roleStat.textContent = '普通用户';
             // 普通用户显示商品数据、回收站、我的申请，隐藏用户列表和待审批
             document.getElementById('tabsNav').style.display = 'flex';
+            document.getElementById('tabRunLogBtn').style.display = 'none';
             document.getElementById('tabUsersBtn').style.display = 'none';
             document.getElementById('tabApprovalBtn').style.display = 'none';
             document.getElementById('tabMyApprovalBtn').style.display = 'inline-block';
@@ -669,6 +681,9 @@
                 loadPendingApprovals();
             } else if (tabName === 'myApproval') {
                 loadMyApprovals();
+            } else if (tabName === 'runLog') {
+                var iframe = document.getElementById('runLogIframe');
+                if (iframe) iframe.src = 'run-log.html';
             }
         }
         // 加载用户列表（仅管理员）
