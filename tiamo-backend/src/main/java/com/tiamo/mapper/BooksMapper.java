@@ -93,4 +93,10 @@ public interface BooksMapper extends BaseMapper<Books> {
             "</script>"
     })
     int batchHardDeleteByIds(@Param("ids") List<Integer> ids);
+
+    /**
+     * 单个彻底删除 - 从数据库物理删除（绕过MyBatis-Plus逻辑删除插件）
+     */
+    @Delete("DELETE FROM books WHERE id = #{id}")
+    int hardDeleteById(@Param("id") Integer id);
 }

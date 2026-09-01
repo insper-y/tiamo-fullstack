@@ -168,7 +168,8 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
 
     @Override
     public boolean hardDelete(Integer id) {
-        boolean result = this.removeById(id);
+        // 使用原生SQL执行物理删除，绕过MyBatis-Plus逻辑删除插件
+        boolean result = baseMapper.hardDeleteById(id) > 0;
         if (result) {
             cacheService.clearBooksCache();
             cacheService.clearRecycleCache();
