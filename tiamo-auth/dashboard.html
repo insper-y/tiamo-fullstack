@@ -715,8 +715,13 @@
                     '<option value="1"' + (item.role === 1 ? ' selected' : '') + '>管理员</option>' +
                     '</select>';
                 var statusBtn = item.status === 1
-                    ? '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="toggleUserStatus(' + item.id + ', 0)"' + (isSelf ? ' disabled title="不能禁用自己"' : '') + '>禁用</button>'
-                    : '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="toggleUserStatus(' + item.id + ', 1)">启用</button>';
+                    ? '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);margin-right:6px;" onclick="toggleUserStatus(' + item.id + ', 0)"' + (isSelf ? ' disabled title="不能禁用自己"' : '') + '>禁用</button>'
+                    : '<button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);margin-right:6px;" onclick="toggleUserStatus(' + item.id + ', 1)">启用</button>';
+                // 删除按钮：只能删除普通用户，不能删除自己和管理员
+                var canDelete = !isSelf && item.role === 0;
+                var deleteBtn = canDelete
+                    ? '<button class="btn-primary btn-sm btn-delete" onclick="deleteUser(' + item.id + ', \'' + (item.username || '') + '\')">删除</button>'
+                    : '';
                 html += '<tr>' +
                     '<td data-label="ID">' + item.id + '</td>' +
                     '<td data-label="用户名">' + (item.username || '-') + '</td>' +
@@ -726,7 +731,7 @@
                     '<td data-label="角色">' + roleSelect + '</td>' +
                     '<td data-label="状态">' + (item.statusName || '-') + '</td>' +
                     '<td data-label="注册时间">' + (item.createTime || '-') + '</td>' +
-                    '<td data-label="操作" style="white-space:nowrap;">' + statusBtn + '</td>' +
+                    '<td data-label="操作" style="white-space:nowrap;">' + statusBtn + deleteBtn + '</td>' +
                     '</tr>';
             });
             html += '</tbody></table>';
@@ -1205,6 +1210,23 @@
                     loadUserList();
                 } else {
                     AuthUtils.showAlert('error', res.msg || '操作失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 删除用户（仅管理员，只能删除普通用户）
+        function deleteUser(userId, username) {
+            if (!confirm('确定要删除用户 "' + username + '" 吗？\n\n删除后不可恢复，该用户的所有数据将被永久删除！')) {
+                return;
+            }
+            Api.deleteUser(userId).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '删除成功');
+                    loadUserList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '删除失败');
                 }
             }).catch(function (err) {
                 AuthUtils.showAlert('error', '网络请求失败');

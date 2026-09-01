@@ -134,6 +134,38 @@ public class AdminController {
     }
 
     /**
+     * 删除用户（仅管理员，只能删除普通用户）
+     * DELETE /api/admin/users/{id}
+     */
+    @DeleteMapping("/users/{id}")
+    @OperationLog(module = "用户管理", description = "删除用户", operationType = "DELETE")
+    public Result<String> deleteUser(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser currentUser = getAdminUser(authHeader);
+        if (currentUser == null) {
+            return new Result<>(403, null, "无权限操作，仅管理员可操作");
+        }
+        // 不允许删除自己
+        if (currentUser.getId().equals(id)) {
+            return new Result<>(400, null, "不能删除自己");
+        }
+        SysUser user = userService.getById(id);
+        if (user == null) {
+            return new Result<>(404, null, "用户不存在");
+        }
+        // 不允许删除管理员
+        if (user.getRole() != null && user.getRole() == 1) {
+            return new Result<>(400, null, "不能删除管理员账户");
+        }
+        boolean flag = userService.removeById(id);
+        if (flag) {
+            return new Result<>(200, null, "已删除用户 " + user.getUsername());
+        }
+        return new Result<>(500, null, "删除失败");
+    }
+
+    /**
      * 从 Token 中获取用户并验证是否为管理员
      */
     private SysUser getAdminUser(String authHeader) {
