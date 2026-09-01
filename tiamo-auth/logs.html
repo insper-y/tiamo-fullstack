@@ -468,17 +468,27 @@
 
         function toggleAutoRefresh() {
             autoRefreshEnabled = !autoRefreshEnabled;
+            localStorage.setItem('tiamo_oplog_autorefresh', autoRefreshEnabled ? '1' : '0');
+            applyAutoRefreshState();
+            if (autoRefreshEnabled) {
+                AuthUtils.showAlert('success', '已开启自动刷新，每30秒刷新一次');
+            } else {
+                AuthUtils.showAlert('info', '已关闭自动刷新');
+            }
+        }
+
+        function applyAutoRefreshState() {
             var btn = document.getElementById('autoRefreshBtn');
             if (autoRefreshEnabled) {
                 btn.textContent = '🔄 自动刷新:开';
                 btn.style.background = 'var(--primary)';
                 btn.style.color = '#fff';
-                // 每30秒自动刷新
-                autoRefreshTimer = setInterval(function() {
-                    loadStats();
-                    loadLogs();
-                }, 30000);
-                AuthUtils.showAlert('success', '已开启自动刷新，每30秒刷新一次');
+                if (!autoRefreshTimer) {
+                    autoRefreshTimer = setInterval(function() {
+                        loadStats();
+                        loadLogs();
+                    }, 30000);
+                }
             } else {
                 btn.textContent = '🔄 自动刷新:关';
                 btn.style.background = '';
@@ -487,7 +497,6 @@
                     clearInterval(autoRefreshTimer);
                     autoRefreshTimer = null;
                 }
-                AuthUtils.showAlert('info', '已关闭自动刷新');
             }
         }
 
@@ -512,6 +521,12 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             initTheme();
+            // 从localStorage恢复自动刷新状态
+            var savedAutoRefresh = localStorage.getItem('tiamo_oplog_autorefresh');
+            if (savedAutoRefresh === '1') {
+                autoRefreshEnabled = true;
+                applyAutoRefreshState();
+            }
             loadStats();
             loadLogs();
             // 管理员显示管理栏
