@@ -797,8 +797,11 @@
         // 主题切换初始化
         initTheme();
         // 侧边栏初始化：手机端默认折叠
+        var sidebarCollapsed = false;
         if (window.innerWidth <= 768) {
-            toggleSidebar();
+            document.querySelector('.sidebar').classList.add('collapsed');
+            document.querySelector('.main-content').classList.add('expanded');
+            sidebarCollapsed = true;
         }
         // 窗口大小变化时处理侧边栏
         window.addEventListener('resize', function() {
@@ -1389,7 +1392,6 @@
             });
         }
         // 侧边栏折叠/展开
-        var sidebarCollapsed = false;
         function toggleSidebar() {
             var sidebar = document.querySelector('.sidebar');
             var mainContent = document.querySelector('.main-content');
