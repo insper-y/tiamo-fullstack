@@ -28,8 +28,8 @@ public class ServerStatusController {
         try {
             // CPU信息
             OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-            double systemCpuLoad = osBean.getSystemCpuLoad() * 100;
-            double processCpuLoad = osBean.getProcessCpuLoad() * 100;
+            double systemCpuLoad = getDoubleFromBean(osBean, "getSystemCpuLoad", 0.0) * 100;
+            double processCpuLoad = getDoubleFromBean(osBean, "getProcessCpuLoad", 0.0) * 100;
             int availableProcessors = osBean.getAvailableProcessors();
 
             Map<String, Object> cpu = new HashMap<>();
@@ -39,10 +39,10 @@ public class ServerStatusController {
             status.put("cpu", cpu);
 
             // 系统内存信息
-            long totalMemory = osBean.getTotalPhysicalMemorySize();
-            long freeMemory = osBean.getFreePhysicalMemorySize();
-            long usedMemory = totalMemory - freeMemory;
-            double memoryUsage = (double) usedMemory / totalMemory * 100;
+            long totalMemory = getLongFromBean(osBean, "getTotalPhysicalMemorySize", 0L);
+            long freeMemory = getLongFromBean(osBean, "getFreePhysicalMemorySize", 0L);
+            long usedMemory = totalMemory > 0 ? totalMemory - freeMemory : 0L;
+            double memoryUsage = totalMemory > 0 ? (double) usedMemory / totalMemory * 100 : 0.0;
 
             Map<String, Object> memory = new HashMap<>();
             memory.put("total", formatBytes(totalMemory));
@@ -60,7 +60,7 @@ public class ServerStatusController {
             long jvmFree = runtime.freeMemory();
             long jvmUsed = jvmTotal - jvmFree;
             long jvmMax = runtime.maxMemory();
-            double jvmUsage = (double) jvmUsed / jvmMax * 100;
+            double jvmUsage = jvmMax > 0 ? (double) jvmUsed / jvmMax * 100 : 0.0;
 
             Map<String, Object> jvm = new HashMap<>();
             jvm.put("total", formatBytes(jvmTotal));
@@ -78,8 +78,8 @@ public class ServerStatusController {
             File root = new File("/");
             long diskTotal = root.getTotalSpace();
             long diskFree = root.getFreeSpace();
-            long diskUsed = diskTotal - diskFree;
-            double diskUsage = (double) diskUsed / diskTotal * 100;
+            long diskUsed = diskTotal > 0 ? diskTotal - diskFree : 0L;
+            double diskUsage = diskTotal > 0 ? (double) diskUsed / diskTotal * 100 : 0.0;
 
             Map<String, Object> disk = new HashMap<>();
             disk.put("total", formatBytes(diskTotal));
@@ -126,7 +126,39 @@ public class ServerStatusController {
 
             return new Result<>(200, status, "获取成功");
         } catch (Exception e) {
+            e.printStackTrace();
             return new Result<>(500, null, "获取服务器状态失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 通过反射调用OperatingSystemMXBean的double方法
+     */
+    private double getDoubleFromBean(OperatingSystemMXBean bean, String methodName, double defaultValue) {
+        try {
+            Object result = bean.getClass().getMethod(methodName).invoke(bean);
+            if (result instanceof Double) {
+                double value = (Double) result;
+                return value >= 0 ? value : defaultValue;
+            }
+            return defaultValue;
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * 通过反射调用OperatingSystemMXBean的long方法
+     */
+    private long getLongFromBean(OperatingSystemMXBean bean, String methodName, long defaultValue) {
+        try {
+            Object result = bean.getClass().getMethod(methodName).invoke(bean);
+            if (result instanceof Long) {
+                return (Long) result;
+            }
+            return defaultValue;
+        } catch (Exception e) {
+            return defaultValue;
         }
     }
 
@@ -134,6 +166,7 @@ public class ServerStatusController {
      * 格式化字节数
      */
     private String formatBytes(long bytes) {
+        if (bytes <= 0) return "0 B";
         if (bytes < 1024) return bytes + " B";
         if (bytes < 1024 * 1024) return String.format("%.2f KB", bytes / 1024.0);
         if (bytes < 1024 * 1024 * 1024) return String.format("%.2f MB", bytes / (1024.0 * 1024));
