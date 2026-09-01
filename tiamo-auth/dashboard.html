@@ -468,7 +468,7 @@
                 </div>
             </div>
         </div>
-        <!-- 数据导出标签页（仅管理员可见） -->
+        <!-- 数据导出标签页（管理员全部功能，普通用户仅商品数据） -->
         <div class="tab-content" id="exportTab">
             <div class="data-card">
                 <div class="data-card-header">
@@ -479,35 +479,35 @@
                     <input type="email" id="exportEmail" class="form-input" placeholder="请输入接收邮箱" style="max-width:400px;">
                 </div>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-                    <button class="btn-primary" onclick="downloadUsers()" style="background:linear-gradient(135deg,#10b981,#059669);">
+                    <button class="btn-primary export-admin-only" onclick="downloadUsers()" style="background:linear-gradient(135deg,#10b981,#059669);">
                         下载用户列表
                     </button>
                     <button class="btn-primary" onclick="downloadBooks()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
                         下载商品数据
                     </button>
-                    <button class="btn-primary" onclick="downloadLogs()" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                    <button class="btn-primary export-admin-only" onclick="downloadLogs()" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
                         下载操作日志
                     </button>
-                    <button class="btn-primary" onclick="downloadRunLogs()" style="background:linear-gradient(135deg,#ef4444,#dc2626);">
+                    <button class="btn-primary export-admin-only" onclick="downloadRunLogs()" style="background:linear-gradient(135deg,#ef4444,#dc2626);">
                         下载运行日志
                     </button>
                 </div>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                    <button class="btn-primary" onclick="sendUsersToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                    <button class="btn-primary export-admin-only" onclick="sendUsersToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
                         发送用户列表到邮箱
                     </button>
                     <button class="btn-primary" onclick="sendBooksToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
                         发送商品数据到邮箱
                     </button>
-                    <button class="btn-primary" onclick="sendLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                    <button class="btn-primary export-admin-only" onclick="sendLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
                         发送操作日志到邮箱
                     </button>
-                    <button class="btn-primary" onclick="sendRunLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                    <button class="btn-primary export-admin-only" onclick="sendRunLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
                         发送运行日志到邮箱
                     </button>
                 </div>
                 <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
-                    提示：用户列表和操作日志仅管理员可操作；CSV文件可用Excel打开，UTF-8编码。
+                    提示：用户列表、操作日志、运行日志仅管理员可操作，普通用户仅支持商品数据；CSV文件可用Excel打开，UTF-8编码。
                 </p>
             </div>
         </div>
@@ -724,14 +724,18 @@
             roleBadge.textContent = '普通用户';
             roleBadge.className = 'role-badge role-user';
             roleStat.textContent = '普通用户';
-            // 普通用户显示商品数据、回收站、我的申请，隐藏用户列表和待审批
+            // 普通用户显示商品数据、回收站、我的申请、数据导出，隐藏用户列表、待审批、数据库管理、邮件配置
             document.getElementById('tabsNav').style.display = 'flex';
             document.getElementById('tabUsersBtn').style.display = 'none';
             document.getElementById('tabApprovalBtn').style.display = 'none';
+            document.getElementById('tabDatabaseBtn').style.display = 'none';
+            document.getElementById('tabEmailConfigBtn').style.display = 'none';
             document.getElementById('tabMyApprovalBtn').style.display = 'inline-block';
             document.getElementById('tabBooksBtn').classList.add('active');
             document.getElementById('logBtn').style.display = 'none';
             document.getElementById('runLogBtn').style.display = 'none';
+            // 普通用户数据导出仅显示商品数据相关按钮
+            document.querySelectorAll('.export-admin-only').forEach(function(el) { el.style.display = 'none'; });
             switchTab('books');
         }
         // 加载邮件配置（仅管理员可见）
@@ -775,11 +779,13 @@
             } else if (tabName === 'runLog') {
                 var iframe = document.getElementById('runLogIframe');
                 if (iframe) iframe.src = 'run-log.html';
-            } else if (tabName === 'database' && isAdmin) {
+            } else if (tabName === 'database') {
+                if (!isAdmin) { switchTab('books'); return; }
                 loadDatabaseTables();
-            } else if (tabName === 'export' && isAdmin) {
-                // 数据导出标签页，无需额外加载
-            } else if (tabName === 'emailConfig' && isAdmin) {
+            } else if (tabName === 'export') {
+                // 数据导出标签页，所有用户可见（普通用户仅商品数据）
+            } else if (tabName === 'emailConfig') {
+                if (!isAdmin) { switchTab('books'); return; }
                 // 邮件配置标签页，无需额外加载
             }
         }
