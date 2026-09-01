@@ -1413,7 +1413,12 @@
         // 切换回收站高级查询面板
         function toggleRecycleAdvanced() {
             var panel = document.getElementById('recycleAdvancedPanel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            var btn = document.getElementById('recycleAdvBtn');
+            var isHidden = panel.style.display === 'none';
+            panel.style.display = isHidden ? 'block' : 'none';
+            if (btn) {
+                btn.textContent = isHidden ? '收起高级查询' : '高级查询';
+            }
         }
 
         // 回收站高级查询
