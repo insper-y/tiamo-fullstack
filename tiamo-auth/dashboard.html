@@ -41,6 +41,7 @@
             display: flex; flex-direction: column; flex-shrink: 0;
             position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
             box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
         }
         .sidebar-logo {
             padding: 18px 20px; font-size: 18px; font-weight: 700;
@@ -88,7 +89,7 @@
         .sidebar-user-role { font-size: 11px; color: rgba(255,255,255,0.7); }
         
         /* 主内容区域 */
-        .main-content { flex: 1; margin-left: 220px; display: flex; flex-direction: column; min-height: 100vh; background: #f5f7fa; }
+        .main-content { flex: 1; margin-left: 220px; display: flex; flex-direction: column; min-height: 100vh; background: #f5f7fa; transition: margin-left 0.3s ease; }
         
         /* 顶部标签页栏 */
         .tabs-bar {
@@ -96,6 +97,21 @@
             display: flex; align-items: center; padding: 0 10px;
             position: sticky; top: 0; z-index: 50; min-height: 40px;
         }
+        .sidebar-toggle {
+            background: transparent; border: none; color: #666; cursor: pointer;
+            font-size: 18px; padding: 8px 12px; margin-right: 8px; border-radius: 4px;
+            transition: all 0.15s ease; flex-shrink: 0;
+        }
+        .sidebar-toggle:hover { background: #f0f0f0; color: #1e88e5; }
+        
+        /* 侧边栏折叠状态 */
+        .sidebar.collapsed { transform: translateX(-100%); }
+        .main-content.expanded { margin-left: 0; }
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 99;
+        }
+        .sidebar-overlay.active { display: block; }
         .tab-item {
             display: flex; align-items: center; gap: 8px;
             padding: 8px 14px; font-size: 13px; cursor: pointer;
@@ -230,7 +246,16 @@
         .table-wrapper { overflow-x: auto; }
         /* ========== 平板适配 (768px) ========== */
         @media (max-width: 768px) {
-            .dashboard-container { padding: 16px 12px; max-width: 100%; }
+            /* 侧边栏手机端样式 */
+            .sidebar {
+                position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+                transform: translateX(-100%); transition: transform 0.3s ease;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            }
+            .sidebar:not(.collapsed) { transform: translateX(0); }
+            .main-content { margin-left: 0 !important; }
+            .content-area { padding: 12px; }
+            .dashboard-container { padding: 0; max-width: 100%; }
             .dashboard-header { flex-direction: column; gap: 12px; text-align: center; padding: 16px; }
             .dashboard-header h1 { font-size: 17px; }
             .user-info { flex-wrap: wrap; justify-content: center; gap: 8px; }
@@ -323,6 +348,7 @@
     </style>
 </head>
 <body>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
     <div class="app-layout">
         <!-- 左侧导航栏 -->
         <div class="sidebar">
@@ -351,6 +377,9 @@
                     <span class="icon">✅</span><span>待审批</span>
                     <span class="badge" id="pendingBadge">0</span>
                 </div>
+                <div class="sidebar-menu-item" onclick="openExportModal()" id="menuExport" style="display:none;">
+                    <span class="icon">📤</span><span>数据导出</span>
+                </div>
                 <div class="sidebar-menu-title">其他</div>
                 <div class="sidebar-menu-item" onclick="toggleTheme()">
                     <span class="icon">🌙</span><span>切换主题</span>
@@ -374,6 +403,7 @@
         <div class="main-content">
             <!-- 顶部标签页栏 -->
             <div class="tabs-bar" id="tabsBar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()" title="折叠/展开菜单">☰</button>
                 <div class="tab-item active" data-page="runLog">
                     <span class="tab-title">运行日志</span>
                 </div>
@@ -547,41 +577,6 @@
                 </div>
             </div>
         </div>
-        <!-- 数据导出（仅管理员可见） -->
-        <div class="data-card" id="exportCard">
-            <div class="data-card-header">
-                <h2>数据导出（CSV格式）</h2>
-            </div>
-            <div style="margin-bottom:16px;">
-                <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">接收邮箱</label>
-                <input type="email" id="exportEmail" class="form-input" placeholder="请输入接收邮箱" style="max-width:400px;">
-            </div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-                <button class="btn-primary" onclick="downloadUsers()" style="background:linear-gradient(135deg,#10b981,#059669);">
-                    下载用户列表
-                </button>
-                <button class="btn-primary" onclick="downloadBooks()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
-                    下载商品数据
-                </button>
-                <button class="btn-primary" onclick="downloadLogs()" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
-                    下载操作日志
-                </button>
-            </div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                <button class="btn-primary" onclick="sendUsersToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                    发送用户列表到邮箱
-                </button>
-                <button class="btn-primary" onclick="sendBooksToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                    发送商品数据到邮箱
-                </button>
-                <button class="btn-primary" onclick="sendLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                    发送操作日志到邮箱
-                </button>
-            </div>
-            <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
-                提示：用户列表和操作日志仅管理员可操作；CSV文件可用Excel打开，UTF-8编码。
-            </p>
-        </div>
 
         <!-- 邮件配置（仅管理员可见） -->
         <div class="data-card" id="emailConfigCard" style="display:none;">
@@ -701,6 +696,35 @@
         </div>
     </div>
 
+    <!-- 数据导出弹窗 -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal" style="max-width:520px;">
+            <div class="modal-header">
+                <h3>数据导出（CSV格式）</h3>
+                <button class="modal-close" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;color:#666;font-size:13px;margin-bottom:6px;">接收邮箱</label>
+                <input type="email" id="exportEmail" class="form-input" placeholder="请输入接收邮箱">
+            </div>
+            <div style="margin-bottom:12px;font-size:13px;color:#666;font-weight:500;">下载到本地</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+                <button class="btn-primary btn-sm" onclick="downloadUsers()" style="background:#10b981;">下载用户列表</button>
+                <button class="btn-primary btn-sm" onclick="downloadBooks()" style="background:#0ea5e9;">下载商品数据</button>
+                <button class="btn-primary btn-sm" onclick="downloadLogs()" style="background:#f59e0b;">下载操作日志</button>
+            </div>
+            <div style="margin-bottom:12px;font-size:13px;color:#666;font-weight:500;">发送到邮箱</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn-primary btn-sm" onclick="sendUsersToEmail()" style="background:#8b5cf6;">发送用户列表</button>
+                <button class="btn-primary btn-sm" onclick="sendBooksToEmail()" style="background:#8b5cf6;">发送商品数据</button>
+                <button class="btn-primary btn-sm" onclick="sendLogsToEmail()" style="background:#8b5cf6;">发送操作日志</button>
+            </div>
+            <p style="color:#999;font-size:12px;margin-top:16px;">
+                提示：用户列表和操作日志仅管理员可操作；CSV文件可用Excel打开，UTF-8编码。
+            </p>
+        </div>
+    </div>
+
     <!-- 删除确认弹窗 -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal" style="max-width:400px;">
@@ -747,17 +771,18 @@
             // 管理员显示所有菜单
             document.getElementById('menuUsers').style.display = 'flex';
             document.getElementById('menuApproval').style.display = 'flex';
+            document.getElementById('menuExport').style.display = 'flex';
             document.getElementById('menuMyApproval').style.display = 'none';
             // 默认显示运行日志
             openPage('runLog');
         } else {
             document.getElementById('sidebarRole').textContent = '普通用户';
             roleStat.textContent = '普通用户';
-            // 普通用户隐藏用户列表和待审批，显示我的申请
+            // 普通用户隐藏用户列表、待审批和数据导出，显示我的申请
             document.getElementById('menuUsers').style.display = 'none';
             document.getElementById('menuApproval').style.display = 'none';
+            document.getElementById('menuExport').style.display = 'none';
             document.getElementById('menuMyApproval').style.display = 'flex';
-            document.getElementById('exportCard').style.display = 'none';
             // 普通用户默认显示商品数据
             openTabs = ['books'];
             openPage('books');
@@ -771,6 +796,22 @@
         }
         // 主题切换初始化
         initTheme();
+        // 侧边栏初始化：手机端默认折叠
+        if (window.innerWidth <= 768) {
+            toggleSidebar();
+        }
+        // 窗口大小变化时处理侧边栏
+        window.addEventListener('resize', function() {
+            var sidebar = document.querySelector('.sidebar');
+            var mainContent = document.querySelector('.main-content');
+            var overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth > 768 && sidebarCollapsed) {
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('expanded');
+                overlay.classList.remove('active');
+                sidebarCollapsed = false;
+            }
+        });
         // 显示 Token
         var token = Auth.getToken();
         document.getElementById('tokenInfo').innerHTML =
@@ -1346,6 +1387,34 @@
                 AuthUtils.showAlert('error', '网络请求失败，请检查后端服务');
                 console.error('保存失败:', err);
             });
+        }
+        // 侧边栏折叠/展开
+        var sidebarCollapsed = false;
+        function toggleSidebar() {
+            var sidebar = document.querySelector('.sidebar');
+            var mainContent = document.querySelector('.main-content');
+            var overlay = document.getElementById('sidebarOverlay');
+            sidebarCollapsed = !sidebarCollapsed;
+            if (sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+                overlay.classList.remove('active');
+            } else {
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('expanded');
+                if (window.innerWidth <= 768) {
+                    overlay.classList.add('active');
+                }
+            }
+        }
+        // 打开数据导出弹窗
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+            loadEmailConfig();
+        }
+        // 关闭数据导出弹窗
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
         }
         // 打开删除确认弹窗
         function openDeleteModal(id) {
