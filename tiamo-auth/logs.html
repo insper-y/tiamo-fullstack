@@ -81,6 +81,7 @@
             border-radius: var(--radius-lg); padding: 20px; overflow-x: auto;
         }
         .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
         .data-table th {
             text-align: left; padding: 12px 10px; color: var(--text-secondary); font-weight: 500;
             border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
@@ -140,6 +141,9 @@
             .btn-secondary { min-height: 40px; padding: 8px 14px; font-size: 13px; }
             .pagination { flex-wrap: wrap; gap: 4px; justify-content: center; }
             .pagination button { min-width: 36px; min-height: 36px; padding: 6px 10px; font-size: 12px; }
+            /* 平板端表格允许横向滚动 */
+            .data-table { min-width: 700px; }
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         }
 
         @media (max-width: 480px) {
@@ -149,14 +153,19 @@
             .stat-card { padding: 12px; display: flex; justify-content: space-between; align-items: center; }
             .stat-card .stat-value { font-size: 20px; }
             .data-card { padding: 12px; border-radius: 12px; }
-            /* 表格改为卡片式布局 */
+            /* 手机端表格改为卡片式布局，移除最小宽度限制和横向滚动 */
+            .table-wrapper { overflow-x: visible; margin: 0; padding: 0; }
+            .data-table { min-width: auto !important; width: 100% !important; }
             .data-table thead { display: none; }
-            .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
-            .data-table tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg-card); }
+            .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100% !important; box-sizing: border-box; }
+            .data-table tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--bg-card); }
             .data-table tr:hover { background: var(--bg-input); }
-            .data-table td { border: none; padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 10px; max-width: 100% !important; white-space: normal !important; word-break: break-all; }
-            .data-table td::before { content: attr(data-label); font-weight: 500; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; min-width: 60px; flex-shrink: 0; }
+            .data-table td { border: none; padding: 8px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; max-width: 100% !important; white-space: normal !important; word-break: break-word; overflow-wrap: break-word; }
+            .data-table td::before { content: attr(data-label); font-weight: 500; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; min-width: 55px; flex-shrink: 0; padding-top: 2px; }
             .data-table td:last-child { border-bottom: none; }
+            /* 操作描述列特殊处理：允许换行显示完整内容 */
+            .data-table td[data-label="操作"] { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .data-table td[data-label="操作"]::before { margin-bottom: 2px; }
             .btn-secondary { min-height: 42px; padding: 10px 14px; font-size: 13px; border-radius: 10px; }
             .pagination button { min-width: 32px; min-height: 32px; padding: 5px 8px; font-size: 11px; border-radius: 8px; }
             .pagination-info { font-size: 11px; }
@@ -354,7 +363,7 @@
                 return;
             }
 
-            var html = '<table class="data-table"><thead><tr>' +
+            var html = '<div class="table-wrapper"><table class="data-table"><thead><tr>' +
                 '<th>时间</th><th>操作人</th><th>模块</th><th>操作</th>' +
                 '<th>类型</th><th>IP</th><th>耗时</th><th>结果</th>' +
                 '</tr></thead><tbody>';
@@ -385,7 +394,7 @@
                     '</tr>';
             });
 
-            html += '</tbody></table>';
+            html += '</tbody></table></div>';
             listEl.innerHTML = html;
         }
 
