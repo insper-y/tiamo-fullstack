@@ -16,7 +16,7 @@ import java.util.Map;
 public class SysRunLogServiceImpl extends ServiceImpl<SysRunLogMapper, SysRunLog> implements SysRunLogService {
 
     @Override
-    @Async("taskExecutor")
+    @Async("logExecutor")
     public void saveLogAsync(SysRunLog log) {
         try {
             save(log);
