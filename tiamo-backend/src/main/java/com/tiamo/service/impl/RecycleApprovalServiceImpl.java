@@ -37,9 +37,23 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
     public void init() {
         try {
             baseMapper.createTableIfNotExists();
-            // 兼容旧表，添加新字段
-            try { baseMapper.addIsReadColumn(); } catch (Exception e) {}
-            try { baseMapper.addReadTimeColumn(); } catch (Exception e) {}
+            // 兼容旧表，添加新字段（先检查是否存在）
+            try {
+                if (baseMapper.checkIsReadColumnExists() == 0) {
+                    baseMapper.addIsReadColumn();
+                    System.out.println("[审批] 已添加 is_read 字段");
+                }
+            } catch (Exception e) {
+                System.out.println("[审批] 添加 is_read 字段失败: " + e.getMessage());
+            }
+            try {
+                if (baseMapper.checkReadTimeColumnExists() == 0) {
+                    baseMapper.addReadTimeColumn();
+                    System.out.println("[审批] 已添加 read_time 字段");
+                }
+            } catch (Exception e) {
+                System.out.println("[审批] 添加 read_time 字段失败: " + e.getMessage());
+            }
             System.out.println("[审批] recycle_approval 表已就绪");
         } catch (Exception e) {
             System.out.println("[审批] 建表失败: " + e.getMessage());
@@ -202,7 +216,7 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
         List<RecycleApproval> list = this.list(new LambdaQueryWrapper<RecycleApproval>()
                 .eq(RecycleApproval::getApplicantId, applicantId)
                 .ne(RecycleApproval::getStatus, "PENDING")
-                .and(wrapper -> wrapper.isNull(RecycleApproval::getIsRead).or().eq(RecycleApproval::getIsRead, 0)));
+                .and(wrapper -> wrapper.eq(RecycleApproval::getIsRead, 0).or().isNull(RecycleApproval::getIsRead)));
         int count = 0;
         for (RecycleApproval approval : list) {
             approval.setIsRead(1);
