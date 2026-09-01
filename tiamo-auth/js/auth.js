@@ -319,6 +319,7 @@
     // 暴露到全局
     window.Api = Api;
     window.Auth = Auth;
+    window.API_BASE = API_BASE;
 
     /* ========== 粒子背景 ========== */
     function initParticles() {

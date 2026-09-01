@@ -325,6 +325,7 @@
             <button class="tab-btn" id="tabRecycleBtn" onclick="switchTab('recycle')">回收站</button>
             <button class="tab-btn" id="tabDatabaseBtn" onclick="switchTab('database')">数据库管理</button>
             <button class="tab-btn" id="tabExportBtn" onclick="switchTab('export')">数据导出</button>
+            <button class="tab-btn" id="tabEmailConfigBtn" onclick="switchTab('emailConfig')">邮件配置</button>
             <button class="tab-btn" id="tabMyApprovalBtn" onclick="switchTab('myApproval')" style="display:none;">我的申请</button>
             <button class="tab-btn" id="tabApprovalBtn" onclick="switchTab('approval')" style="display:none;">待审批 <span id="pendingBadge" style="background:#ef4444;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
         </div>
@@ -762,6 +763,8 @@
                 loadDatabaseTables();
             } else if (tabName === 'export' && isAdmin) {
                 // 数据导出标签页，无需额外加载
+            } else if (tabName === 'emailConfig' && isAdmin) {
+                // 邮件配置标签页，无需额外加载
             }
         }
 
@@ -2198,8 +2201,7 @@
             if (!userInfo || userInfo.role !== 1) {
                 return;
             }
-            // 显示邮件配置面板
-            document.getElementById('emailConfigCard').style.display = 'block';
+            // 邮件配置已移到单独标签页，无需显示面板
             Api.getEmailConfig().then(function (res) {
                 if (res.code === 200 && res.data) {
                     document.getElementById('configSendTime').value = res.data.sendTime || '20:00';
