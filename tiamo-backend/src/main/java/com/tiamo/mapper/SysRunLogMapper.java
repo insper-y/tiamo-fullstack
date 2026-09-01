@@ -42,6 +42,6 @@ public interface SysRunLogMapper extends BaseMapper<SysRunLog> {
     /**
      * 清理指定天数之前的日志
      */
-    @Delete("DELETE FROM sys_run_log WHERE create_time < DATE_SUB(NOW(), INTERVAL #{days} DAY)")
+    @Delete("DELETE FROM sys_run_log WHERE create_time < DATE_SUB(NOW(), INTERVAL ${days} DAY)")
     int cleanOldLogs(@Param("days") int days);
 }
