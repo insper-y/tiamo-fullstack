@@ -324,6 +324,7 @@
             <button class="tab-btn" id="tabBooksBtn" onclick="switchTab('books')">商品数据</button>
             <button class="tab-btn" id="tabRecycleBtn" onclick="switchTab('recycle')">回收站</button>
             <button class="tab-btn" id="tabDatabaseBtn" onclick="switchTab('database')">数据库管理</button>
+            <button class="tab-btn" id="tabExportBtn" onclick="switchTab('export')">数据导出</button>
             <button class="tab-btn" id="tabMyApprovalBtn" onclick="switchTab('myApproval')" style="display:none;">我的申请</button>
             <button class="tab-btn" id="tabApprovalBtn" onclick="switchTab('approval')" style="display:none;">待审批 <span id="pendingBadge" style="background:#ef4444;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
         </div>
@@ -463,40 +464,42 @@
                 </div>
             </div>
         </div>
-        <!-- 数据导出（仅管理员可见） -->
-        <div class="data-card" id="exportCard">
-            <div class="data-card-header">
-                <h2>数据导出（CSV格式）</h2>
+        <!-- 数据导出标签页（仅管理员可见） -->
+        <div class="tab-content" id="exportTab">
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h2>数据导出（CSV格式）</h2>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">接收邮箱</label>
+                    <input type="email" id="exportEmail" class="form-input" placeholder="请输入接收邮箱" style="max-width:400px;">
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                    <button class="btn-primary" onclick="downloadUsers()" style="background:linear-gradient(135deg,#10b981,#059669);">
+                        下载用户列表
+                    </button>
+                    <button class="btn-primary" onclick="downloadBooks()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
+                        下载商品数据
+                    </button>
+                    <button class="btn-primary" onclick="downloadLogs()" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                        下载操作日志
+                    </button>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button class="btn-primary" onclick="sendUsersToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                        发送用户列表到邮箱
+                    </button>
+                    <button class="btn-primary" onclick="sendBooksToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                        发送商品数据到邮箱
+                    </button>
+                    <button class="btn-primary" onclick="sendLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                        发送操作日志到邮箱
+                    </button>
+                </div>
+                <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
+                    提示：用户列表和操作日志仅管理员可操作；CSV文件可用Excel打开，UTF-8编码。
+                </p>
             </div>
-            <div style="margin-bottom:16px;">
-                <label style="display:block;color:var(--text-secondary);font-size:13px;margin-bottom:6px;">接收邮箱</label>
-                <input type="email" id="exportEmail" class="form-input" placeholder="请输入接收邮箱" style="max-width:400px;">
-            </div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-                <button class="btn-primary" onclick="downloadUsers()" style="background:linear-gradient(135deg,#10b981,#059669);">
-                    下载用户列表
-                </button>
-                <button class="btn-primary" onclick="downloadBooks()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
-                    下载商品数据
-                </button>
-                <button class="btn-primary" onclick="downloadLogs()" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
-                    下载操作日志
-                </button>
-            </div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                <button class="btn-primary" onclick="sendUsersToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                    发送用户列表到邮箱
-                </button>
-                <button class="btn-primary" onclick="sendBooksToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                    发送商品数据到邮箱
-                </button>
-                <button class="btn-primary" onclick="sendLogsToEmail()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                    发送操作日志到邮箱
-                </button>
-            </div>
-            <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
-                提示：用户列表和操作日志仅管理员可操作；CSV文件可用Excel打开，UTF-8编码。
-            </p>
         </div>
 
         <!-- 数据库管理标签页（仅管理员可见） -->
@@ -714,7 +717,6 @@
             document.getElementById('tabBooksBtn').classList.add('active');
             document.getElementById('logBtn').style.display = 'none';
             document.getElementById('runLogBtn').style.display = 'none';
-            document.getElementById('exportCard').style.display = 'none';
             switchTab('books');
         }
         // 加载邮件配置（仅管理员可见）
@@ -758,6 +760,8 @@
                 if (iframe) iframe.src = 'run-log.html';
             } else if (tabName === 'database' && isAdmin) {
                 loadDatabaseTables();
+            } else if (tabName === 'export' && isAdmin) {
+                // 数据导出标签页，无需额外加载
             }
         }
 
