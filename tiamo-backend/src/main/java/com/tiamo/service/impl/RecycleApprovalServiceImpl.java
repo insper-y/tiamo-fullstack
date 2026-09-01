@@ -37,6 +37,9 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
     public void init() {
         try {
             baseMapper.createTableIfNotExists();
+            // 兼容旧表，添加新字段
+            try { baseMapper.addIsReadColumn(); } catch (Exception e) {}
+            try { baseMapper.addReadTimeColumn(); } catch (Exception e) {}
             System.out.println("[审批] recycle_approval 表已就绪");
         } catch (Exception e) {
             System.out.println("[审批] 建表失败: " + e.getMessage());
@@ -166,6 +169,100 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
         if (!isOwner && !isAdmin) {
             throw new RuntimeException("无权限删除，仅申请人本人或管理员可操作");
         }
+        // 必须已阅读才能删除
+        if (approval.getIsRead() == null || approval.getIsRead() != 1) {
+            throw new RuntimeException("请先阅读后再删除");
+        }
         return this.removeById(id);
+    }
+
+    /**
+     * 标记为已阅读
+     */
+    public boolean markAsRead(Long id, Long userId) {
+        RecycleApproval approval = this.getById(id);
+        if (approval == null) {
+            throw new RuntimeException("申请记录不存在");
+        }
+        // 仅申请人本人可标记阅读
+        if (approval.getApplicantId() == null || !approval.getApplicantId().equals(userId)) {
+            throw new RuntimeException("无权限操作，仅申请人本人可标记阅读");
+        }
+        approval.setIsRead(1);
+        approval.setReadTime(java.time.LocalDateTime.now());
+        // 清除缓存
+        cacheService.delete(PENDING_CACHE_KEY);
+        return this.updateById(approval);
+    }
+
+    /**
+     * 一键阅读所有（申请人本人的已处理申请）
+     */
+    public int markAllAsRead(Long applicantId) {
+        List<RecycleApproval> list = this.list(new LambdaQueryWrapper<RecycleApproval>()
+                .eq(RecycleApproval::getApplicantId, applicantId)
+                .ne(RecycleApproval::getStatus, "PENDING")
+                .and(wrapper -> wrapper.isNull(RecycleApproval::getIsRead).or().eq(RecycleApproval::getIsRead, 0)));
+        int count = 0;
+        for (RecycleApproval approval : list) {
+            approval.setIsRead(1);
+            approval.setReadTime(java.time.LocalDateTime.now());
+            if (this.updateById(approval)) {
+                count++;
+            }
+        }
+        // 清除缓存
+        cacheService.delete(PENDING_CACHE_KEY);
+        return count;
+    }
+
+    /**
+     * 一键清理所有已阅读的记录（申请人本人）
+     */
+    public int deleteAllRead(Long applicantId) {
+        List<RecycleApproval> list = this.list(new LambdaQueryWrapper<RecycleApproval>()
+                .eq(RecycleApproval::getApplicantId, applicantId)
+                .eq(RecycleApproval::getIsRead, 1));
+        int count = 0;
+        for (RecycleApproval approval : list) {
+            if (this.removeById(approval.getId())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 批量通过申请（管理员）
+     */
+    @Transactional
+    public int batchApprove(List<Long> ids, Long approverId, String approverName, String remark) {
+        int count = 0;
+        for (Long id : ids) {
+            try {
+                this.approve(id, approverId, approverName, remark);
+                count++;
+            } catch (Exception e) {
+                // 跳过失败的
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 批量拒绝申请（管理员）
+     */
+    @Transactional
+    public int batchReject(List<Long> ids, Long approverId, String approverName, String remark) {
+        int count = 0;
+        for (Long id : ids) {
+            try {
+                this.reject(id, approverId, approverName, remark);
+                count++;
+            } catch (Exception e) {
+                // 跳过失败的
+            }
+        }
+        return count;
     }
 }

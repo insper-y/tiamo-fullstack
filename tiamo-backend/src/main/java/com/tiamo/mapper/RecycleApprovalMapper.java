@@ -27,10 +27,22 @@ public interface RecycleApprovalMapper extends BaseMapper<RecycleApproval> {
             "remark VARCHAR(500), " +
             "apply_time DATETIME, " +
             "approve_time DATETIME, " +
+            "is_read TINYINT DEFAULT 0 COMMENT '0-未阅读 1-已阅读', " +
+            "read_time DATETIME, " +
             "INDEX idx_status (status), " +
             "INDEX idx_book_id (book_id), " +
             "INDEX idx_applicant (applicant_id), " +
-            "INDEX idx_apply_time (apply_time)" +
+            "INDEX idx_apply_time (apply_time), " +
+            "INDEX idx_is_read (is_read)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='回收站审批表'")
     void createTableIfNotExists();
+
+    /**
+     * 添加is_read和read_time字段（兼容旧表）
+     */
+    @Update("ALTER TABLE recycle_approval ADD COLUMN IF NOT EXISTS is_read TINYINT DEFAULT 0 COMMENT '0-未阅读 1-已阅读'")
+    void addIsReadColumn();
+
+    @Update("ALTER TABLE recycle_approval ADD COLUMN IF NOT EXISTS read_time DATETIME")
+    void addReadTimeColumn();
 }

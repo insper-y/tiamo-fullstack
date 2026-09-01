@@ -65,4 +65,12 @@ public class RecycleApproval implements Serializable {
     /** 审批时间 */
     @TableField("approve_time")
     private LocalDateTime approveTime;
+
+    /** 是否已阅读：0-未阅读 1-已阅读 */
+    @TableField("is_read")
+    private Integer isRead;
+
+    /** 阅读时间 */
+    @TableField("read_time")
+    private LocalDateTime readTime;
 }

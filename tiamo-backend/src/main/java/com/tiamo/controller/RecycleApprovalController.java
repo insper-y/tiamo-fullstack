@@ -154,7 +154,7 @@ public class RecycleApprovalController {
     }
 
     /**
-     * 删除申请记录（申请人本人或管理员）
+     * 删除申请记录（申请人本人或管理员，必须已阅读）
      * DELETE /api/recycle-approval/{id}
      */
     @DeleteMapping("/{id}")
@@ -169,6 +169,129 @@ public class RecycleApprovalController {
         try {
             approvalService.deleteById(id, user.getId(), user.getRole());
             return new Result<>(200, null, "删除成功");
+        } catch (Exception e) {
+            return new Result<>(500, null, e.getMessage());
+        }
+    }
+
+    /**
+     * 标记为已阅读（申请人本人）
+     * POST /api/recycle-approval/{id}/read
+     */
+    @PostMapping("/{id}/read")
+    @OperationLog(module = "回收站审批", description = "标记为已阅读", operationType = "UPDATE")
+    public Result<String> markAsRead(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser user = getCurrentUser(authHeader);
+        if (user == null) {
+            return new Result<>(401, null, "请先登录");
+        }
+        try {
+            approvalService.markAsRead(id, user.getId());
+            return new Result<>(200, null, "已标记为已阅读");
+        } catch (Exception e) {
+            return new Result<>(500, null, e.getMessage());
+        }
+    }
+
+    /**
+     * 一键阅读所有（申请人本人的已处理申请）
+     * POST /api/recycle-approval/read-all
+     */
+    @PostMapping("/read-all")
+    @OperationLog(module = "回收站审批", description = "一键阅读所有", operationType = "UPDATE")
+    public Result<Map<String, Object>> markAllAsRead(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser user = getCurrentUser(authHeader);
+        if (user == null) {
+            return new Result<>(401, null, "请先登录");
+        }
+        try {
+            int count = approvalService.markAllAsRead(user.getId());
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("count", count);
+            return new Result<>(200, data, "已阅读 " + count + " 条记录");
+        } catch (Exception e) {
+            return new Result<>(500, null, e.getMessage());
+        }
+    }
+
+    /**
+     * 一键清理所有已阅读的记录（申请人本人）
+     * DELETE /api/recycle-approval/delete-read-all
+     */
+    @DeleteMapping("/delete-read-all")
+    @OperationLog(module = "回收站审批", description = "一键清理所有已阅读记录", operationType = "DELETE")
+    public Result<Map<String, Object>> deleteAllRead(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser user = getCurrentUser(authHeader);
+        if (user == null) {
+            return new Result<>(401, null, "请先登录");
+        }
+        try {
+            int count = approvalService.deleteAllRead(user.getId());
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("count", count);
+            return new Result<>(200, data, "已清理 " + count + " 条已阅读记录");
+        } catch (Exception e) {
+            return new Result<>(500, null, e.getMessage());
+        }
+    }
+
+    /**
+     * 批量通过申请（管理员）
+     * PUT /api/recycle-approval/batch-approve
+     */
+    @PutMapping("/batch-approve")
+    @OperationLog(module = "回收站审批", description = "批量通过申请", operationType = "UPDATE")
+    public Result<Map<String, Object>> batchApprove(
+            @RequestBody Map<String, Object> request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser user = getAdminUser(authHeader);
+        if (user == null) {
+            return new Result<>(403, null, "无权限操作，仅管理员可批量审批");
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> ids = (List<Long>) request.get("ids");
+            String remark = request.get("remark") != null ? request.get("remark").toString() : null;
+            if (ids == null || ids.isEmpty()) {
+                return new Result<>(400, null, "请选择要处理的申请");
+            }
+            int count = approvalService.batchApprove(ids, user.getId(), user.getUsername(), remark);
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("count", count);
+            return new Result<>(200, data, "已通过 " + count + " 条申请");
+        } catch (Exception e) {
+            return new Result<>(500, null, e.getMessage());
+        }
+    }
+
+    /**
+     * 批量拒绝申请（管理员）
+     * PUT /api/recycle-approval/batch-reject
+     */
+    @PutMapping("/batch-reject")
+    @OperationLog(module = "回收站审批", description = "批量拒绝申请", operationType = "UPDATE")
+    public Result<Map<String, Object>> batchReject(
+            @RequestBody Map<String, Object> request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser user = getAdminUser(authHeader);
+        if (user == null) {
+            return new Result<>(403, null, "无权限操作，仅管理员可批量审批");
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> ids = (List<Long>) request.get("ids");
+            String remark = request.get("remark") != null ? request.get("remark").toString() : null;
+            if (ids == null || ids.isEmpty()) {
+                return new Result<>(400, null, "请选择要处理的申请");
+            }
+            int count = approvalService.batchReject(ids, user.getId(), user.getUsername(), remark);
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("count", count);
+            return new Result<>(200, data, "已拒绝 " + count + " 条申请");
         } catch (Exception e) {
             return new Result<>(500, null, e.getMessage());
         }

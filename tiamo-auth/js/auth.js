@@ -258,6 +258,26 @@
         rejectApproval: function (id, remark) {
             return this.put('/api/recycle-approval/' + id + '/reject', { remark: remark });
         },
+        /** 标记为已阅读（申请人本人） */
+        markApprovalAsRead: function (id) {
+            return this.post('/api/recycle-approval/' + id + '/read', {});
+        },
+        /** 一键阅读所有（申请人本人） */
+        markAllApprovalAsRead: function () {
+            return this.post('/api/recycle-approval/read-all', {});
+        },
+        /** 一键清理所有已阅读记录（申请人本人） */
+        deleteAllReadApproval: function () {
+            return this.del('/api/recycle-approval/delete-read-all');
+        },
+        /** 批量通过申请（管理员） */
+        batchApproveApproval: function (ids, remark) {
+            return this.put('/api/recycle-approval/batch-approve', { ids: ids, remark: remark });
+        },
+        /** 批量拒绝申请（管理员） */
+        batchRejectApproval: function (ids, remark) {
+            return this.put('/api/recycle-approval/batch-reject', { ids: ids, remark: remark });
+        },
         /** 删除申请记录（本人或管理员） */
         deleteApproval: function (id) {
             return this.del('/api/recycle-approval/' + id);

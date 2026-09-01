@@ -445,7 +445,15 @@
             <div class="data-card">
                 <div class="data-card-header">
                     <h2>待审批申请</h2>
-                    <button class="btn-primary" onclick="loadPendingApprovals(true)">刷新</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn-primary btn-sm" onclick="batchApprove()" style="background:linear-gradient(135deg,#10b981,#059669);">批量通过</button>
+                        <button class="btn-primary btn-sm" onclick="batchReject()" style="background:linear-gradient(135deg,#ef4444,#dc2626);">批量拒绝</button>
+                        <button class="btn-primary btn-sm" onclick="loadPendingApprovals(true)">刷新</button>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;padding:10px;background:var(--bg-input);border-radius:8px;font-size:13px;color:var(--text-secondary);">
+                    <label style="cursor:pointer;"><input type="checkbox" id="selectAllApproval" onchange="toggleSelectAllApproval()" style="margin-right:6px;">全选</label>
+                    <span style="margin-left:16px;">已选择 <span id="selectedApprovalCount" style="color:var(--primary);font-weight:600;">0</span> 条</span>
                 </div>
                 <div class="table-wrapper">
                     <div id="approvalList">
@@ -459,7 +467,11 @@
             <div class="data-card">
                 <div class="data-card-header">
                     <h2>我的申请记录</h2>
-                    <button class="btn-primary" onclick="loadMyApprovals()">刷新</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn-primary btn-sm" onclick="markAllAsRead()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">一键阅读所有</button>
+                        <button class="btn-primary btn-sm" onclick="deleteAllRead()" style="background:linear-gradient(135deg,#ef4444,#dc2626);">一键清理已阅读</button>
+                        <button class="btn-primary btn-sm" onclick="loadMyApprovals()">刷新</button>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <div id="myApprovalList">
@@ -1903,6 +1915,100 @@
             });
         }
 
+        // 批量选择相关变量
+        var selectedApprovalIds = [];
+
+        // 切换单个申请的选择状态
+        function toggleApprovalSelection(id) {
+            var index = selectedApprovalIds.indexOf(id);
+            if (index > -1) {
+                selectedApprovalIds.splice(index, 1);
+            } else {
+                selectedApprovalIds.push(id);
+            }
+            updateSelectedApprovalCount();
+        }
+
+        // 全选/取消全选
+        function toggleSelectAllApproval() {
+            var checkboxes = document.querySelectorAll('.approval-checkbox');
+            var selectAll = document.getElementById('selectAllApproval');
+            var selectAllHeader = document.getElementById('selectAllApprovalHeader');
+            var isChecked = selectAll ? selectAll.checked : (selectAllHeader ? selectAllHeader.checked : false);
+            if (isChecked) {
+                selectedApprovalIds = [];
+                checkboxes.forEach(function(cb) {
+                    selectedApprovalIds.push(parseInt(cb.value));
+                    cb.checked = true;
+                });
+            } else {
+                selectedApprovalIds = [];
+                checkboxes.forEach(function(cb) { cb.checked = false; });
+            }
+            // 同步两个全选复选框
+            if (selectAll) selectAll.checked = isChecked;
+            if (selectAllHeader) selectAllHeader.checked = isChecked;
+            updateSelectedApprovalCount();
+        }
+
+        // 更新已选择数量显示
+        function updateSelectedApprovalCount() {
+            var countEl = document.getElementById('selectedApprovalCount');
+            if (countEl) countEl.textContent = selectedApprovalIds.length;
+        }
+
+        // 批量通过
+        async function batchApprove() {
+            if (selectedApprovalIds.length === 0) {
+                AuthUtils.showAlert('error', '请先选择要处理的申请');
+                return;
+            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量通过申请',
+                message: '确定要通过选中的 ' + selectedApprovalIds.length + ' 条申请吗？',
+                type: 'success',
+                confirmText: '确认通过'
+            });
+            if (!confirmed) return;
+            Api.batchApproveApproval(selectedApprovalIds, '批量通过').then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '批量通过成功');
+                    selectedApprovalIds = [];
+                    loadPendingApprovals(true);
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '批量通过失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 批量拒绝
+        async function batchReject() {
+            if (selectedApprovalIds.length === 0) {
+                AuthUtils.showAlert('error', '请先选择要处理的申请');
+                return;
+            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量拒绝申请',
+                message: '确定要拒绝选中的 ' + selectedApprovalIds.length + ' 条申请吗？',
+                type: 'danger',
+                confirmText: '确认拒绝'
+            });
+            if (!confirmed) return;
+            Api.batchRejectApproval(selectedApprovalIds, '批量拒绝').then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '批量拒绝成功');
+                    selectedApprovalIds = [];
+                    loadPendingApprovals(true);
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '批量拒绝失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
         // 管理员加载待审批列表（带前端缓存，避免重复请求）
         var pendingApprovalCache = null;
         var pendingApprovalCacheTime = 0;
@@ -1947,13 +2053,16 @@
             var pageData = list.slice(start, end);
             
             var html = '<table class="data-table"><thead><tr>' +
+                '<th style="width:40px;"><input type="checkbox" id="selectAllApprovalHeader" onchange="toggleSelectAllApproval()"></th>' +
                 '<th>ID</th><th>商品ID</th><th>商品名称</th><th>申请类型</th>' +
                 '<th>申请人</th><th>申请时间</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             pageData.forEach(function (item) {
                 var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
                 var typeColor = item.approvalType === 'RESTORE' ? '#10b981' : '#ef4444';
+                var isChecked = selectedApprovalIds.indexOf(item.id) > -1 ? 'checked' : '';
                 html += '<tr>' +
+                    '<td data-label="选择"><input type="checkbox" class="approval-checkbox" value="' + item.id + '" ' + isChecked + ' onchange="toggleApprovalSelection(' + item.id + ')"></td>' +
                     '<td data-label="ID">' + item.id + '</td>' +
                     '<td data-label="商品ID">' + item.bookId + '</td>' +
                     '<td data-label="商品名称">' + (item.bookName || '-') + '</td>' +
@@ -2068,7 +2177,7 @@
             
             var html = '<table class="data-table"><thead><tr>' +
                 '<th>ID</th><th>商品ID</th><th>商品名称</th><th>申请类型</th>' +
-                '<th>申请时间</th><th>状态</th><th>审批人</th><th>审批时间</th><th>拒绝原因</th><th>操作</th>' +
+                '<th>申请时间</th><th>状态</th><th>阅读状态</th><th>审批人</th><th>审批时间</th><th>拒绝原因</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             pageData.forEach(function (item) {
                 var typeName = item.approvalType === 'RESTORE' ? '恢复' : '彻底删除';
@@ -2077,6 +2186,10 @@
                 if (item.status === 'PENDING') { statusText = '待审批'; statusColor = '#f59e0b'; }
                 else if (item.status === 'APPROVED') { statusText = '已通过'; statusColor = '#10b981'; }
                 else { statusText = '已拒绝'; statusColor = '#ef4444'; }
+                var isRead = item.isRead === 1 || item.is_read === 1;
+                var readText = isRead ? '已阅读' : '未阅读';
+                var readColor = isRead ? '#10b981' : '#f59e0b';
+                var canDelete = item.status !== 'PENDING' && isRead;
                 html += '<tr>' +
                     '<td data-label="ID">' + item.id + '</td>' +
                     '<td data-label="商品ID">' + item.bookId + '</td>' +
@@ -2084,11 +2197,13 @@
                     '<td data-label="申请类型"><span style="color:' + typeColor + ';font-weight:600;">' + typeName + '</span></td>' +
                     '<td data-label="申请时间" style="white-space:nowrap;font-size:12px;">' + (item.applyTime || '-') + '</td>' +
                     '<td data-label="状态"><span style="color:' + statusColor + ';font-weight:600;">' + statusText + '</span></td>' +
+                    '<td data-label="阅读状态"><span style="color:' + readColor + ';font-weight:600;">' + readText + '</span></td>' +
                     '<td data-label="审批人">' + (item.approverName || '-') + '</td>' +
                     '<td data-label="审批时间" style="white-space:nowrap;font-size:12px;">' + (item.approveTime || '-') + '</td>' +
                     '<td data-label="拒绝原因" style="max-width:200px;word-break:break-all;color:' + (item.status === 'REJECTED' ? '#ef4444' : 'var(--text-muted)') + ';">' + (item.remark || '-') + '</td>' +
                     '<td data-label="操作" style="white-space:nowrap;">' +
-                        '<button class="btn-primary btn-sm btn-delete" onclick="deleteMyApproval(' + item.id + ')">删除</button>' +
+                        (item.status !== 'PENDING' && !isRead ? '<button class="btn-primary btn-sm" onclick="markAsRead(' + item.id + ')" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);margin-right:6px;">已阅读</button>' : '') +
+                        '<button class="btn-primary btn-sm btn-delete" onclick="deleteMyApproval(' + item.id + ')" ' + (canDelete ? '' : 'disabled title="' + (item.status === 'PENDING' ? '待审批的申请不能删除' : '请先点击已阅读后才能删除') + '"') + '>删除</button>' +
                     '</td>' +
                     '</tr>';
             });
@@ -2103,11 +2218,60 @@
         function myApprovalNextPage() { var t = Math.ceil(myApprovalList.length / myApprovalPageSize); if (myApprovalCurrentPage < t) { myApprovalCurrentPage++; renderMyApprovals(myApprovalList); } }
         function myApprovalChangePageSize(size) { myApprovalPageSize = parseInt(size); myApprovalCurrentPage = 1; renderMyApprovals(myApprovalList); }
 
+        // 标记为已阅读
+        function markAsRead(id) {
+            Api.markApprovalAsRead(id).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', '已标记为已阅读');
+                    loadMyApprovals();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '操作失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 一键阅读所有
+        function markAllAsRead() {
+            Api.markAllApprovalAsRead().then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '一键阅读成功');
+                    loadMyApprovals();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '操作失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 一键清理所有已阅读记录
+        async function deleteAllRead() {
+            var confirmed = await AuthUtils.showConfirm({
+                title: '一键清理已阅读记录',
+                message: '确定要清理所有已阅读的申请记录吗？此操作不可恢复！',
+                type: 'danger',
+                confirmText: '确认清理'
+            });
+            if (!confirmed) return;
+            Api.deleteAllReadApproval().then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '清理成功');
+                    loadMyApprovals();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '清理失败');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
         // 删除我的申请记录
         async function deleteMyApproval(id) {
             var confirmed = await AuthUtils.showConfirm({
                 title: '删除申请记录',
-                message: '确定要删除这条申请记录吗？此操作不可恢复！',
+                message: '确定要删除这条申请记录吗？此操作不可恢复！\n注意：必须先点击"已阅读"后才能删除。',
                 type: 'danger',
                 confirmText: '确认删除'
             });
