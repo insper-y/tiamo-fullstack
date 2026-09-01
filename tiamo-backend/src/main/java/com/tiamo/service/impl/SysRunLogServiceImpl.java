@@ -50,4 +50,9 @@ public class SysRunLogServiceImpl extends ServiceImpl<SysRunLogMapper, SysRunLog
     public int cleanOldLogs(int days) {
         return baseMapper.cleanOldLogs(days);
     }
+
+    @Override
+    public int cleanTodayLogs() {
+        return baseMapper.cleanTodayLogs();
+    }
 }

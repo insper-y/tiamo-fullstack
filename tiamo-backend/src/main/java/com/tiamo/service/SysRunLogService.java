@@ -39,4 +39,9 @@ public interface SysRunLogService extends IService<SysRunLog> {
      * 清理指定天数之前的日志
      */
     int cleanOldLogs(int days);
+
+    /**
+     * 清空当天的日志
+     */
+    int cleanTodayLogs();
 }

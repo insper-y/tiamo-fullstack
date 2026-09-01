@@ -159,6 +159,20 @@ public class RunLogController {
     }
 
     /**
+     * 清空当天的运行日志（仅管理员）
+     * DELETE /api/run-log/clean-today
+     */
+    @DeleteMapping("/clean-today")
+    public Result<String> cleanTodayLogs(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if (!isAdmin(authHeader)) {
+            return new Result<>(403, null, "无权限操作");
+        }
+        int count = runLogService.cleanTodayLogs();
+        return new Result<>(200, null, "清空成功，共删除" + count + "条当天日志");
+    }
+
+    /**
      * 验证是否为管理员
      */
     private boolean isAdmin(String authHeader) {

@@ -306,7 +306,10 @@
         <div class="data-card">
             <div class="data-card-header">
                 <h2>运行日志列表</h2>
-                <button class="btn-primary btn-sm btn-danger" onclick="showCleanModal()">清理旧日志</button>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn-primary btn-sm" onclick="cleanTodayLogs()">清空当天日志</button>
+                    <button class="btn-primary btn-sm btn-danger" onclick="showCleanModal()">清理旧日志</button>
+                </div>
             </div>
             <div class="filter-bar">
                 <select id="filterLevel" onchange="loadRunLogs()">
@@ -328,7 +331,19 @@
                 </div>
             </div>
             <div class="pagination">
-                <div class="pagination-info" id="paginationInfo">--</div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <div class="pagination-info" id="paginationInfo">--</div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-size:13px;color:var(--text-secondary);">每页</span>
+                        <select id="pageSizeSelect" onchange="changePageSize()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:13px;">
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span style="font-size:13px;color:var(--text-secondary);">条</span>
+                    </div>
+                </div>
                 <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
         </div>
@@ -796,6 +811,35 @@
                 }
             })
             .catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
+        }
+
+        // 清空当天日志
+        function cleanTodayLogs() {
+            if (!confirm('确定要清空今天的所有运行日志吗？此操作不可恢复！')) {
+                return;
+            }
+            fetch(APP_CONFIG.API_BASE + '/api/run-log/clean-today', {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + Auth.getToken() }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200) {
+                    AuthUtils.showAlert('success', data.msg || '清空成功');
+                    loadRunLogs();
+                    loadStats();
+                } else {
+                    AuthUtils.showAlert('error', data.msg || '清空失败');
+                }
+            })
+            .catch(function() { AuthUtils.showAlert('error', '网络请求失败'); });
+        }
+
+        // 改变每页条数
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value) || 20;
+            currentPage = 1;
+            loadRunLogs();
         }
 
         // ==================== 实时刷新 ====================
