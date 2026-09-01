@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tiamo.common.Result;
 import com.tiamo.entity.SysRunLog;
+import com.tiamo.entity.SysUser;
 import com.tiamo.security.JwtUtil;
 import com.tiamo.service.impl.SysRunLogServiceImpl;
+import com.tiamo.service.impl.SysUserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
@@ -23,6 +25,9 @@ public class RunLogController {
 
     @Autowired
     private SysRunLogServiceImpl runLogService;
+
+    @Autowired
+    private SysUserServiceImpl userService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -164,8 +169,8 @@ public class RunLogController {
             }
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId == null) return false;
-            // admin用户ID为1
-            return userId == 1L;
+            SysUser user = userService.getById(userId);
+            return user != null && user.getRole() != null && user.getRole() == 1;
         } catch (Exception e) {
             return false;
         }
