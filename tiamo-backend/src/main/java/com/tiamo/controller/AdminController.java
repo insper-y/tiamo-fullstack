@@ -13,9 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.springframework.data.redis.core.RedisTemplate;
-import java.util.concurrent.TimeUnit;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 管理员 Controller
@@ -32,7 +31,8 @@ public class AdminController {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    // 内存存储邀请码：code -> 过期时间戳
+    private static final ConcurrentHashMap<String, Long> inviteCodeMap = new ConcurrentHashMap<>();
 
     /**
      * 获取用户列表（仅管理员）
@@ -195,17 +195,38 @@ public class AdminController {
         if (currentUser == null) {
             return new Result<>(403, null, "无权限操作，仅管理员可生成邀请码");
         }
-        // 生成6位随机数字邀请码
+        // 清理过期邀请码
+        long now = System.currentTimeMillis();
+        inviteCodeMap.entrySet().removeIf(e -> e.getValue() < now);
+        // 生成6位随机数字邀请码（确保不重复）
         Random random = new Random();
-        String code = String.format("%06d", random.nextInt(1000000));
-        String inviteKey = "invite:code:" + code;
-        // 存储到Redis，3分钟过期
-        redisTemplate.opsForValue().set(inviteKey, code, 3, TimeUnit.MINUTES);
+        String code;
+        do {
+            code = String.format("%06d", random.nextInt(1000000));
+        } while (inviteCodeMap.containsKey(code));
+        // 存储到内存，3分钟过期
+        inviteCodeMap.put(code, now + 3 * 60 * 1000);
         Map<String, Object> data = new HashMap<>();
         data.put("inviteCode", code);
         data.put("expireMinutes", 3);
         data.put("createdBy", currentUser.getUsername());
         return new Result<>(200, data, "邀请码生成成功，3分钟内有效");
+    }
+    
+    /**
+     * 验证邀请码是否有效（供AuthController调用）
+     */
+    public static boolean validateInviteCode(String code) {
+        if (code == null || code.isEmpty()) return false;
+        Long expireTime = inviteCodeMap.get(code);
+        if (expireTime == null) return false;
+        if (expireTime < System.currentTimeMillis()) {
+            inviteCodeMap.remove(code);
+            return false;
+        }
+        // 验证成功后删除（一次性使用）
+        inviteCodeMap.remove(code);
+        return true;
     }
 
     /**
