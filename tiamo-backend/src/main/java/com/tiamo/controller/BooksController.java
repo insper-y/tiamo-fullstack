@@ -158,14 +158,14 @@ public class BooksController {
             // 查询所有用户的申请记录（只要有申请就不显示在所有数据中）
             List<RecycleApproval> approvals = recycleApprovalService.list();
             // 构建bookId -> approval的映射
-            Map<Long, RecycleApproval> approvalMap = new java.util.HashMap<>();
+            Map<Integer, RecycleApproval> approvalMap = new java.util.HashMap<>();
             for (RecycleApproval approval : approvals) {
                 // 只保留最新的申请记录
-                approvalMap.put(approval.getBookId().longValue(), approval);
+                approvalMap.put(approval.getBookId(), approval);
             }
             // 设置申请状态
             for (Books book : list) {
-                RecycleApproval approval = approvalMap.get(book.getId().longValue());
+                RecycleApproval approval = approvalMap.get(book.getId());
                 if (approval != null) {
                     book.setApprovalStatus(approval.getStatus());
                     book.setApprovalType(approval.getApprovalType());
