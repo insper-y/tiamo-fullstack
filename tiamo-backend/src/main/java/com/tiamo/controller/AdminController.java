@@ -181,6 +181,36 @@ public class AdminController {
     }
 
     /**
+     * 重置用户密码（仅管理员）
+     * PUT /api/admin/users/{id}/password
+     * body: {"newPassword": "xxx"}
+     */
+    @PutMapping("/users/{id}/password")
+    @OperationLog(module = "用户管理", description = "重置用户密码", operationType = "UPDATE")
+    public Result<String> resetUserPassword(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser currentUser = getAdminUser(authHeader);
+        if (currentUser == null) {
+            return new Result<>(403, null, "无权限操作，仅管理员可操作");
+        }
+        String newPassword = request.get("newPassword");
+        if (newPassword == null || newPassword.length() < 8) {
+            return new Result<>(400, null, "新密码至少8位");
+        }
+        SysUser user = userService.getById(id);
+        if (user == null) {
+            return new Result<>(404, null, "用户不存在");
+        }
+        boolean success = userService.resetPasswordById(id, newPassword);
+        if (success) {
+            return new Result<>(200, null, "用户 " + user.getUsername() + " 密码重置成功");
+        }
+        return new Result<>(500, null, "密码重置失败");
+    }
+
+    /**
      * 生成注册邀请码（仅管理员）
      * POST /api/admin/invite-code
      * 邀请码6位数字，3分钟有效，使用一次后失效

@@ -42,4 +42,9 @@ public interface SysUserService extends IService<SysUser> {
      * 通过邮箱重置密码
      */
     boolean resetPasswordByEmail(String email, String newPassword);
+
+    /**
+     * 通过用户ID重置密码（管理员用）
+     */
+    boolean resetPasswordById(Long userId, String newPassword);
 }
