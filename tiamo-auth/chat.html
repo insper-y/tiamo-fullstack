@@ -569,7 +569,7 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            var userInfo = Auth.getUserInfo();
+            var userInfo = Auth.getUser();
             document.getElementById('currentUsername').textContent = userInfo ? userInfo.username : '';
             initTheme();
             loadAllData();
