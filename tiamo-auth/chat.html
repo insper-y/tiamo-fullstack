@@ -772,15 +772,16 @@
         // 渲染消息
         function renderMessages(messages) {
             var container = document.getElementById('chatMessages');
-            var currentUser = Auth.getUserInfo();
+            var currentUser = Auth.getUser() || {};
             var html = '';
             messages.forEach(function(msg) {
                 var isSent = msg.fromUserId === currentUser.userId;
-                var initial = isSent ? (currentUser.username || '我').charAt(0).toUpperCase() : (currentFriend.nickname || currentFriend.username).charAt(0).toUpperCase();
+                var senderName = isSent ? (currentUser.username || '我') : (currentFriend ? (currentFriend.nickname || currentFriend.username) : '对方');
+                var initial = senderName.charAt(0).toUpperCase();
                 html += '<div class="message ' + (isSent ? 'sent' : 'received') + '">';
                 html += '<div class="message-avatar">' + initial + '</div>';
                 html += '<div>';
-                html += '<div class="message-bubble">' + escapeHtml(msg.content) + '</div>';
+                html += '<div class="message-bubble">' + escapeHtml(msg.content || '') + '</div>';
                 html += '<div class="message-time">' + formatTime(msg.createTime) + '</div>';
                 html += '</div></div>';
             });
