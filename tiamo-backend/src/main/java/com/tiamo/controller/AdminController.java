@@ -8,6 +8,7 @@ import com.tiamo.service.CacheService;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import com.tiamo.service.InviteCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -38,6 +39,9 @@ public class AdminController {
     @Autowired
     private CacheService cacheService;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     private static final String USER_LIST_CACHE_KEY = "tiamo:users:list";
 
     /**
@@ -55,7 +59,7 @@ public class AdminController {
 
         // 先从缓存读取
         try {
-            Object cachedObj = cacheService.get(USER_LIST_CACHE_KEY, Object.class);
+            Object cachedObj = redisTemplate.opsForValue().get(USER_LIST_CACHE_KEY);
             if (cachedObj != null && cachedObj instanceof List) {
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> cachedList = (List<Map<String, Object>>) cachedObj;
