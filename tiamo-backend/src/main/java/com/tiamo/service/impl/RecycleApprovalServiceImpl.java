@@ -281,4 +281,19 @@ public class RecycleApprovalServiceImpl extends ServiceImpl<RecycleApprovalMappe
         }
         return count;
     }
+
+    @Override
+    @Transactional
+    public int batchSubmitApproval(List<Integer> bookIds, String approvalType, Long applicantId, String applicantName) {
+        int count = 0;
+        for (Integer bookId : bookIds) {
+            try {
+                this.submitApproval(bookId, approvalType, applicantId, applicantName);
+                count++;
+            } catch (Exception e) {
+                // 跳过已申请或不存在的商品
+            }
+        }
+        return count;
+    }
 }

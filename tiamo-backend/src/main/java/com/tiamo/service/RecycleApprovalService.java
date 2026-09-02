@@ -69,4 +69,9 @@ public interface RecycleApprovalService extends IService<RecycleApproval> {
      * 批量拒绝申请（管理员）
      */
     int batchReject(List<Long> ids, Long approverId, String approverName, String remark);
+    /**
+     * 批量提交审批申请（普通用户）
+     * @return 成功提交的数量
+     */
+    int batchSubmitApproval(List<Integer> bookIds, String approvalType, Long applicantId, String applicantName);
 }

@@ -305,6 +305,44 @@ public class RecycleApprovalController {
         }
     }
 
+    /**
+     * 批量提交审批申请（普通用户）
+     * POST /api/recycle-approval/batch-submit
+     * body: {"bookIds": [1,2,3], "approvalType": "RESTORE"}
+     */
+    @PostMapping("/batch-submit")
+    @OperationLog(module = "回收站审批", description = "批量提交审批申请", operationType = "CREATE")
+    public Result<Map<String, Object>> batchSubmit(
+            @RequestBody Map<String, Object> request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser user = getCurrentUser(authHeader);
+        if (user == null) {
+            return new Result<>(401, null, "请先登录");
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object> rawIds = (List<Object>) request.get("bookIds");
+            String approvalType = (String) request.get("approvalType");
+            if (rawIds == null || rawIds.isEmpty()) {
+                return new Result<>(400, null, "请选择要申请的商品");
+            }
+            if (approvalType == null || (!"RESTORE".equals(approvalType) && !"DELETE".equals(approvalType))) {
+                return new Result<>(400, null, "申请类型无效");
+            }
+            List<Integer> bookIds = new java.util.ArrayList<>();
+            for (Object id : rawIds) {
+                bookIds.add(Integer.valueOf(id.toString()));
+            }
+            int count = approvalService.batchSubmitApproval(bookIds, approvalType, user.getId(), user.getUsername());
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("count", count);
+            data.put("total", bookIds.size());
+            return new Result<>(200, data, "已提交 " + count + " 条申请，等待管理员审批");
+        } catch (Exception e) {
+            return new Result<>(500, null, e.getMessage());
+        }
+    }
+
     /* ==================== 辅助方法 ==================== */
 
     private SysUser getCurrentUser(String authHeader) {

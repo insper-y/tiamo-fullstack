@@ -1696,17 +1696,13 @@
             var pageData = list.slice(start, end);
             
             var html = '<table class="data-table"><thead><tr>';
-            if (isAdmin) {
-                html += '<th style="width:40px;"><input type="checkbox" id="selectAllRecycle" onchange="toggleSelectAllRecycle(this)"></th>';
-            }
+            html += '<th style="width:40px;"><input type="checkbox" id="selectAllRecycle" onchange="toggleSelectAllRecycle(this)"></th>';
             html += '<th>ID</th><th>分销软件</th><th>微信账号</th><th>软件账号</th>' +
                 '<th>商品标题</th><th>删除时间</th><th>删除人</th><th>申请状态</th><th>操作</th>' +
                 '</tr></thead><tbody>';
             pageData.forEach(function (item) {
                 html += '<tr>';
-                if (isAdmin) {
-                    html += '<td data-label="选择"><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>';
-                }
+                html += '<td data-label="选择"><input type="checkbox" class="recycle-checkbox" value="' + item.id + '" onchange="updateRecycleBatchBtnState()"></td>';
                 html += '<td data-label="ID">' + item.id + '</td>' +
                     '<td data-label="分销软件">' + (item.name || '-') + '</td>' +
                     '<td data-label="微信账号">' + (item.type || '-') + '</td>' +
@@ -1843,15 +1839,29 @@
         // 更新批量恢复按钮状态
         function updateRecycleBatchBtnState() {
             var selected = getSelectedRecycleIds();
-            var restoreBtn = document.getElementById('batchRestoreBtn');
-            var deleteBtn = document.getElementById('batchHardDeleteBtn');
-            if (restoreBtn) {
-                restoreBtn.style.display = selected.length > 0 ? 'inline-block' : 'none';
-                restoreBtn.textContent = '批量恢复(' + selected.length + ')';
-            }
-            if (deleteBtn) {
-                deleteBtn.style.display = selected.length > 0 ? 'inline-block' : 'none';
-                deleteBtn.textContent = '批量删除(' + selected.length + ')';
+            var hasSelection = selected.length > 0;
+            if (isAdmin) {
+                var restoreBtn = document.getElementById('batchRestoreBtn');
+                var deleteBtn = document.getElementById('batchHardDeleteBtn');
+                if (restoreBtn) {
+                    restoreBtn.style.display = hasSelection ? 'inline-block' : 'none';
+                    restoreBtn.textContent = '批量恢复(' + selected.length + ')';
+                }
+                if (deleteBtn) {
+                    deleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
+                    deleteBtn.textContent = '批量删除(' + selected.length + ')';
+                }
+            } else {
+                var applyRestoreBtn = document.getElementById('batchApplyRestoreBtn');
+                var applyDeleteBtn = document.getElementById('batchApplyDeleteBtn');
+                if (applyRestoreBtn) {
+                    applyRestoreBtn.style.display = hasSelection ? 'inline-block' : 'none';
+                    applyRestoreBtn.textContent = '批量申请恢复(' + selected.length + ')';
+                }
+                if (applyDeleteBtn) {
+                    applyDeleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
+                    applyDeleteBtn.textContent = '批量申请删除(' + selected.length + ')';
+                }
             }
         }
 
@@ -1922,6 +1932,58 @@
                     loadRecycleList();
                 } else {
                     AuthUtils.showAlert('error', res.msg || '批量彻底删除失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 批量申请恢复（普通用户）
+        async function batchApplyRestore() {
+            var ids = getSelectedRecycleIds();
+            if (ids.length === 0) {
+                AuthUtils.showAlert('error', '请先选择要申请恢复的数据');
+                return;
+            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量申请恢复',
+                message: '确定要批量申请恢复选中的 ' + ids.length + ' 条数据吗？申请后需管理员审批通过才能恢复。',
+                type: 'info',
+                confirmText: '提交申请'
+            });
+            if (!confirmed) return;
+            Api.batchApplyRestore(ids).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '批量申请恢复已提交');
+                    loadRecycleList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '批量申请恢复失败');
+                }
+            }).catch(function (err) {
+                AuthUtils.showAlert('error', '网络请求失败');
+            });
+        }
+
+        // 批量申请彻底删除（普通用户）
+        async function batchApplyDelete() {
+            var ids = getSelectedRecycleIds();
+            if (ids.length === 0) {
+                AuthUtils.showAlert('error', '请先选择要申请删除的数据');
+                return;
+            }
+            var confirmed = await AuthUtils.showConfirm({
+                title: '批量申请彻底删除',
+                message: '确定要批量申请彻底删除选中的 ' + ids.length + ' 条数据吗？申请后需管理员审批通过才能删除，删除后不可恢复。',
+                type: 'danger',
+                confirmText: '提交申请'
+            });
+            if (!confirmed) return;
+            Api.batchApplyDelete(ids).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '批量申请删除已提交');
+                    loadRecycleList();
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '批量申请删除失败');
                 }
             }).catch(function (err) {
                 AuthUtils.showAlert('error', '网络请求失败');

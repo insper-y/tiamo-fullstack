@@ -278,6 +278,14 @@
         batchRejectApproval: function (ids, remark) {
             return this.put('/api/recycle-approval/batch-reject', { ids: ids, remark: remark });
         },
+        /** 批量申请恢复（普通用户） */
+        batchApplyRestore: function (bookIds) {
+            return this.post('/api/recycle-approval/batch-submit', { bookIds: bookIds, approvalType: 'RESTORE' });
+        },
+        /** 批量申请彻底删除（普通用户） */
+        batchApplyDelete: function (bookIds) {
+            return this.post('/api/recycle-approval/batch-submit', { bookIds: bookIds, approvalType: 'DELETE' });
+        },
         /** 删除申请记录（本人或管理员） */
         deleteApproval: function (id) {
             return this.del('/api/recycle-approval/' + id);
