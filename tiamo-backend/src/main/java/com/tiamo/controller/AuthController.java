@@ -212,6 +212,34 @@ public class AuthController {
         data.put("email", email);
         return new Result<>(200, data, "验证码已发送到您的邮箱，5分钟内有效");
     }
+
+    /**
+     * 验证邮箱验证码（第一步验证用）
+     * POST /api/auth/verify-email-captcha
+     */
+    @PostMapping("/verify-email-captcha")
+    public Result<String> verifyEmailCaptcha(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String captcha = request.get("captcha");
+        
+        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            return new Result<>(400, null, "请输入有效的邮箱地址");
+        }
+        if (captcha == null || captcha.length() != 6) {
+            return new Result<>(400, null, "请输入6位验证码");
+        }
+        // 检查邮箱是否已注册
+        SysUser user = userService.getByEmail(email);
+        if (user == null) {
+            return new Result<>(400, null, "该邮箱未注册");
+        }
+        // 校验验证码（注意：这里不删除验证码，因为第二步重置密码时还需要用）
+        // 所以需要添加一个只验证不删除的方法
+        if (!captchaService.validateCaptchaOnly(email, captcha)) {
+            return new Result<>(400, null, "验证码错误或已过期");
+        }
+        return new Result<>(200, null, "验证码验证成功");
+    }
     /**
      * 重置密码（忘记密码）
      * POST /api/auth/reset-password

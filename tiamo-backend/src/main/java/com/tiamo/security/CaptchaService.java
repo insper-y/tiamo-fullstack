@@ -58,4 +58,23 @@ public class CaptchaService {
         }
         return false;
     }
+
+    /**
+     * 仅验证验证码，不删除（用于第一步预验证）
+     * @param phone 手机号或邮箱
+     * @param captcha 用户输入的验证码
+     * @return 是否验证通过
+     */
+    public boolean validateCaptchaOnly(String phone, String captcha) {
+        String[] stored = captchaStore.get(phone);
+        if (stored == null) return false;
+        String storedCaptcha = stored[0];
+        long generateTime = Long.parseLong(stored[1]);
+        // 检查是否过期
+        if (System.currentTimeMillis() - generateTime > EXPIRE_TIME) {
+            captchaStore.remove(phone);
+            return false;
+        }
+        return storedCaptcha.equals(captcha);
+    }
 }

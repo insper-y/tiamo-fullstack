@@ -81,6 +81,11 @@
             return this.post('/api/auth/send-email-captcha', { email: email });
         },
 
+        /** 验证邮箱验证码（第一步预验证） */
+        verifyEmailCaptcha: function (data) {
+            return this.post('/api/auth/verify-email-captcha', data);
+        },
+
         /** 重置密码 */
         resetPassword: function (data) {
             return this.post('/api/auth/reset-password', data);
