@@ -1982,8 +1982,17 @@
             if (!confirmed) return;
             Api.batchApplyRestore(ids).then(function (res) {
                 if (res.code === 200) {
-                    AuthUtils.showAlert('success', res.msg || '批量申请恢复已提交');
-                    loadRecycleList();
+                    var count = res.data ? res.data.count : 0;
+                    var total = res.data ? res.data.total : ids.length;
+                    if (count === 0) {
+                        AuthUtils.showAlert('warning', '提交失败：选中的 ' + total + ' 条数据可能已有待审批申请，请等待管理员处理后再操作');
+                    } else if (count < total) {
+                        AuthUtils.showAlert('success', '已成功提交 ' + count + ' 条申请，跳过 ' + (total - count) + ' 条（已有待审批申请）');
+                        loadRecycleList();
+                    } else {
+                        AuthUtils.showAlert('success', res.msg || '批量申请恢复已提交');
+                        loadRecycleList();
+                    }
                 } else {
                     AuthUtils.showAlert('error', res.msg || '批量申请恢复失败');
                 }
@@ -2008,8 +2017,17 @@
             if (!confirmed) return;
             Api.batchApplyDelete(ids).then(function (res) {
                 if (res.code === 200) {
-                    AuthUtils.showAlert('success', res.msg || '批量申请删除已提交');
-                    loadRecycleList();
+                    var count = res.data ? res.data.count : 0;
+                    var total = res.data ? res.data.total : ids.length;
+                    if (count === 0) {
+                        AuthUtils.showAlert('warning', '提交失败：选中的 ' + total + ' 条数据可能已有待审批申请，请等待管理员处理后再操作');
+                    } else if (count < total) {
+                        AuthUtils.showAlert('success', '已成功提交 ' + count + ' 条申请，跳过 ' + (total - count) + ' 条（已有待审批申请）');
+                        loadRecycleList();
+                    } else {
+                        AuthUtils.showAlert('success', res.msg || '批量申请删除已提交');
+                        loadRecycleList();
+                    }
                 } else {
                     AuthUtils.showAlert('error', res.msg || '批量申请删除失败');
                 }
