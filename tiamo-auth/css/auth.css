@@ -511,6 +511,59 @@ a:hover {
     color: var(--text-secondary);
 }
 
+/* 手机端checkbox样式 - 确保点击区域足够大 */
+.checkbox-mobile {
+    position: relative;
+    padding: 12px 0;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+}
+
+.checkbox-mobile input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 44px;
+    cursor: pointer;
+    z-index: 2;
+    margin: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.checkbox-mobile .checkbox-custom {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.checkbox-mobile span:not(.checkbox-custom) {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.checkbox-mobile span:not(.checkbox-custom) a {
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+}
+
+/* 注册页协议checkbox对齐 */
+.checkbox-agree {
+    align-items: flex-start;
+}
+
+.checkbox-agree .checkbox-custom {
+    margin-top: 2px;
+}
+
+.checkbox-agree .checkbox-text {
+    line-height: 1.5;
+}
+
 .forgot-link {
     color: var(--text-link);
     font-weight: 500;
@@ -1330,5 +1383,104 @@ body.light-theme .steps .step.active .step-label {
     .confirm-btn {
         padding: 10px 16px;
         font-size: 13px;
+    }
+}
+
+
+/* ========== 原生checkbox美化（最可靠，手机端兼容） ========== */
+.native-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.native-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg-input);
+    cursor: pointer;
+    position: relative;
+    margin-right: 10px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.native-checkbox:checked {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--primary);
+}
+
+.native-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.native-checkbox:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.native-checkbox-label {
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.native-checkbox-label a {
+    color: var(--text-link);
+    text-decoration: none;
+}
+
+.native-checkbox-label a:hover {
+    text-decoration: underline;
+}
+
+/* 注册页协议checkbox对齐 */
+.native-checkbox-agree {
+    align-items: flex-start;
+}
+
+.native-checkbox-agree .native-checkbox {
+    margin-top: 2px;
+}
+
+/* 手机端优化 */
+@media (max-width: 768px) {
+    .native-checkbox-wrapper {
+        padding: 12px 0;
+        min-height: 48px;
+    }
+    
+    .native-checkbox {
+        width: 22px;
+        height: 22px;
+        min-width: 22px;
+    }
+    
+    .native-checkbox:checked::after {
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 12px;
+    }
+    
+    .native-checkbox-label {
+        font-size: 15px;
     }
 }
