@@ -54,7 +54,8 @@ public class AdminController {
         }
 
         // 先从缓存读取
-        List<Map<String, Object>> cachedList = cacheService.getList(USER_LIST_CACHE_KEY, Map.class);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> cachedList = (List<Map<String, Object>>) (List<?>) cacheService.getList(USER_LIST_CACHE_KEY, Map.class);
         if (cachedList != null && !cachedList.isEmpty()) {
             return new Result<>(200, cachedList, "查询成功(缓存)");
         }
