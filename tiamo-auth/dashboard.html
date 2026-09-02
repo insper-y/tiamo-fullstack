@@ -144,6 +144,7 @@
         .data-table tbody tr:hover { background: var(--bg-input); }
         .data-table tbody tr:last-child td { border-bottom: none; }
         .empty-state { text-align: center; padding: 48px; color: var(--text-muted); font-size: 13px; }
+        .recycle-subtab.active { color: var(--primary) !important; border-bottom-color: var(--primary) !important; font-weight: 600 !important; }
         .token-info {
             background: var(--bg-input); border-radius: 8px;
             padding: 14px; font-size: 12px; color: var(--text-secondary); word-break: break-all;
@@ -416,6 +417,12 @@
                         <button class="btn-primary btn-sm" id="batchApplyDeleteBtn" style="background:linear-gradient(135deg,#f59e0b,#d97706);display:none;" onclick="batchApplyDelete()">批量申请删除</button>
                         <button class="btn-primary" onclick="loadRecycleList()">刷新</button>
                     </div>
+                </div>
+                <!-- 回收站子标签 -->
+                <div style="display:flex;gap:4px;margin:12px 0;border-bottom:1px solid var(--border);padding-bottom:0;">
+                    <button class="recycle-subtab active" data-tab="all" onclick="switchRecycleSubTab('all')" style="padding:8px 16px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;border-bottom:2px solid transparent;margin-bottom:-1px;">所有数据</button>
+                    <button class="recycle-subtab" data-tab="restore" onclick="switchRecycleSubTab('restore')" style="padding:8px 16px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;border-bottom:2px solid transparent;margin-bottom:-1px;">已申请恢复</button>
+                    <button class="recycle-subtab" data-tab="delete" onclick="switchRecycleSubTab('delete')" style="padding:8px 16px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;border-bottom:2px solid transparent;margin-bottom:-1px;">已申请删除</button>
                 </div>
                 <!-- 回收站高级查询 -->
                 <div id="recycleAdvancedPanel" style="display:none;margin-bottom:16px;padding:16px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border);">
@@ -1638,6 +1645,7 @@
         var recycleCurrentPage = 1;
         var recyclePageSize = 20;
         var recycleFilteredList = [];
+        var recycleSubTab = 'all'; // all-所有数据 restore-已申请恢复 delete-已申请删除
 
         // 加载回收站列表
         function loadRecycleList() {
@@ -1690,7 +1698,33 @@
                 listEl.innerHTML = '<div class="empty-state">回收站为空</div>';
                 return;
             }
-            recycleFilteredList = list;
+            // 根据子标签过滤数据
+            var filtered = [];
+            if (recycleSubTab === 'all') {
+                // 所有数据：不包含已申请的数据
+                filtered = list.filter(function(item) {
+                    return !item.approvalStatus || item.approvalStatus === '';
+                });
+            } else if (recycleSubTab === 'restore') {
+                // 已申请恢复
+                filtered = list.filter(function(item) {
+                    return item.approvalType === 'RESTORE';
+                });
+            } else if (recycleSubTab === 'delete') {
+                // 已申请删除
+                filtered = list.filter(function(item) {
+                    return item.approvalType === 'DELETE';
+                });
+            }
+            if (filtered.length === 0) {
+                var emptyMsg = '';
+                if (recycleSubTab === 'all') emptyMsg = '暂无未申请的数据';
+                else if (recycleSubTab === 'restore') emptyMsg = '暂无已申请恢复的数据';
+                else if (recycleSubTab === 'delete') emptyMsg = '暂无已申请删除的数据';
+                listEl.innerHTML = '<div class="empty-state">' + emptyMsg + '</div>';
+                return;
+            }
+            recycleFilteredList = filtered;
             var totalPages = Math.ceil(list.length / recyclePageSize);
             if (recycleCurrentPage > totalPages) recycleCurrentPage = totalPages;
             if (recycleCurrentPage < 1) recycleCurrentPage = 1;
@@ -1845,6 +1879,27 @@
             var btn = document.getElementById('selectAllRecycleBtn');
             if (btn) btn.textContent = newState ? '取消全选' : '全选';
             updateRecycleBatchBtnState();
+        }
+
+        // 切换回收站子标签
+        function switchRecycleSubTab(tab) {
+            recycleSubTab = tab;
+            recycleCurrentPage = 1;
+            // 更新标签样式
+            document.querySelectorAll('.recycle-subtab').forEach(function(btn) {
+                if (btn.getAttribute('data-tab') === tab) {
+                    btn.classList.add('active');
+                    btn.style.color = 'var(--primary)';
+                    btn.style.borderBottomColor = 'var(--primary)';
+                    btn.style.fontWeight = '600';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.color = 'var(--text-secondary)';
+                    btn.style.borderBottomColor = 'transparent';
+                    btn.style.fontWeight = 'normal';
+                }
+            });
+            renderRecycleList(recycleFilteredList.length > 0 ? recycleFilteredList : recycleList);
         }
 
         // 全选/取消全选回收站
