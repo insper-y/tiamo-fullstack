@@ -245,15 +245,17 @@
         // 页面加载时填充记住的用户名和密码
         window.addEventListener('DOMContentLoaded', function () {
             initTheme();
-            var savedUsername = localStorage.getItem('tiamo_username');
-            var savedPassword = localStorage.getItem('tiamo_password');
-            if (savedUsername) {
-                document.getElementById('username').value = savedUsername;
-                document.getElementById('remember').checked = true;
-            }
-            if (savedPassword) {
-                document.getElementById('password').value = savedPassword;
-            }
+            setTimeout(function () {
+                var savedUsername = localStorage.getItem('tiamo_username');
+                var savedPassword = localStorage.getItem('tiamo_password');
+                if (savedUsername) {
+                    document.getElementById('username').value = savedUsername;
+                    document.getElementById('remember').checked = true;
+                }
+                if (savedPassword) {
+                    document.getElementById('password').value = savedPassword;
+                }
+            }, 100);
         });
     </script>
 </body>
