@@ -1602,7 +1602,7 @@
             var btn = document.getElementById('batchDeleteBtn');
             if (btn) {
                 btn.style.display = selected.length > 0 ? 'inline-block' : 'none';
-                btn.textContent = '批量删除(' + selected.length + ')';
+                btn.textContent = '批量删除';
             }
         }
 
@@ -1869,22 +1869,22 @@
                 var deleteBtn = document.getElementById('batchHardDeleteBtn');
                 if (restoreBtn) {
                     restoreBtn.style.display = hasSelection ? 'inline-block' : 'none';
-                    restoreBtn.textContent = '批量恢复(' + selected.length + ')';
+                    restoreBtn.textContent = '批量恢复';
                 }
                 if (deleteBtn) {
                     deleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
-                    deleteBtn.textContent = '批量删除(' + selected.length + ')';
+                    deleteBtn.textContent = '批量删除';
                 }
             } else {
                 var applyRestoreBtn = document.getElementById('batchApplyRestoreBtn');
                 var applyDeleteBtn = document.getElementById('batchApplyDeleteBtn');
                 if (applyRestoreBtn) {
                     applyRestoreBtn.style.display = hasSelection ? 'inline-block' : 'none';
-                    applyRestoreBtn.textContent = '批量申请恢复(' + selected.length + ')';
+                    applyRestoreBtn.textContent = '批量申请恢复';
                 }
                 if (applyDeleteBtn) {
                     applyDeleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
-                    applyDeleteBtn.textContent = '批量申请删除(' + selected.length + ')';
+                    applyDeleteBtn.textContent = '批量申请删除';
                 }
             }
         }
