@@ -11,8 +11,8 @@ import com.tiamo.security.CaptchaService;
 import com.tiamo.security.JwtUtil;
 import com.tiamo.service.SysOperationLogService;
 import com.tiamo.service.impl.SysUserServiceImpl;
+import com.tiamo.service.InviteCodeService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -37,6 +37,8 @@ public class AuthController {
     private CaptchaService captchaService;
     @Autowired
     private SysOperationLogService operationLogService;
+    @Autowired
+    private InviteCodeService inviteCodeService;
     @Autowired
     /**
      * 用户登录
@@ -130,7 +132,7 @@ public class AuthController {
             return new Result<>(400, null, "请输入邀请码");
         }
         // 验证邀请码（3分钟有效，使用后删除）
-        if (!AdminController.validateInviteCode(registerDTO.getInviteCode().trim())) {
+        if (!inviteCodeService.validateCode(registerDTO.getInviteCode().trim())) {
             return new Result<>(400, null, "邀请码无效或已过期（有效期3分钟）");
         }
         if (registerDTO.getPassword() == null || registerDTO.getPassword().length() < 8) {
