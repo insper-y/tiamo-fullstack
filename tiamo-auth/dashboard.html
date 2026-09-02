@@ -2520,9 +2520,11 @@
         }
 
         /* ==================== 主题切换 ==================== */
+        // 初始化主题（默认白天模式）
         function initTheme() {
-            var savedTheme = localStorage.getItem('tiamo_theme') || 'dark';
-            if (savedTheme === 'light') {
+            var savedTheme = localStorage.getItem('tiamo_theme');
+            var theme = savedTheme === 'dark' ? 'dark' : 'light';
+            if (theme === 'light') {
                 document.body.classList.add('light-theme');
                 document.getElementById('themeToggleBtn').textContent = '☀️';
             } else {

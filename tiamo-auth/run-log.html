@@ -403,10 +403,14 @@
             var meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.setAttribute('content', isLight ? '#f0f2f5' : '#0a0a1a');
         }
+        // 初始化主题（默认白天模式）
         function initTheme() {
-            if (localStorage.getItem('tiamo_theme') === 'light') {
+            var savedTheme = localStorage.getItem('tiamo_theme');
+            var theme = savedTheme === 'dark' ? 'dark' : 'light';
+            if (theme === 'light') {
                 document.body.classList.add('light-theme');
-                document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f0f2f5');
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute('content', '#f0f2f5');
             }
         }
 

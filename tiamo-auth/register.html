@@ -182,17 +182,18 @@
             }
         }
 
+        // 初始化主题（默认白天模式）
         function initTheme() {
             var savedTheme = localStorage.getItem('tiamo_theme');
-            if (savedTheme === 'light') {
+            // 默认使用白天模式，只有明确保存为dark时才使用深色模式
+            var theme = savedTheme === 'dark' ? 'dark' : 'light';
+            if (theme === 'light') {
                 document.body.classList.add('light-theme');
-                updateThemeButton('light');
-                var metaThemeColor = document.querySelector('meta[name="theme-color"]');
-                if (metaThemeColor) {
-                    metaThemeColor.setAttribute('content', '#f0f2f5');
-                }
-            } else {
-                updateThemeButton('dark');
+            }
+            updateThemeButton(theme);
+            var metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', theme === 'light' ? '#f0f2f5' : '#0a0a1a');
             }
         }
 
