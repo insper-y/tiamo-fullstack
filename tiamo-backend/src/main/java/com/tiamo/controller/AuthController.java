@@ -39,7 +39,6 @@ public class AuthController {
     private SysOperationLogService operationLogService;
     @Autowired
     private InviteCodeService inviteCodeService;
-    @Autowired
     /**
      * 用户登录
      * POST /api/auth/login
