@@ -614,6 +614,11 @@
             var container = document.getElementById('listContainer');
             container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">加载中...</div></div>';
 
+            var showError = function(err) {
+                console.error('加载失败:', err);
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">加载失败，请刷新重试</div></div>';
+            };
+
             if (currentTab === 'conversations') {
                 Api.getChatConversations().then(function(res) {
                     if (res.code === 200 && res.data && res.data.length > 0) {
@@ -621,7 +626,7 @@
                     } else {
                         container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><div class="empty-state-text">暂无会话，添加好友开始聊天</div></div>';
                     }
-                });
+                }).catch(showError);
             } else if (currentTab === 'friends') {
                 Api.getFriendList().then(function(res) {
                     if (res.code === 200 && res.data && res.data.length > 0) {
@@ -629,7 +634,7 @@
                     } else {
                         container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">暂无好友，点击右上角添加好友</div></div>';
                     }
-                });
+                }).catch(showError);
             } else if (currentTab === 'requests') {
                 Api.getReceivedFriendRequests().then(function(res) {
                     if (res.code === 200 && res.data && res.data.length > 0) {
@@ -637,22 +642,27 @@
                     } else {
                         container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📨</div><div class="empty-state-text">暂无好友请求</div></div>';
                     }
-                });
+                }).catch(showError);
             }
         }
 
         // 渲染会话列表
+        function escapeAttr(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
         function renderConversations(list) {
             var container = document.getElementById('listContainer');
             var html = '';
             list.forEach(function(conv) {
-                var initial = conv.friendNickname ? conv.friendNickname.charAt(0).toUpperCase() : '?';
+                var nickname = conv.friendNickname || conv.friendUsername || '';
+                var initial = nickname ? nickname.charAt(0).toUpperCase() : '?';
                 var time = conv.lastMessageTime ? formatTime(conv.lastMessageTime) : '';
-                html += '<div class="list-item" onclick="openChat(' + conv.friendId + ', \'' + conv.friendUsername + '\', \'' + (conv.friendNickname || '') + '\')">';
+                html += '<div class="list-item" data-friend-id="' + conv.friendId + '" data-friend-username="' + escapeAttr(conv.friendUsername) + '" data-friend-nickname="' + escapeAttr(nickname) + '">';
                 html += '<div class="avatar">' + initial + '</div>';
                 html += '<div class="item-info">';
-                html += '<div class="item-name">' + (conv.friendNickname || conv.friendUsername) + '</div>';
-                html += '<div class="item-preview">' + (conv.lastMessage || '暂无消息') + '</div>';
+                html += '<div class="item-name">' + escapeAttr(nickname) + '</div>';
+                html += '<div class="item-preview">' + escapeAttr(conv.lastMessage || '暂无消息') + '</div>';
                 html += '</div>';
                 html += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">';
                 html += '<span class="item-time">' + time + '</span>';
@@ -662,6 +672,15 @@
                 html += '</div></div>';
             });
             container.innerHTML = html;
+            // 绑定点击事件
+            container.querySelectorAll('.list-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var friendId = parseInt(this.getAttribute('data-friend-id'));
+                    var friendUsername = this.getAttribute('data-friend-username');
+                    var friendNickname = this.getAttribute('data-friend-nickname');
+                    openChat(friendId, friendUsername, friendNickname);
+                });
+            });
         }
 
         // 渲染好友列表
