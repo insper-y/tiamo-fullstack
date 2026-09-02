@@ -4,6 +4,7 @@ import com.tiamo.annotation.OperationLog;
 import com.tiamo.common.Result;
 import com.tiamo.entity.SysUser;
 import com.tiamo.security.JwtUtil;
+import com.tiamo.service.CacheService;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import com.tiamo.service.InviteCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -29,8 +31,14 @@ public class AdminController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
     @Autowired
     private InviteCodeService inviteCodeService;
+
+    @Autowired
+    private CacheService cacheService;
+
+    private static final String USER_LIST_CACHE_KEY = "tiamo:users:list";
 
     /**
      * 获取用户列表（仅管理员）
@@ -44,6 +52,14 @@ public class AdminController {
         if (currentUser == null) {
             return new Result<>(403, null, "无权限访问，仅管理员可操作");
         }
+
+        // 先从缓存读取
+        List<Map<String, Object>> cachedList = cacheService.getList(USER_LIST_CACHE_KEY, Map.class);
+        if (cachedList != null && !cachedList.isEmpty()) {
+            return new Result<>(200, cachedList, "查询成功(缓存)");
+        }
+
+        // 缓存没有，查询数据库
         List<SysUser> users = userService.list();
         List<Map<String, Object>> userList = users.stream().map(user -> {
             Map<String, Object> map = new HashMap<>();
@@ -59,6 +75,10 @@ public class AdminController {
             map.put("createTime", user.getCreateTime());
             return map;
         }).collect(Collectors.toList());
+
+        // 写入缓存，30秒过期
+        cacheService.set(USER_LIST_CACHE_KEY, userList, 30, TimeUnit.SECONDS);
+
         return new Result<>(200, userList, "查询成功");
     }
 
@@ -97,6 +117,7 @@ public class AdminController {
         user.setUpdateTime(LocalDateTime.now());
         boolean flag = userService.updateById(user);
         if (flag) {
+            cacheService.delete(USER_LIST_CACHE_KEY);
             String roleName = role == 1 ? "管理员" : "普通用户";
             return new Result<>(200, null, "已将用户 " + user.getUsername() + " 设置为" + roleName);
         }
@@ -138,6 +159,7 @@ public class AdminController {
         user.setUpdateTime(LocalDateTime.now());
         boolean flag = userService.updateById(user);
         if (flag) {
+            cacheService.delete(USER_LIST_CACHE_KEY);
             String statusName = status == 1 ? "启用" : "禁用";
             return new Result<>(200, null, "已将用户 " + user.getUsername() + " " + statusName);
         }
@@ -175,6 +197,7 @@ public class AdminController {
         }
         boolean flag = userService.removeById(id);
         if (flag) {
+            cacheService.delete(USER_LIST_CACHE_KEY);
             return new Result<>(200, null, "已删除用户 " + user.getUsername());
         }
         return new Result<>(500, null, "删除失败");
