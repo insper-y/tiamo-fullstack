@@ -154,11 +154,9 @@ public class BooksController {
             }
         }
         
-        if (userId != null && list != null && !list.isEmpty()) {
-            List<RecycleApproval> approvals = recycleApprovalService.list(
-                new LambdaQueryWrapper<RecycleApproval>()
-                    .eq(RecycleApproval::getApplicantId, userId)
-            );
+        if (list != null && !list.isEmpty()) {
+            // 查询所有用户的申请记录（只要有申请就不显示在所有数据中）
+            List<RecycleApproval> approvals = recycleApprovalService.list();
             // 构建bookId -> approval的映射
             Map<Integer, RecycleApproval> approvalMap = new java.util.HashMap<>();
             for (RecycleApproval approval : approvals) {
