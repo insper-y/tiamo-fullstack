@@ -593,13 +593,23 @@
                         </select>
                     </div>
                 </div>
-                <div style="margin-top:16px;">
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
                     <button class="btn-primary" onclick="saveEmailConfig()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
                         保存配置
                     </button>
+                    <button class="btn-primary" onclick="sendOperationLogsFromConfig()" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+                        立即发送操作日志到邮箱
+                    </button>
+                    <button class="btn-primary" onclick="sendRunLogsFromConfig()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                        立即发送运行日志到邮箱
+                    </button>
                 </div>
-                <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
-                    提示：修改发送时间后，系统将在每天指定时间自动发送操作日志日报邮件。
+                <p style="color:var(--text-muted);font-size:12px;margin-top:12px;line-height:1.8;">
+                    提示：<br>
+                    1. 修改发送时间后，系统将在每天指定时间自动发送操作日志日报邮件。<br>
+                    2. 点击"立即发送操作日志到邮箱"可手动发送当天操作日志。<br>
+                    3. 点击"立即发送运行日志到邮箱"可手动发送当天系统运行日志。<br>
+                    4. 实时操作日志邮件开启后，每次操作将立即发送通知邮件。
                 </p>
             </div>
         </div>
@@ -2640,6 +2650,52 @@
                 } else {
                     AuthUtils.showAlert('error', res.msg || '发送失败，可能无管理员权限');
                 }
+            });
+        }
+
+        // 从邮件配置页面发送操作日志到邮箱
+        function sendOperationLogsFromConfig() {
+            var email = document.getElementById('configToEmail').value.trim();
+            if (!email) {
+                AuthUtils.showAlert('error', '请先填写收件邮箱');
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                AuthUtils.showAlert('error', '邮箱格式不正确');
+                return;
+            }
+            AuthUtils.showAlert('success', '正在发送操作日志到邮箱...');
+            Api.exportLogsToEmail(email).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '操作日志发送成功');
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '发送失败，可能无管理员权限');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '发送失败，请检查网络连接');
+            });
+        }
+
+        // 从邮件配置页面发送运行日志到邮箱
+        function sendRunLogsFromConfig() {
+            var email = document.getElementById('configToEmail').value.trim();
+            if (!email) {
+                AuthUtils.showAlert('error', '请先填写收件邮箱');
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                AuthUtils.showAlert('error', '邮箱格式不正确');
+                return;
+            }
+            AuthUtils.showAlert('success', '正在发送运行日志到邮箱...');
+            Api.exportRunLogsToEmail(email).then(function (res) {
+                if (res.code === 200) {
+                    AuthUtils.showAlert('success', res.msg || '运行日志发送成功');
+                } else {
+                    AuthUtils.showAlert('error', res.msg || '发送失败，可能无管理员权限');
+                }
+            }).catch(function () {
+                AuthUtils.showAlert('error', '发送失败，请检查网络连接');
             });
         }
 
