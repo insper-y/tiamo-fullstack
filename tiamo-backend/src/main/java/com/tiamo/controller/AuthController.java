@@ -57,8 +57,12 @@ public class AuthController {
             return new Result<>(400, null, "请输入密码");
         }
         String username = loginDTO.getUsername().trim();
-        // 查询用户
+        // 查询用户（支持用户名或邮箱登录）
         SysUser user = userService.getByUsername(username);
+        if (user == null && username.contains("@")) {
+            // 如果输入包含@，尝试用邮箱查询
+            user = userService.getByEmail(username);
+        }
         if (user == null) {
             recordLoginFail(username, "用户不存在", null);
             return new Result<>(401, null, "用户名或密码错误");
