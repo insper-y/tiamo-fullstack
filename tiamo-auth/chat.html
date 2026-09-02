@@ -688,17 +688,35 @@
             var container = document.getElementById('listContainer');
             var html = '';
             list.forEach(function(friend) {
-                var initial = friend.friendNickname ? friend.friendNickname.charAt(0).toUpperCase() : '?';
-                html += '<div class="list-item" onclick="openChat(' + friend.friendId + ', \'' + friend.friendUsername + '\', \'' + (friend.friendNickname || '') + '\')">';
+                var nickname = friend.friendNickname || friend.friendUsername || '';
+                var initial = nickname ? nickname.charAt(0).toUpperCase() : '?';
+                html += '<div class="list-item" data-friend-id="' + friend.friendId + '" data-friend-username="' + escapeAttr(friend.friendUsername) + '" data-friend-nickname="' + escapeAttr(nickname) + '">';
                 html += '<div class="avatar">' + initial + '</div>';
                 html += '<div class="item-info">';
-                html += '<div class="item-name">' + (friend.friendNickname || friend.friendUsername) + '</div>';
-                html += '<div class="item-preview">@' + friend.friendUsername + '</div>';
+                html += '<div class="item-name">' + escapeAttr(nickname) + '</div>';
+                html += '<div class="item-preview">@' + escapeAttr(friend.friendUsername) + '</div>';
                 html += '</div>';
-                html += '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteFriend(' + friend.friendId + ')">删除</button>';
+                html += '<button class="btn btn-danger btn-sm delete-friend-btn" data-friend-id="' + friend.friendId + '">删除</button>';
                 html += '</div>';
             });
             container.innerHTML = html;
+            // 绑定点击事件
+            container.querySelectorAll('.list-item').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('delete-friend-btn')) return;
+                    var friendId = parseInt(this.getAttribute('data-friend-id'));
+                    var friendUsername = this.getAttribute('data-friend-username');
+                    var friendNickname = this.getAttribute('data-friend-nickname');
+                    openChat(friendId, friendUsername, friendNickname);
+                });
+            });
+            container.querySelectorAll('.delete-friend-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var friendId = parseInt(this.getAttribute('data-friend-id'));
+                    deleteFriend(friendId);
+                });
+            });
         }
 
         // 渲染好友请求
