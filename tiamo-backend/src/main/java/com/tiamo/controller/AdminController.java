@@ -54,10 +54,17 @@ public class AdminController {
         }
 
         // 先从缓存读取
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> cachedList = (List<Map<String, Object>>) (List<?>) cacheService.getList(USER_LIST_CACHE_KEY, Map.class);
-        if (cachedList != null && !cachedList.isEmpty()) {
-            return new Result<>(200, cachedList, "查询成功(缓存)");
+        try {
+            Object cachedObj = cacheService.get(USER_LIST_CACHE_KEY, Object.class);
+            if (cachedObj != null && cachedObj instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> cachedList = (List<Map<String, Object>>) cachedObj;
+                if (!cachedList.isEmpty()) {
+                    return new Result<>(200, cachedList, "查询成功(缓存)");
+                }
+            }
+        } catch (Exception e) {
+            // 缓存读取失败，继续查询数据库
         }
 
         // 缓存没有，查询数据库
