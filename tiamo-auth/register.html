@@ -134,12 +134,12 @@
 
                 <!-- 用户协议 -->
                 <div class="form-group">
-                    <label class="checkbox-wrapper">
-                        <input type="checkbox" id="agree" name="agree" data-required>
-                        <span class="checkbox-custom">
+                    <label class="checkbox-wrapper" style="position: relative; padding: 10px 0; min-height: 40px; display: flex; align-items: flex-start; cursor: pointer;">
+                        <input type="checkbox" id="agree" name="agree" data-required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 1;">
+                        <span class="checkbox-custom" style="pointer-events: none; flex-shrink: 0; position: relative; z-index: 2; margin-top: 2px;">
                             <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                         </span>
-                        <span>我已阅读并同意 <a href="#" onclick="event.preventDefault()">《用户协议》</a> 和 <a href="#" onclick="event.preventDefault()">《隐私政策》</a></span>
+                        <span style="pointer-events: none; position: relative; z-index: 2; line-height: 1.5;">我已阅读并同意 <a href="#" onclick="event.preventDefault()" style="pointer-events: auto; position: relative; z-index: 3;">《用户协议》</a> 和 <a href="#" onclick="event.preventDefault()" style="pointer-events: auto; position: relative; z-index: 3;">《隐私政策》</a></span>
                     </label>
                     <div class="error-message" style="margin-top:4px">请先同意用户协议</div>
                 </div>
