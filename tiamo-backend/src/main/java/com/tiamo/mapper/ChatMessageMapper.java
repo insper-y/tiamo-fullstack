@@ -1,16 +1,14 @@
 package com.tiamo.mapper;
-
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.tiamo.entity.ChatMessage;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
-
 /**
  * 聊天消息 Mapper
  */
 @Mapper
 public interface ChatMessageMapper extends BaseMapper<ChatMessage> {
-
     /**
      * 自动建表
      */
@@ -31,4 +29,25 @@ public interface ChatMessageMapper extends BaseMapper<ChatMessage> {
             "INDEX idx_create_time (create_time)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天消息表'")
     void createTableIfNotExists();
+
+    /**
+     * 检查索引是否存在
+     */
+    @Select("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE table_schema = DATABASE() AND table_name = 'chat_message' AND index_name = #{indexName}")
+    int checkIndexExists(String indexName);
+
+    /**
+     * 添加索引
+     */
+    @Update("ALTER TABLE chat_message ADD INDEX ${indexName} (${column})")
+    void addIndex(String indexName, String column);
+
+    /**
+     * 如果索引不存在则添加
+     */
+    default void addIndexIfNotExists(String indexName, String column) {
+        if (checkIndexExists(indexName) == 0) {
+            addIndex(indexName, column);
+        }
+    }
 }

@@ -884,8 +884,10 @@
                         }
                         loadPendingRequestCount();
                     }
+                }).catch(function(err) {
+                    console.error('轮询新消息失败:', err);
                 });
-            }, 3000);
+            }, 5000);
         }
 
         // 添加好友弹窗

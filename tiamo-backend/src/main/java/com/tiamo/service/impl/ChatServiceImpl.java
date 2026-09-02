@@ -36,6 +36,16 @@ public class ChatServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage>
     public void init() {
         try {
             baseMapper.createTableIfNotExists();
+            // 添加索引优化查询速度
+            try {
+                baseMapper.addIndexIfNotExists("idx_from_user", "from_user_id");
+                baseMapper.addIndexIfNotExists("idx_to_user", "to_user_id");
+                baseMapper.addIndexIfNotExists("idx_create_time", "create_time");
+                baseMapper.addIndexIfNotExists("idx_is_read", "is_read");
+                System.out.println("[聊天系统] 数据库索引初始化完成");
+            } catch (Exception e) {
+                System.out.println("[聊天系统] 数据库索引创建失败: " + e.getMessage());
+            }
             System.out.println("[聊天系统] 数据库表初始化完成");
         } catch (Exception e) {
             System.out.println("[聊天系统] 数据库表初始化失败: " + e.getMessage());
