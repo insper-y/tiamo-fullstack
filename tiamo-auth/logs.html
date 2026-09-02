@@ -100,6 +100,7 @@
         .badge-update { background: rgba(251,191,36,0.15); color: var(--warning); }
         .badge-delete { background: rgba(248,113,113,0.15); color: var(--error); }
         .badge-query { background: rgba(129,140,248,0.15); color: var(--primary-light); }
+        .badge-export { background: rgba(168,85,247,0.15); color: #a855f7; }
         .badge-other { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
         .params-cell {
             max-width: 250px; font-size: 11px; color: var(--text-muted); font-family: monospace;
@@ -227,8 +228,12 @@
                 <select id="filterModule">
                     <option value="">全部</option>
                     <option value="认证管理">认证管理</option>
+                    <option value="用户管理">用户管理</option>
                     <option value="商品管理">商品管理</option>
+                    <option value="回收站审批">回收站审批</option>
+                    <option value="数据导出">数据导出</option>
                     <option value="日志管理">日志管理</option>
+                    <option value="系统配置">系统配置</option>
                 </select>
             </div>
             <div class="filter-item">
@@ -240,6 +245,7 @@
                     <option value="UPDATE">修改</option>
                     <option value="DELETE">删除</option>
                     <option value="QUERY">查询</option>
+                    <option value="EXPORT">导出</option>
                 </select>
             </div>
             <div class="filter-item">
@@ -376,12 +382,15 @@
 
             logs.forEach(function (log) {
                 var typeClass = 'badge-other';
-                var typeText = log.operationType || 'OTHER';
+                var typeText = log.operationType || '其他';
+                var typeMap = {'LOGIN': '登录', 'CREATE': '新增', 'UPDATE': '修改', 'DELETE': '删除', 'QUERY': '查询', 'EXPORT': '导出'};
+                if (typeMap[log.operationType]) typeText = typeMap[log.operationType];
                 if (log.operationType === 'LOGIN') typeClass = 'badge-login';
                 else if (log.operationType === 'CREATE') typeClass = 'badge-create';
                 else if (log.operationType === 'UPDATE') typeClass = 'badge-update';
                 else if (log.operationType === 'DELETE') typeClass = 'badge-delete';
                 else if (log.operationType === 'QUERY') typeClass = 'badge-query';
+                else if (log.operationType === 'EXPORT') typeClass = 'badge-export';
 
                 var statusClass = log.status === 'SUCCESS' ? 'badge-success' : 'badge-error';
                 var statusText = log.status === 'SUCCESS' ? '成功' : '失败';
