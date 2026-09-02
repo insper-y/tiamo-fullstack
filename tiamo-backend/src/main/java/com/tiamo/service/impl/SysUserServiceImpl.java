@@ -67,6 +67,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return this.updateById(user);
     }
 
+    @Override
+    public boolean resetPasswordByEmail(String email, String newPassword) {
+        SysUser user = this.getByEmail(email);
+        if (user == null) return false;
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setUpdateTime(LocalDateTime.now());
+        return this.updateById(user);
+    }
+
     /**
      * 校验密码是否匹配
      */

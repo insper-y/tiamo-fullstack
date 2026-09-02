@@ -71,9 +71,14 @@
             return this.post('/api/admin/invite-code', {});
         },
 
-        /** 发送验证码 */
+        /** 发送短信验证码 */
         sendCaptcha: function (phone) {
             return this.post('/api/auth/send-captcha', { phone: phone });
+        },
+
+        /** 发送邮箱验证码 */
+        sendEmailCaptcha: function (email) {
+            return this.post('/api/auth/send-email-captcha', { email: email });
         },
 
         /** 重置密码 */
@@ -540,14 +545,18 @@
                     return;
                 }
 
-                // 调用后端发送验证码接口
+                // 调用后端发送验证码接口（根据验证类型选择短信或邮箱）
                 btn.disabled = true;
                 btn.textContent = '发送中...';
 
-                Api.sendCaptcha(targetInput.value).then(function (res) {
+                var sendPromise = (btn.dataset.validate === 'email') 
+                    ? Api.sendEmailCaptcha(targetInput.value) 
+                    : Api.sendCaptcha(targetInput.value);
+
+                sendPromise.then(function (res) {
                     if (res.code === 200) {
                         // 演示环境：如果后端返回了验证码，自动填充（生产环境删除）
-                        if (res.data && res.data.captcha) {
+                        if (res.data && res.data.captcha && btn.dataset.validate !== 'email') {
                             var captchaInput = document.getElementById('captcha');
                             if (captchaInput) captchaInput.value = res.data.captcha;
                         }

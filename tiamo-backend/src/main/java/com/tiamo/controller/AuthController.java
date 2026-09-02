@@ -12,6 +12,7 @@ import com.tiamo.security.JwtUtil;
 import com.tiamo.service.SysOperationLogService;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import com.tiamo.service.InviteCodeService;
+import com.tiamo.service.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +40,8 @@ public class AuthController {
     private SysOperationLogService operationLogService;
     @Autowired
     private InviteCodeService inviteCodeService;
+    @Autowired
+    private EmailService emailService;
     /**
      * 用户登录
      * POST /api/auth/login
@@ -175,6 +178,40 @@ public class AuthController {
         data.put("captcha", captcha); // 仅开发环境，生产环境删除此行
         return new Result<>(200, data, "验证码已发送，5分钟内有效");
     }
+
+    /**
+     * 发送邮箱验证码（忘记密码用）
+     * POST /api/auth/send-email-captcha
+     */
+    @PostMapping("/send-email-captcha")
+    public Result<Map<String, String>> sendEmailCaptcha(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            return new Result<>(400, null, "请输入有效的邮箱地址");
+        }
+        SysUser user = userService.getByEmail(email);
+        if (user == null) {
+            return new Result<>(400, null, "该邮箱未注册");
+        }
+        String captcha = captchaService.generateCaptcha(email);
+        try {
+            String subject = "【Tiamo AI】找回密码验证码";
+            String htmlContent = "<div style='font-family:Arial,sans-serif;max-width:500px;margin:0 auto;'>"
+                + "<div style='background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:24px;border-radius:12px 12px 0 0;'>"
+                + "<h2 style='margin:0;font-size:20px;'>找回密码验证码</h2></div>"
+                + "<div style='background:white;padding:24px;border-radius:0 0 12px 12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);'>"
+                + "<p style='font-size:14px;color:#475569;margin:0 0 16px;'>您好，您正在进行找回密码操作，验证码如下：</p>"
+                + "<div style='text-align:center;padding:20px;background:#f1f5f9;border-radius:8px;margin-bottom:16px;'>"
+                + "<span style='font-size:36px;font-weight:bold;letter-spacing:8px;color:#6366f1;font-family:monospace;'>" + captcha + "</span></div>"
+                + "<p style='font-size:12px;color:#94a3b8;margin:0;'>验证码5分钟内有效，请勿泄露给他人。</p></div></div>";
+            emailService.sendHtmlEmail(email, subject, htmlContent);
+        } catch (Exception e) {
+            return new Result<>(500, null, "邮件发送失败，请稍后重试");
+        }
+        Map<String, String> data = new HashMap<>();
+        data.put("email", email);
+        return new Result<>(200, data, "验证码已发送到您的邮箱，5分钟内有效");
+    }
     /**
      * 重置密码（忘记密码）
      * POST /api/auth/reset-password
@@ -182,9 +219,18 @@ public class AuthController {
     @PostMapping("/reset-password")
     @OperationLog(module = "认证管理", description = "重置密码", operationType = "UPDATE")
     public Result<String> resetPassword(@RequestBody ResetPasswordDTO resetDTO) {
-        // 参数校验
-        if (resetDTO.getPhone() == null || !resetDTO.getPhone().matches("^1[3-9]\\d{9}$")) {
-            return new Result<>(400, null, "请输入有效的手机号");
+        // 参数校验：支持邮箱或手机号
+        boolean useEmail = resetDTO.getEmail() != null && !resetDTO.getEmail().trim().isEmpty();
+        String account = useEmail ? resetDTO.getEmail().trim() : resetDTO.getPhone();
+        
+        if (useEmail) {
+            if (!account.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                return new Result<>(400, null, "请输入有效的邮箱地址");
+            }
+        } else {
+            if (account == null || !account.matches("^1[3-9]\\d{9}$")) {
+                return new Result<>(400, null, "请输入有效的手机号或邮箱");
+            }
         }
         if (resetDTO.getCaptcha() == null || resetDTO.getCaptcha().length() != 6) {
             return new Result<>(400, null, "请输入6位验证码");
@@ -195,17 +241,18 @@ public class AuthController {
         if (!resetDTO.getNewPassword().equals(resetDTO.getConfirmPassword())) {
             return new Result<>(400, null, "两次输入的密码不一致");
         }
-        // 检查手机号是否已注册
-        SysUser user = userService.getByPhone(resetDTO.getPhone());
+        // 检查账号是否已注册
+        SysUser user = useEmail ? userService.getByEmail(account) : userService.getByPhone(account);
         if (user == null) {
-            return new Result<>(400, null, "该手机号未注册");
+            return new Result<>(400, null, useEmail ? "该邮箱未注册" : "该手机号未注册");
         }
         // 校验验证码
-        if (!captchaService.validateCaptcha(resetDTO.getPhone(), resetDTO.getCaptcha())) {
+        if (!captchaService.validateCaptcha(account, resetDTO.getCaptcha())) {
             return new Result<>(400, null, "验证码错误或已过期");
         }
         // 重置密码
-        boolean success = userService.resetPasswordByPhone(resetDTO.getPhone(), resetDTO.getNewPassword());
+        boolean success = useEmail ? userService.resetPasswordByEmail(account, resetDTO.getNewPassword()) 
+                                   : userService.resetPasswordByPhone(account, resetDTO.getNewPassword());
         if (success) {
             return new Result<>(200, null, "密码重置成功，请使用新密码登录");
         }

@@ -37,4 +37,9 @@ public interface SysUserService extends IService<SysUser> {
      * 通过手机号重置密码
      */
     boolean resetPasswordByPhone(String phone, String newPassword);
+
+    /**
+     * 通过邮箱重置密码
+     */
+    boolean resetPasswordByEmail(String email, String newPassword);
 }
