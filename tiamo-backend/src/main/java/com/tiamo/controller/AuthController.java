@@ -12,6 +12,8 @@ import com.tiamo.security.JwtUtil;
 import com.tiamo.service.SysOperationLogService;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -36,6 +38,8 @@ public class AuthController {
     private CaptchaService captchaService;
     @Autowired
     private SysOperationLogService operationLogService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
     /**
      * 用户登录
      * POST /api/auth/login
@@ -124,29 +128,26 @@ public class AuthController {
         if (!registerDTO.getUsername().matches("^[a-zA-Z0-9_]{4,20}$")) {
             return new Result<>(400, null, "用户名需为4-20位字母、数字或下划线");
         }
-        if (registerDTO.getPhone() == null || !registerDTO.getPhone().matches("^1[3-9]\\d{9}$")) {
-            return new Result<>(400, null, "请输入有效的手机号");
+        if (registerDTO.getInviteCode() == null || registerDTO.getInviteCode().trim().isEmpty()) {
+            return new Result<>(400, null, "请输入邀请码");
         }
-        if (registerDTO.getCaptcha() == null || registerDTO.getCaptcha().length() != 6) {
-            return new Result<>(400, null, "请输入6位验证码");
+        // 验证邀请码（3分钟有效，使用后删除）
+        String inviteKey = "invite:code:" + registerDTO.getInviteCode().trim();
+        String storedCode = stringRedisTemplate.opsForValue().get(inviteKey);
+        if (storedCode == null) {
+            return new Result<>(400, null, "邀请码无效或已过期（有效期3分钟）");
         }
+        // 邀请码使用后删除
+        stringRedisTemplate.delete(inviteKey);
         if (registerDTO.getPassword() == null || registerDTO.getPassword().length() < 8) {
             return new Result<>(400, null, "密码至少8位");
         }
         if (!registerDTO.getPassword().equals(registerDTO.getConfirmPassword())) {
             return new Result<>(400, null, "两次输入的密码不一致");
         }
-        // 校验验证码
-        if (!captchaService.validateCaptcha(registerDTO.getPhone(), registerDTO.getCaptcha())) {
-            return new Result<>(400, null, "验证码错误或已过期");
-        }
         // 检查用户名是否已存在
         if (userService.getByUsername(registerDTO.getUsername()) != null) {
             return new Result<>(400, null, "用户名已被注册");
-        }
-        // 检查手机号是否已注册
-        if (userService.getByPhone(registerDTO.getPhone()) != null) {
-            return new Result<>(400, null, "该手机号已被注册");
         }
         // 创建用户（默认普通用户）
         SysUser user = new SysUser();

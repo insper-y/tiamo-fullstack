@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import java.util.concurrent.TimeUnit;
+import java.util.Random;
 
 /**
  * 管理员 Controller
@@ -28,6 +31,8 @@ public class AdminController {
 
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 获取用户列表（仅管理员）
@@ -175,6 +180,32 @@ public class AdminController {
             return new Result<>(200, null, "已删除用户 " + user.getUsername());
         }
         return new Result<>(500, null, "删除失败");
+    }
+
+    /**
+     * 生成注册邀请码（仅管理员）
+     * POST /api/admin/invite-code
+     * 邀请码6位数字，3分钟有效，使用一次后失效
+     */
+    @PostMapping("/invite-code")
+    @OperationLog(module = "用户管理", description = "生成注册邀请码", operationType = "CREATE")
+    public Result<Map<String, Object>> generateInviteCode(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        SysUser currentUser = getAdminUser(authHeader);
+        if (currentUser == null) {
+            return new Result<>(403, null, "无权限操作，仅管理员可生成邀请码");
+        }
+        // 生成6位随机数字邀请码
+        Random random = new Random();
+        String code = String.format("%06d", random.nextInt(1000000));
+        String inviteKey = "invite:code:" + code;
+        // 存储到Redis，3分钟过期
+        stringRedisTemplate.opsForValue().set(inviteKey, code, 3, TimeUnit.MINUTES);
+        Map<String, Object> data = new HashMap<>();
+        data.put("inviteCode", code);
+        data.put("expireMinutes", 3);
+        data.put("createdBy", currentUser.getUsername());
+        return new Result<>(200, data, "邀请码生成成功，3分钟内有效");
     }
 
     /**

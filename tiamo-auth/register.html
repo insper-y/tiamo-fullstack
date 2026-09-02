@@ -75,38 +75,19 @@
                     <div class="error-message">请输入有效的邮箱地址</div>
                 </div>
 
-                <!-- 手机号 + 验证码 -->
+                <!-- 邀请码 -->
                 <div class="form-group">
-                    <label class="form-label" for="phone">手机号</label>
+                    <label class="form-label" for="inviteCode">邀请码</label>
                     <div class="input-wrapper">
                         <span class="input-icon">
-                            <svg viewBox="0 0 24 24"><path d="M17.01 14h-.8l-.27-.27c.98-1.14 1.57-2.61 1.57-4.23 0-3.42-2.61-6.2-6-6.2s-6 2.78-6 6.2c0 3.42 2.61 6.2 6 6.2 1.61 0 3.09-.59 4.23-1.57l.27.27v.79l5.01 4.99L21 19l-3.99-5zm-6.01 0c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
                         </span>
-                        <input type="tel" class="form-input" id="phone" name="phone"
-                               placeholder="请输入手机号"
-                               data-required data-rules="required,phone" autocomplete="tel">
+                        <input type="text" class="form-input" id="inviteCode" name="inviteCode"
+                               placeholder="请输入6位邀请码（管理员生成，3分钟有效）" maxlength="6"
+                               data-required autocomplete="off">
                     </div>
-                    <div class="error-message">请输入有效的手机号</div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="captcha">验证码</label>
-                    <div class="captcha-group">
-                        <div class="input-wrapper">
-                            <span class="input-icon">
-                                <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-                            </span>
-                            <input type="text" class="form-input" id="captcha" name="captcha"
-                                   placeholder="6位验证码" maxlength="6"
-                                   data-required data-rules="required,captcha" autocomplete="one-time-code">
-                        </div>
-                        <button type="button" class="captcha-btn"
-                                data-target="#phone" data-validate="phone"
-                                data-countdown="60" data-original-text="获取验证码">
-                            获取验证码
-                        </button>
-                    </div>
-                    <div class="error-message">请输入6位验证码</div>
+                    <div class="error-message">请输入邀请码</div>
+                    <div class="form-hint" style="font-size:12px;color:#888;margin-top:4px;">邀请码由管理员生成，有效期3分钟，使用一次后失效</div>
                 </div>
 
                 <!-- 密码 -->
@@ -226,8 +207,7 @@
 
             var username = document.getElementById('username');
             var email = document.getElementById('email');
-            var phone = document.getElementById('phone');
-            var captcha = document.getElementById('captcha');
+            var inviteCode = document.getElementById('inviteCode');
             var password = document.getElementById('password');
             var confirmPassword = document.getElementById('confirmPassword');
             var agree = document.getElementById('agree');
@@ -235,8 +215,10 @@
             var valid = true;
             if (!AuthUtils.validateField(username, ['required', 'username'])) valid = false;
             if (!AuthUtils.validateField(email, ['required', 'email'])) valid = false;
-            if (!AuthUtils.validateField(phone, ['required', 'phone'])) valid = false;
-            if (!AuthUtils.validateField(captcha, ['required', 'captcha'])) valid = false;
+            if (inviteCode.value.trim().length !== 6) {
+                AuthUtils.showError(inviteCode.closest('.form-group'), '请输入6位邀请码');
+                valid = false;
+            }
             if (!AuthUtils.validateField(password, ['required', 'strongPassword'])) valid = false;
 
             if (password.value !== confirmPassword.value) {
@@ -262,8 +244,7 @@
             Api.register({
                 username: username.value.trim(),
                 email: email.value.trim(),
-                phone: phone.value.trim(),
-                captcha: captcha.value.trim(),
+                inviteCode: inviteCode.value.trim(),
                 password: password.value,
                 confirmPassword: confirmPassword.value
             }).then(function (res) {

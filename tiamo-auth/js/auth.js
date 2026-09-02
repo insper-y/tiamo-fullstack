@@ -67,6 +67,9 @@
         register: function (data) {
             return this.post('/api/auth/register', data);
         },
+        generateInviteCode: function () {
+            return this.post('/api/admin/invite-code', {});
+        },
 
         /** 发送验证码 */
         sendCaptcha: function (phone) {

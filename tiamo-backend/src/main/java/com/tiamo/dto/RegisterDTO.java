@@ -18,11 +18,14 @@ public class RegisterDTO implements Serializable {
     /** 邮箱 */
     private String email;
 
-    /** 手机号 */
+    /** 手机号（可选） */
     private String phone;
 
-    /** 验证码 */
+    /** 验证码（可选，保留兼容） */
     private String captcha;
+
+    /** 邀请码（必填，管理员生成，3分钟有效） */
+    private String inviteCode;
 
     /** 密码 */
     private String password;

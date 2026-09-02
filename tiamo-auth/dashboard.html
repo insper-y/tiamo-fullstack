@@ -343,6 +343,7 @@
                         <button class="btn-primary btn-sm" onclick="quickSearchUsers()">搜索</button>
                         <button class="btn-primary btn-sm" id="userAdvBtn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="toggleUserAdvanced()">高级查询</button>
                         <button class="btn-primary" onclick="loadUserList()">刷新</button>
+                        <button class="btn-primary btn-sm" style="background:linear-gradient(135deg,#10b981,#059669);" onclick="generateInviteCode()">生成邀请码</button>
                     </div>
                 </div>
                 <!-- 用户高级查询面板 -->
@@ -2687,6 +2688,52 @@
         document.getElementById('deleteModal').addEventListener('click', function (e) {
             if (e.target === this) closeDeleteModal();
         });
+    </script>
+
+    <!-- 邀请码弹窗 -->
+    <div id="inviteCodeModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);border:1px solid var(--border);">
+            <h3 style="margin:0 0 16px 0;color:var(--text-primary);">注册邀请码</h3>
+            <div id="inviteCodeDisplay" style="font-size:48px;font-weight:bold;letter-spacing:8px;color:#10b981;margin:20px 0;font-family:monospace;">------</div>
+            <p style="color:var(--text-secondary);font-size:14px;margin:8px 0;">有效期：<span id="inviteCountdown">180</span>秒</p>
+            <p style="color:var(--text-secondary);font-size:12px;margin:8px 0;">邀请码使用一次后失效，请尽快发送给注册用户</p>
+            <button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeInviteCodeModal()">关闭</button>
+        </div>
+    </div>
+    <script>
+    var inviteCountdownTimer = null;
+    function generateInviteCode() {
+        if (typeof Api === 'undefined' || !Api.generateInviteCode) {
+            alert('API未加载，请刷新页面');
+            return;
+        }
+        Api.generateInviteCode().then(function(res) {
+            if (res.code === 200 && res.data) {
+                document.getElementById('inviteCodeDisplay').textContent = res.data.inviteCode;
+                document.getElementById('inviteCodeModal').style.display = 'flex';
+                var seconds = 180;
+                document.getElementById('inviteCountdown').textContent = seconds;
+                if (inviteCountdownTimer) clearInterval(inviteCountdownTimer);
+                inviteCountdownTimer = setInterval(function() {
+                    seconds--;
+                    document.getElementById('inviteCountdown').textContent = seconds;
+                    if (seconds <= 0) {
+                        clearInterval(inviteCountdownTimer);
+                        document.getElementById('inviteCodeDisplay').textContent = '已过期';
+                        document.getElementById('inviteCodeDisplay').style.color = '#ef4444';
+                    }
+                }, 1000);
+            } else {
+                alert(res.msg || '生成邀请码失败');
+            }
+        }).catch(function(err) {
+            alert('生成邀请码失败: ' + err.message);
+        });
+    }
+    function closeInviteCodeModal() {
+        document.getElementById('inviteCodeModal').style.display = 'none';
+        if (inviteCountdownTimer) clearInterval(inviteCountdownTimer);
+    }
     </script>
 </body>
 </html>
