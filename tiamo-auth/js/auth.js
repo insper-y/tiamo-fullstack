@@ -320,6 +320,70 @@
         /** 设置日志保留天数配置（管理员） */
         setLogRetention: function (params) {
             return this.put('/api/logs/retention-days', params);
+        },
+
+        /* ---- 好友管理接口 ---- */
+        /** 发送好友请求 */
+        sendFriendRequest: function (toUsername, message) {
+            return this.post('/api/friend/request', { toUsername: toUsername, message: message });
+        },
+        /** 接受好友请求 */
+        acceptFriendRequest: function (id) {
+            return this.put('/api/friend/request/' + id + '/accept');
+        },
+        /** 拒绝好友请求 */
+        rejectFriendRequest: function (id) {
+            return this.put('/api/friend/request/' + id + '/reject');
+        },
+        /** 获取好友列表 */
+        getFriendList: function () {
+            return this.get('/api/friend/list');
+        },
+        /** 获取收到的好友请求 */
+        getReceivedFriendRequests: function () {
+            return this.get('/api/friend/requests/received');
+        },
+        /** 获取发送的好友请求 */
+        getSentFriendRequests: function () {
+            return this.get('/api/friend/requests/sent');
+        },
+        /** 获取待处理请求数量 */
+        getPendingFriendRequestCount: function () {
+            return this.get('/api/friend/requests/pending-count');
+        },
+        /** 删除好友 */
+        deleteFriend: function (friendId) {
+            return this.del('/api/friend/' + friendId);
+        },
+
+        /* ---- 聊天消息接口 ---- */
+        /** 发送消息 */
+        sendChatMessage: function (toUserId, content, msgType) {
+            return this.post('/api/chat/send', { toUserId: toUserId, content: content, msgType: msgType || 'text' });
+        },
+        /** 获取聊天记录 */
+        getChatHistory: function (friendId, page, size) {
+            return this.get('/api/chat/history?friendId=' + friendId + '&page=' + (page || 1) + '&size=' + (size || 20));
+        },
+        /** 获取会话列表 */
+        getChatConversations: function () {
+            return this.get('/api/chat/conversations');
+        },
+        /** 获取未读消息总数 */
+        getChatUnreadCount: function () {
+            return this.get('/api/chat/unread-count');
+        },
+        /** 获取与某个好友的未读消息数 */
+        getChatUnreadCountWithFriend: function (friendId) {
+            return this.get('/api/chat/unread-count-with-friend?friendId=' + friendId);
+        },
+        /** 标记消息已读 */
+        markChatAsRead: function (friendId) {
+            return this.put('/api/chat/mark-read?friendId=' + friendId);
+        },
+        /** 获取新消息（轮询） */
+        getNewChatMessages: function (lastMessageId) {
+            return this.get('/api/chat/new-messages?lastMessageId=' + (lastMessageId || 0));
         }
     };
 

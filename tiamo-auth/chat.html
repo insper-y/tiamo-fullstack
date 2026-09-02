@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f0f2f5">
+    <title>聊天 - Tiamo AI</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        body.dark-theme {
+            background: #0a0a1a;
+            color: #e0e0e0;
+        }
+        .chat-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        body.dark-theme .chat-container {
+            background: #1a1a2e;
+        }
+        /* 左侧面板 */
+        .sidebar {
+            width: 320px;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+        }
+        body.dark-theme .sidebar {
+            background: #16213e;
+            border-right-color: #2a2a4a;
+        }
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        body.dark-theme .sidebar-header {
+            border-bottom-color: #2a2a4a;
+        }
+        .sidebar-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+        body.dark-theme .sidebar-header h2 {
+            color: #e0e0e0;
+        }
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: #e8e8e8;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .icon-btn:hover { background: #d0d0d0; }
+        body.dark-theme .icon-btn {
+            background: #2a2a4a;
+            color: #e0e0e0;
+        }
+        body.dark-theme .icon-btn:hover { background: #3a3a5a; }
+        .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ff4757;
+            color: #fff;
+            font-size: 11px;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        /* 标签切换 */
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        body.dark-theme .tab-bar { border-bottom-color: #2a2a4a; }
+        .tab-item {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-item.active {
+            color: #6c5ce7;
+            border-bottom-color: #6c5ce7;
+            font-weight: 600;
+        }
+        body.dark-theme .tab-item { color: #aaa; }
+        body.dark-theme .tab-item.active { color: #a29bfe; }
+        /* 列表 */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .list-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+        .list-item:hover { background: #f0f0f0; }
+        .list-item.active { background: #e8e4ff; }
+        body.dark-theme .list-item { border-bottom-color: #2a2a4a; }
+        body.dark-theme .list-item:hover { background: #1f2f4a; }
+        body.dark-theme .list-item.active { background: #2d2d5a; }
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .item-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        body.dark-theme .item-name { color: #e0e0e0; }
+        .item-preview {
+            font-size: 13px;
+            color: #999;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .item-time {
+            font-size: 11px;
+            color: #bbb;
+            flex-shrink: 0;
+        }
+        .unread-badge {
+            background: #ff4757;
+            color: #fff;
+            font-size: 11px;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            flex-shrink: 0;
+        }
+        /* 右侧聊天区域 */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+        }
+        body.dark-theme .chat-header {
+            background: #1a1a2e;
+            border-bottom-color: #2a2a4a;
+        }
+        .chat-header-info { flex: 1; }
+        .chat-header-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: #333;
+        }
+        body.dark-theme .chat-header-name { color: #e0e0e0; }
+        .chat-header-status {
+            font-size: 12px;
+            color: #52c41a;
+            margin-top: 2px;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        body.dark-theme .chat-messages { background: #0f0f1a; }
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            gap: 10px;
+        }
+        .message.sent {
+            flex-direction: row-reverse;
+        }
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .message.sent .message-avatar {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+        }
+        .message-bubble {
+            max-width: 65%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .message.received .message-bubble {
+            background: #fff;
+            color: #333;
+            border-top-left-radius: 4px;
+        }
+        .message.sent .message-bubble {
+            background: #6c5ce7;
+            color: #fff;
+            border-top-right-radius: 4px;
+        }
+        body.dark-theme .message.received .message-bubble {
+            background: #2a2a4a;
+            color: #e0e0e0;
+        }
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+        /* 输入区域 */
+        .chat-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #fff;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        body.dark-theme .chat-input-area {
+            background: #1a1a2e;
+            border-top-color: #2a2a4a;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .chat-input:focus { border-color: #6c5ce7; }
+        body.dark-theme .chat-input {
+            background: #2a2a4a;
+            border-color: #3a3a5a;
+            color: #e0e0e0;
+        }
+        .send-btn {
+            padding: 10px 24px;
+            background: #6c5ce7;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            height: 40px;
+        }
+        .send-btn:hover { background: #5b4bdb; }
+        .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+        /* 空状态 */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            gap: 12px;
+        }
+        .empty-state-icon { font-size: 48px; }
+        .empty-state-text { font-size: 15px; }
+        /* 弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        body.dark-theme .modal {
+            background: #1a1a2e;
+        }
+        .modal h3 {
+            margin-bottom: 16px;
+            color: #333;
+            font-size: 18px;
+        }
+        body.dark-theme .modal h3 { color: #e0e0e0; }
+        .modal input, .modal textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+        .modal input:focus, .modal textarea:focus { border-color: #6c5ce7; }
+        body.dark-theme .modal input, body.dark-theme .modal textarea {
+            background: #2a2a4a;
+            border-color: #3a3a5a;
+            color: #e0e0e0;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #6c5ce7; color: #fff; }
+        .btn-primary:hover { background: #5b4bdb; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        body.dark-theme .btn-secondary {
+            background: #3a3a5a;
+            color: #e0e0e0;
+        }
+        .btn-success { background: #00b894; color: #fff; }
+        .btn-danger { background: #ff4757; color: #fff; }
+        .btn-sm { padding: 4px 12px; font-size: 12px; }
+        /* 请求操作按钮 */
+        .request-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .status-tag {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-accepted { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        /* 返回按钮（手机端） */
+        .back-btn {
+            display: none;
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 20px;
+            color: #666;
+        }
+        body.dark-theme .back-btn { color: #aaa; }
+        /* 手机端适配 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                height: 100%;
+                z-index: 10;
+            }
+            .sidebar.hidden { display: none; }
+            .chat-area {
+                width: 100%;
+                position: absolute;
+                height: 100%;
+            }
+            .chat-area.hidden { display: none; }
+            .back-btn { display: flex; align-items: center; justify-content: center; }
+            .message-bubble { max-width: 75%; }
+        }
+        /* 顶部导航 */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 12px;
+        }
+        body.dark-theme .top-nav {
+            background: #1a1a2e;
+            border-bottom-color: #2a2a4a;
+        }
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { background: #f0f0f0; color: #6c5ce7; }
+        body.dark-theme .nav-link { color: #aaa; }
+        body.dark-theme .nav-link:hover { background: #2a2a4a; color: #a29bfe; }
+        .nav-user {
+            margin-left: auto;
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        body.dark-theme .nav-user { color: #aaa; }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+        <a href="dashboard.html" class="nav-link">← 返回控制台</a>
+        <div class="nav-user">
+            <span id="currentUsername"></span>
+            <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="切换主题">☀️</button>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <!-- 左侧面板 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>消息</h2>
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="showAddFriendModal()" title="添加好友">➕</button>
+                    <button class="icon-btn" onclick="loadAllData()" title="刷新">🔄</button>
+                </div>
+            </div>
+            <div class="tab-bar">
+                <div class="tab-item active" onclick="switchTab('conversations')" id="tab-conversations">会话</div>
+                <div class="tab-item" onclick="switchTab('friends')" id="tab-friends">好友</div>
+                <div class="tab-item" onclick="switchTab('requests')" id="tab-requests">
+                    请求 <span class="badge" id="requestBadge" style="display:none">0</span>
+                </div>
+            </div>
+            <div class="list-container" id="listContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <div class="empty-state-text">加载中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧聊天区域 -->
+        <div class="chat-area hidden" id="chatArea">
+            <div class="chat-header">
+                <button class="back-btn" onclick="backToList()">←</button>
+                <div class="avatar" id="chatAvatar">?</div>
+                <div class="chat-header-info">
+                    <div class="chat-header-name" id="chatName">选择一个会话开始聊天</div>
+                    <div class="chat-header-status" id="chatStatus">在线</div>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state">
+                    <div class="empty-state-icon">👋</div>
+                    <div class="empty-state-text">选择一个好友开始聊天</div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <textarea class="chat-input" id="chatInput" placeholder="输入消息..." rows="1" onkeydown="handleInputKeydown(event)"></textarea>
+                <button class="send-btn" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加好友弹窗 -->
+    <div class="modal-overlay" id="addFriendModal" style="display:none">
+        <div class="modal">
+            <h3>添加好友</h3>
+            <input type="text" id="friendUsername" placeholder="输入对方用户名">
+            <textarea id="friendMessage" placeholder="验证消息（可选）" rows="2"></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeAddFriendModal()">取消</button>
+                <button class="btn btn-primary" onclick="sendFriendRequest()">发送请求</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        var currentTab = 'conversations';
+        var currentFriend = null;
+        var lastMessageId = 0;
+        var pollTimer = null;
+
+        // 检查登录状态
+        if (!Auth.isLoggedIn()) {
+            window.location.href = 'login.html';
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            var userInfo = Auth.getUserInfo();
+            document.getElementById('currentUsername').textContent = userInfo ? userInfo.username : '';
+            initTheme();
+            loadAllData();
+            startPolling();
+        });
+
+        // 主题切换
+        function initTheme() {
+            var savedTheme = localStorage.getItem('tiamo_theme');
+            var theme = savedTheme === 'dark' ? 'dark' : 'light';
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('themeToggle').textContent = '🌙';
+            } else {
+                document.getElementById('themeToggle').textContent = '☀️';
+            }
+        }
+        function toggleTheme() {
+            var isDark = document.body.classList.toggle('dark-theme');
+            localStorage.setItem('tiamo_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+        }
+
+        // 切换标签
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-item').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            document.getElementById('tab-' + tab).classList.add('active');
+            loadListData();
+        }
+
+        // 加载所有数据
+        function loadAllData() {
+            loadListData();
+            loadPendingRequestCount();
+        }
+
+        // 加载列表数据
+        function loadListData() {
+            var container = document.getElementById('listContainer');
+            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">加载中...</div></div>';
+
+            if (currentTab === 'conversations') {
+                Api.getChatConversations().then(function(res) {
+                    if (res.code === 200 && res.data && res.data.length > 0) {
+                        renderConversations(res.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><div class="empty-state-text">暂无会话，添加好友开始聊天</div></div>';
+                    }
+                });
+            } else if (currentTab === 'friends') {
+                Api.getFriendList().then(function(res) {
+                    if (res.code === 200 && res.data && res.data.length > 0) {
+                        renderFriends(res.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-text">暂无好友，点击右上角添加好友</div></div>';
+                    }
+                });
+            } else if (currentTab === 'requests') {
+                Api.getReceivedFriendRequests().then(function(res) {
+                    if (res.code === 200 && res.data && res.data.length > 0) {
+                        renderRequests(res.data);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📨</div><div class="empty-state-text">暂无好友请求</div></div>';
+                    }
+                });
+            }
+        }
+
+        // 渲染会话列表
+        function renderConversations(list) {
+            var container = document.getElementById('listContainer');
+            var html = '';
+            list.forEach(function(conv) {
+                var initial = conv.friendNickname ? conv.friendNickname.charAt(0).toUpperCase() : '?';
+                var time = conv.lastMessageTime ? formatTime(conv.lastMessageTime) : '';
+                html += '<div class="list-item" onclick="openChat(' + conv.friendId + ', \'' + conv.friendUsername + '\', \'' + (conv.friendNickname || '') + '\')">';
+                html += '<div class="avatar">' + initial + '</div>';
+                html += '<div class="item-info">';
+                html += '<div class="item-name">' + (conv.friendNickname || conv.friendUsername) + '</div>';
+                html += '<div class="item-preview">' + (conv.lastMessage || '暂无消息') + '</div>';
+                html += '</div>';
+                html += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">';
+                html += '<span class="item-time">' + time + '</span>';
+                if (conv.unreadCount > 0) {
+                    html += '<span class="unread-badge">' + conv.unreadCount + '</span>';
+                }
+                html += '</div></div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // 渲染好友列表
+        function renderFriends(list) {
+            var container = document.getElementById('listContainer');
+            var html = '';
+            list.forEach(function(friend) {
+                var initial = friend.friendNickname ? friend.friendNickname.charAt(0).toUpperCase() : '?';
+                html += '<div class="list-item" onclick="openChat(' + friend.friendId + ', \'' + friend.friendUsername + '\', \'' + (friend.friendNickname || '') + '\')">';
+                html += '<div class="avatar">' + initial + '</div>';
+                html += '<div class="item-info">';
+                html += '<div class="item-name">' + (friend.friendNickname || friend.friendUsername) + '</div>';
+                html += '<div class="item-preview">@' + friend.friendUsername + '</div>';
+                html += '</div>';
+                html += '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteFriend(' + friend.friendId + ')">删除</button>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // 渲染好友请求
+        function renderRequests(list) {
+            var container = document.getElementById('listContainer');
+            var html = '';
+            list.forEach(function(req) {
+                var initial = req.fromUsername ? req.fromUsername.charAt(0).toUpperCase() : '?';
+                var statusClass = req.status === 0 ? 'status-pending' : (req.status === 1 ? 'status-accepted' : 'status-rejected');
+                var statusText = req.status === 0 ? '待处理' : (req.status === 1 ? '已接受' : '已拒绝');
+                html += '<div class="list-item">';
+                html += '<div class="avatar">' + initial + '</div>';
+                html += '<div class="item-info">';
+                html += '<div class="item-name">' + req.fromUsername + '</div>';
+                html += '<div class="item-preview">' + (req.message || '请求添加好友') + '</div>';
+                html += '</div>';
+                if (req.status === 0) {
+                    html += '<div class="request-actions">';
+                    html += '<button class="btn btn-success btn-sm" onclick="acceptRequest(' + req.id + ')">接受</button>';
+                    html += '<button class="btn btn-danger btn-sm" onclick="rejectRequest(' + req.id + ')">拒绝</button>';
+                    html += '</div>';
+                } else {
+                    html += '<span class="status-tag ' + statusClass + '">' + statusText + '</span>';
+                }
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // 加载待处理请求数量
+        function loadPendingRequestCount() {
+            Api.getPendingFriendRequestCount().then(function(res) {
+                if (res.code === 200 && res.data) {
+                    var badge = document.getElementById('requestBadge');
+                    if (res.data.count > 0) {
+                        badge.style.display = 'inline-flex';
+                        badge.textContent = res.data.count;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // 打开聊天
+        function openChat(friendId, friendUsername, friendNickname) {
+            currentFriend = { id: friendId, username: friendUsername, nickname: friendNickname };
+            lastMessageId = 0;
+
+            document.getElementById('chatName').textContent = friendNickname || friendUsername;
+            document.getElementById('chatAvatar').textContent = (friendNickname || friendUsername).charAt(0).toUpperCase();
+
+            // 手机端显示聊天区域
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.add('hidden');
+                document.getElementById('chatArea').classList.remove('hidden');
+            } else {
+                document.getElementById('chatArea').classList.remove('hidden');
+            }
+
+            loadChatHistory();
+            Api.markChatAsRead(friendId);
+        }
+
+        // 返回列表（手机端）
+        function backToList() {
+            document.getElementById('sidebar').classList.remove('hidden');
+            document.getElementById('chatArea').classList.add('hidden');
+            currentFriend = null;
+        }
+
+        // 加载聊天记录
+        function loadChatHistory() {
+            if (!currentFriend) return;
+            Api.getChatHistory(currentFriend.id, 1, 50).then(function(res) {
+                if (res.code === 200 && res.data) {
+                    renderMessages(res.data);
+                    if (res.data.length > 0) {
+                        lastMessageId = res.data[res.data.length - 1].id;
+                    }
+                }
+            });
+        }
+
+        // 渲染消息
+        function renderMessages(messages) {
+            var container = document.getElementById('chatMessages');
+            var currentUser = Auth.getUserInfo();
+            var html = '';
+            messages.forEach(function(msg) {
+                var isSent = msg.fromUserId === currentUser.userId;
+                var initial = isSent ? (currentUser.username || '我').charAt(0).toUpperCase() : (currentFriend.nickname || currentFriend.username).charAt(0).toUpperCase();
+                html += '<div class="message ' + (isSent ? 'sent' : 'received') + '">';
+                html += '<div class="message-avatar">' + initial + '</div>';
+                html += '<div>';
+                html += '<div class="message-bubble">' + escapeHtml(msg.content) + '</div>';
+                html += '<div class="message-time">' + formatTime(msg.createTime) + '</div>';
+                html += '</div></div>';
+            });
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 发送消息
+        function sendMessage() {
+            if (!currentFriend) {
+                alert('请先选择一个好友');
+                return;
+            }
+            var input = document.getElementById('chatInput');
+            var content = input.value.trim();
+            if (!content) return;
+
+            var btn = document.querySelector('.send-btn');
+            btn.disabled = true;
+            btn.textContent = '发送中...';
+
+            Api.sendChatMessage(currentFriend.id, content).then(function(res) {
+                btn.disabled = false;
+                btn.textContent = '发送';
+                if (res.code === 200) {
+                    input.value = '';
+                    loadChatHistory();
+                    if (currentTab === 'conversations') {
+                        loadListData();
+                    }
+                } else {
+                    alert(res.msg || '发送失败');
+                }
+            });
+        }
+
+        // 输入框回车发送
+        function handleInputKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // 轮询新消息
+        function startPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(function() {
+                if (!Auth.isLoggedIn()) return;
+                Api.getNewChatMessages(lastMessageId).then(function(res) {
+                    if (res.code === 200 && res.data && res.data.length > 0) {
+                        res.data.forEach(function(msg) {
+                            if (msg.id > lastMessageId) lastMessageId = msg.id;
+                        });
+                        // 如果当前正在和发送者聊天，直接显示消息
+                        if (currentFriend && res.data.some(function(m) { return m.fromUserId === currentFriend.id; })) {
+                            loadChatHistory();
+                            Api.markChatAsRead(currentFriend.id);
+                        }
+                        // 刷新会话列表和未读数
+                        if (currentTab === 'conversations') {
+                            loadListData();
+                        }
+                        loadPendingRequestCount();
+                    }
+                });
+            }, 3000);
+        }
+
+        // 添加好友弹窗
+        function showAddFriendModal() {
+            document.getElementById('addFriendModal').style.display = 'flex';
+            document.getElementById('friendUsername').value = '';
+            document.getElementById('friendMessage').value = '';
+        }
+        function closeAddFriendModal() {
+            document.getElementById('addFriendModal').style.display = 'none';
+        }
+        function sendFriendRequest() {
+            var username = document.getElementById('friendUsername').value.trim();
+            var message = document.getElementById('friendMessage').value.trim();
+            if (!username) {
+                alert('请输入对方用户名');
+                return;
+            }
+            Api.sendFriendRequest(username, message).then(function(res) {
+                if (res.code === 200) {
+                    alert('好友请求已发送');
+                    closeAddFriendModal();
+                } else {
+                    alert(res.msg || '发送失败');
+                }
+            });
+        }
+
+        // 接受/拒绝请求
+        function acceptRequest(id) {
+            Api.acceptFriendRequest(id).then(function(res) {
+                if (res.code === 200) {
+                    alert('已接受好友请求');
+                    loadListData();
+                    loadPendingRequestCount();
+                } else {
+                    alert(res.msg || '操作失败');
+                }
+            });
+        }
+        function rejectRequest(id) {
+            if (!confirm('确定拒绝该好友请求吗？')) return;
+            Api.rejectFriendRequest(id).then(function(res) {
+                if (res.code === 200) {
+                    alert('已拒绝好友请求');
+                    loadListData();
+                    loadPendingRequestCount();
+                } else {
+                    alert(res.msg || '操作失败');
+                }
+            });
+        }
+
+        // 删除好友
+        function deleteFriend(friendId) {
+            if (!confirm('确定删除该好友吗？删除后聊天记录将保留。')) return;
+            Api.deleteFriend(friendId).then(function(res) {
+                if (res.code === 200) {
+                    alert('已删除好友');
+                    loadListData();
+                } else {
+                    alert(res.msg || '删除失败');
+                }
+            });
+        }
+
+        // 工具函数
+        function formatTime(timeStr) {
+            if (!timeStr) return '';
+            var date = new Date(timeStr);
+            var now = new Date();
+            var diff = now - date;
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+            return (date.getMonth() + 1) + '/' + date.getDate() + ' ' +
+                   String(date.getHours()).padStart(2, '0') + ':' +
+                   String(date.getMinutes()).padStart(2, '0');
+        }
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
