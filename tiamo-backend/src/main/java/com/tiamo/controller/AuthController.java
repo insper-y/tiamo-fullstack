@@ -12,7 +12,7 @@ import com.tiamo.security.JwtUtil;
 import com.tiamo.service.SysOperationLogService;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +39,7 @@ public class AuthController {
     @Autowired
     private SysOperationLogService operationLogService;
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
     /**
      * 用户登录
      * POST /api/auth/login
@@ -133,12 +133,13 @@ public class AuthController {
         }
         // 验证邀请码（3分钟有效，使用后删除）
         String inviteKey = "invite:code:" + registerDTO.getInviteCode().trim();
-        String storedCode = stringRedisTemplate.opsForValue().get(inviteKey);
+        Object storedCodeObj = redisTemplate.opsForValue().get(inviteKey);
+        String storedCode = storedCodeObj != null ? storedCodeObj.toString() : null;
         if (storedCode == null) {
             return new Result<>(400, null, "邀请码无效或已过期（有效期3分钟）");
         }
         // 邀请码使用后删除
-        stringRedisTemplate.delete(inviteKey);
+        redisTemplate.delete(inviteKey);
         if (registerDTO.getPassword() == null || registerDTO.getPassword().length() < 8) {
             return new Result<>(400, null, "密码至少8位");
         }

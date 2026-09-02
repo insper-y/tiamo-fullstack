@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
 
@@ -32,7 +32,7 @@ public class AdminController {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 获取用户列表（仅管理员）
@@ -200,7 +200,7 @@ public class AdminController {
         String code = String.format("%06d", random.nextInt(1000000));
         String inviteKey = "invite:code:" + code;
         // 存储到Redis，3分钟过期
-        stringRedisTemplate.opsForValue().set(inviteKey, code, 3, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(inviteKey, code, 3, TimeUnit.MINUTES);
         Map<String, Object> data = new HashMap<>();
         data.put("inviteCode", code);
         data.put("expireMinutes", 3);
