@@ -754,13 +754,18 @@
         // 加载聊天记录
         function loadChatHistory() {
             if (!currentFriend) return;
+            var container = document.getElementById('chatMessages');
+            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">加载中...</div></div>';
             Api.getChatHistory(currentFriend.id, 1, 50).then(function(res) {
-                if (res.code === 200 && res.data) {
+                if (res.code === 200 && res.data && res.data.length > 0) {
                     renderMessages(res.data);
-                    if (res.data.length > 0) {
-                        lastMessageId = res.data[res.data.length - 1].id;
-                    }
+                    lastMessageId = res.data[res.data.length - 1].id;
+                } else {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><div class="empty-state-text">暂无消息，发送第一条消息吧</div></div>';
                 }
+            }).catch(function(err) {
+                console.error('加载聊天记录失败:', err);
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">加载失败，请刷新重试</div></div>';
             });
         }
 
