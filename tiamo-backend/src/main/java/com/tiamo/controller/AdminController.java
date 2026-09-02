@@ -30,7 +30,6 @@ public class AdminController {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
-    @Autowired
     private InviteCodeService inviteCodeService;
 
     /**
