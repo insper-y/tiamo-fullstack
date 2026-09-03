@@ -9,7 +9,9 @@ import com.tiamo.security.JwtUtil;
 import com.tiamo.service.impl.SysRunLogServiceImpl;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,11 @@ public class RunLogController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    private static final String RUN_LOG_STATS_CACHE_KEY = "tiamo:run-log:stats";
 
     /**
      * 分页查询运行日志（仅管理员）
@@ -106,6 +113,16 @@ public class RunLogController {
             return new Result<>(403, null, "无权限访问");
         }
 
+        // 先从缓存读取
+        try {
+            Object cachedStats = redisTemplate.opsForValue().get(RUN_LOG_STATS_CACHE_KEY);
+            if (cachedStats != null && cachedStats instanceof Map) {
+                return new Result<>(200, (Map<String, Object>) cachedStats, "查询成功(缓存)");
+            }
+        } catch (Exception e) {
+            // 缓存读取失败，继续查询数据库
+        }
+
         Map<String, Object> stats = new HashMap<>();
 
         // 各层级调用统计
@@ -140,6 +157,13 @@ public class RunLogController {
                 .apply("DATE(create_time) = CURDATE()"));
         stats.put("todayErrorCount", todayErrorCount);
 
+        // 写入缓存，5分钟过期
+        try {
+            redisTemplate.opsForValue().set(RUN_LOG_STATS_CACHE_KEY, stats, 5, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            // 缓存写入失败，不影响正常返回
+        }
+
         return new Result<>(200, stats, "查询成功");
     }
 
@@ -155,6 +179,12 @@ public class RunLogController {
             return new Result<>(403, null, "无权限操作");
         }
         int count = runLogService.cleanOldLogs(days);
+        // 清除统计缓存
+        try {
+            redisTemplate.delete(RUN_LOG_STATS_CACHE_KEY);
+        } catch (Exception e) {
+            // 忽略缓存清除失败
+        }
         return new Result<>(200, null, "清理成功，共删除" + count + "条日志");
     }
 

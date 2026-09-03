@@ -11,7 +11,9 @@ import com.tiamo.service.SysOperationLogService;
 import com.tiamo.service.SysConfigService;
 import com.tiamo.service.impl.SysUserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import java.util.concurrent.TimeUnit;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +26,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/logs")
 public class OperationLogController {
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    private static final String OP_LOG_STATS_CACHE_KEY = "tiamo:op-log:stats";
+
 
     @Autowired
     private SysOperationLogService operationLogService;
@@ -108,6 +115,13 @@ public class OperationLogController {
         stats.put("success", successCount);
         stats.put("fail", failCount);
         stats.put("successRate", total > 0 ? String.format("%.1f%%", (successCount * 100.0 / total)) : "0%");
+        // 写入缓存，5分钟过期
+        try {
+            redisTemplate.opsForValue().set(OP_LOG_STATS_CACHE_KEY, stats, 5, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            // 缓存写入失败，不影响正常返回
+        }
+
         return new Result<>(200, stats, "查询成功");
     }
 
