@@ -49,7 +49,7 @@ public class DatabaseController {
             );
             return new Result<>(200, tables, "查询成功");
         } catch (Exception e) {
-            return new Result<>(500, null, "查询失败: " + e.getMessage());
+            return new Result<>(500, null, "查询失败，请稍后重试");
         }
     }
 
@@ -89,7 +89,7 @@ public class DatabaseController {
             result.put("indexes", indexes);
             return new Result<>(200, result, "查询成功");
         } catch (Exception e) {
-            return new Result<>(500, null, "查询失败: " + e.getMessage());
+            return new Result<>(500, null, "查询失败，请稍后重试");
         }
     }
 
@@ -126,7 +126,7 @@ public class DatabaseController {
             data.put("columns", results.isEmpty() ? new ArrayList<>() : new ArrayList<>(results.get(0).keySet()));
             return new Result<>(200, data, "查询成功，返回" + results.size() + "条记录");
         } catch (Exception e) {
-            return new Result<>(500, null, "查询失败: " + e.getMessage());
+            return new Result<>(500, null, "查询失败，请稍后重试");
         }
     }
 
@@ -196,7 +196,7 @@ public class DatabaseController {
             // 返回SQL内容
             return new Result<>(200, sql.toString(), "备份成功，共" + tables.size() + "个表");
         } catch (Exception e) {
-            return new Result<>(500, null, "备份失败: " + e.getMessage());
+            return new Result<>(500, null, "备份失败，请稍后重试");
         }
     }
 

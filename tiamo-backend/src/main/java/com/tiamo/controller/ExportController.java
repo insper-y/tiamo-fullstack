@@ -118,7 +118,7 @@ public class ExportController {
             String filename = "用户列表_" + getDateString() + ".csv";
             return createCsvResponse(baos.toByteArray(), filename);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(("导出失败: " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
+            return ResponseEntity.status(500).body(("导出失败，请稍后重试").getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -155,7 +155,7 @@ public class ExportController {
             String filename = "商品数据_" + getDateString() + ".csv";
             return createCsvResponse(baos.toByteArray(), filename);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(("导出失败: " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
+            return ResponseEntity.status(500).body(("导出失败，请稍后重试").getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -218,7 +218,7 @@ public class ExportController {
             String filename = "操作日志_" + getDateString() + ".csv";
             return createCsvResponse(baos.toByteArray(), filename);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(("导出失败: " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
+            return ResponseEntity.status(500).body(("导出失败，请稍后重试").getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -257,7 +257,7 @@ public class ExportController {
             String filename = "运行日志_" + getDateString() + ".csv";
             return createCsvResponse(csvData, filename);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(("导出失败: " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
+            return ResponseEntity.status(500).body(("导出失败，请稍后重试").getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -358,7 +358,7 @@ public class ExportController {
 
         } catch (Exception e) {
             result.put("code", 500);
-            result.put("msg", "发送失败: " + e.getMessage());
+            result.put("msg", "发送失败，请稍后重试");
             return ResponseEntity.status(500).body(result);
         }
     }
@@ -399,7 +399,7 @@ public class ExportController {
 
         } catch (Exception e) {
             result.put("code", 500);
-            result.put("msg", "发送失败: " + e.getMessage());
+            result.put("msg", "发送失败，请稍后重试");
             return ResponseEntity.status(500).body(result);
         }
     }
@@ -449,7 +449,7 @@ public class ExportController {
 
         } catch (Exception e) {
             result.put("code", 500);
-            result.put("msg", "发送失败: " + e.getMessage());
+            result.put("msg", "发送失败，请稍后重试");
             return ResponseEntity.status(500).body(result);
         }
     }
@@ -499,7 +499,7 @@ public class ExportController {
 
         } catch (Exception e) {
             result.put("code", 500);
-            result.put("msg", "发送失败: " + e.getMessage());
+            result.put("msg", "发送失败，请稍后重试");
             return ResponseEntity.status(500).body(result);
         }
     }

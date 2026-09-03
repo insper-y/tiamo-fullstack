@@ -59,7 +59,7 @@ public class ConfigController {
 
         } catch (Exception e) {
             result.put("code", 500);
-            result.put("msg", "获取配置失败: " + e.getMessage());
+            result.put("msg", "获取配置失败，请稍后重试");
             return ResponseEntity.status(500).body(result);
         }
     }
@@ -109,7 +109,7 @@ public class ConfigController {
 
         } catch (Exception e) {
             result.put("code", 500);
-            result.put("msg", "更新配置失败: " + e.getMessage());
+            result.put("msg", "更新配置失败，请稍后重试");
             return ResponseEntity.status(500).body(result);
         }
     }

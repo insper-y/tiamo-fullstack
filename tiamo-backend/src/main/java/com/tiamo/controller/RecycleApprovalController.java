@@ -56,7 +56,7 @@ public class RecycleApprovalController {
             RecycleApproval approval = approvalService.submitApproval(bookId, approvalType, user.getId(), user.getUsername());
             return new Result<>(200, approval, "申请已提交，等待管理员审批");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -79,7 +79,7 @@ public class RecycleApprovalController {
             approvalService.approve(id, user.getId(), user.getUsername(), remark);
             return new Result<>(200, null, "审批通过，操作已执行");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -102,7 +102,7 @@ public class RecycleApprovalController {
             approvalService.reject(id, user.getId(), user.getUsername(), remark);
             return new Result<>(200, null, "已拒绝申请");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -170,7 +170,7 @@ public class RecycleApprovalController {
             approvalService.deleteById(id, user.getId(), user.getRole());
             return new Result<>(200, null, "删除成功");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -191,7 +191,7 @@ public class RecycleApprovalController {
             approvalService.markAsRead(id, user.getId());
             return new Result<>(200, null, "已标记为已阅读");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -213,7 +213,7 @@ public class RecycleApprovalController {
             data.put("count", count);
             return new Result<>(200, data, "已阅读 " + count + " 条记录");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -235,7 +235,7 @@ public class RecycleApprovalController {
             data.put("count", count);
             return new Result<>(200, data, "已清理 " + count + " 条已阅读记录");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -268,7 +268,7 @@ public class RecycleApprovalController {
             data.put("count", count);
             return new Result<>(200, data, "已通过 " + count + " 条申请");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -301,7 +301,7 @@ public class RecycleApprovalController {
             data.put("count", count);
             return new Result<>(200, data, "已拒绝 " + count + " 条申请");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 
@@ -339,7 +339,7 @@ public class RecycleApprovalController {
             data.put("total", bookIds.size());
             return new Result<>(200, data, "已提交 " + count + " 条申请，等待管理员审批");
         } catch (Exception e) {
-            return new Result<>(500, null, e.getMessage());
+            return new Result<>(500, null, "操作失败，请稍后重试");
         }
     }
 

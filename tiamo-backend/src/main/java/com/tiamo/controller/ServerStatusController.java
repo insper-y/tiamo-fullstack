@@ -134,7 +134,7 @@ public class ServerStatusController {
             return new Result<>(200, status, "获取成功");
         } catch (Exception e) {
             e.printStackTrace();
-            return new Result<>(500, null, "获取服务器状态失败: " + e.getMessage());
+            return new Result<>(500, null, "获取服务器状态失败，请稍后重试");
         }
     }
 
