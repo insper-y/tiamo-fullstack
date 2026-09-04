@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- 性能优化：预加载关键资源 -->
+    <link rel="preconnect" href="https://hwiwdlrhrbiy.sealosbja.site">
+    <meta http-equiv="Cache-Control" content="public, max-age=3600">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0a0a1a">
     <title>控制台 - Tiamo AI 数据管理</title>
     <link rel="stylesheet" href="css/auth.css">
     <style>
+/* 性能优化：关键渲染路径优化 */
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; }
+/* 懒加载图片占位 */
+img.lazy { background: #f0f0f0; min-height: 100px; }
         /* 亮色主题变量覆盖 */
         body.light-theme {
             --bg-primary: #f5f7fa;

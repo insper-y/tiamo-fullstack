@@ -12,7 +12,9 @@ import com.tiamo.service.impl.SysUserServiceImpl;
 import com.tiamo.entity.RecycleApproval;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import java.util.concurrent.TimeUnit;
 
 import java.util.List;
 import java.util.Map;
@@ -50,13 +52,36 @@ public class BooksController {
     @Autowired
     private RecycleApprovalService recycleApprovalService;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    private static final String BOOKS_LIST_CACHE_KEY = "tiamo:books:list";
+
     /**
      * 查询全部未删除数据
      */
     @GetMapping
     @OperationLog(module = "商品管理", description = "查询商品列表", operationType = "QUERY")
     public Result<List<Books>> getAll() {
+        // 先从缓存读取
+        try {
+            Object cachedList = redisTemplate.opsForValue().get(BOOKS_LIST_CACHE_KEY);
+            if (cachedList != null && cachedList instanceof List) {
+                return new Result<>(Code.GET_OK, (List<Books>) cachedList, "查询成功(缓存)");
+            }
+        } catch (Exception e) {
+            // 缓存读取失败，继续查询数据库
+        }
+
         List<Books> list = booksService.listAll();
+
+        // 写入缓存，5分钟过期
+        try {
+            redisTemplate.opsForValue().set(BOOKS_LIST_CACHE_KEY, list, 5, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            // 缓存写入失败，不影响正常返回
+        }
+
         return new Result<>(Code.GET_OK, list, "查询成功");
     }
 
@@ -94,7 +119,9 @@ public class BooksController {
     public Result<String> update(@RequestBody Books books) {
         boolean flag = booksService.update(books);
         if (flag) {
-            return new Result<>(Code.UPDATE_OK, null, "修改成功");
+            // 清除商品列表缓存
+        try { redisTemplate.delete(BOOKS_LIST_CACHE_KEY); } catch (Exception e) {}
+        return new Result<>(Code.UPDATE_OK, null, "修改成功");
         }
         return new Result<>(Code.UPDATE_ERR, null, "修改失败");
     }
@@ -128,7 +155,9 @@ public class BooksController {
         String operator = getOperatorFromToken(authHeader);
         boolean flag = booksService.batchSoftDelete(ids, operator);
         if (flag) {
-            return new Result<>(Code.DELETE_OK, null, "批量删除成功（共" + ids.size() + "条，已移入回收站）");
+            // 清除商品列表缓存
+        try { redisTemplate.delete(BOOKS_LIST_CACHE_KEY); } catch (Exception e) {}
+        return new Result<>(Code.DELETE_OK, null, "批量删除成功（共" + ids.size() + "条，已移入回收站）");
         }
         return new Result<>(Code.DELETE_ERR, null, "批量删除失败");
     }

@@ -137,25 +137,24 @@ public class RunLogController {
         // 耗时最长的方法TOP10
         stats.put("topSlowMethods", runLogService.getTopSlowMethods());
 
-        // 总调用量
-        long totalCount = runLogService.count();
-        stats.put("totalCount", totalCount);
-
-        // 今日调用量
-        long todayCount = runLogService.count(new LambdaQueryWrapper<SysRunLog>()
-                .apply("DATE(create_time) = CURDATE()"));
-        stats.put("todayCount", todayCount);
-
-        // 异常总数
-        long errorCount = runLogService.count(new LambdaQueryWrapper<SysRunLog>()
-                .eq(SysRunLog::getStatus, "FAIL"));
-        stats.put("errorCount", errorCount);
-
-        // 今日异常数
-        long todayErrorCount = runLogService.count(new LambdaQueryWrapper<SysRunLog>()
-                .eq(SysRunLog::getStatus, "FAIL")
-                .apply("DATE(create_time) = CURDATE()"));
-        stats.put("todayErrorCount", todayErrorCount);
+        // 使用一次聚合查询获取总调用量、今日调用量、异常总数、今日异常数
+        try {
+            Map<String, Object> aggregateStats = runLogService.getAggregateStats();
+            stats.put("totalCount", aggregateStats.getOrDefault("totalCount", 0L));
+            stats.put("todayCount", aggregateStats.getOrDefault("todayCount", 0L));
+            stats.put("errorCount", aggregateStats.getOrDefault("errorCount", 0L));
+            stats.put("todayErrorCount", aggregateStats.getOrDefault("todayErrorCount", 0L));
+        } catch (Exception e) {
+            // 聚合查询失败，降级为单独查询
+            stats.put("totalCount", runLogService.count());
+            stats.put("todayCount", runLogService.count(new LambdaQueryWrapper<SysRunLog>()
+                    .apply("DATE(create_time) = CURDATE()")));
+            stats.put("errorCount", runLogService.count(new LambdaQueryWrapper<SysRunLog>()
+                    .eq(SysRunLog::getStatus, "FAIL")));
+            stats.put("todayErrorCount", runLogService.count(new LambdaQueryWrapper<SysRunLog>()
+                    .eq(SysRunLog::getStatus, "FAIL")
+                    .apply("DATE(create_time) = CURDATE()")));
+        }
 
         // 写入缓存，5分钟过期
         try {

@@ -5,6 +5,7 @@ import com.tiamo.entity.SysRunLog;
 import com.tiamo.mapper.SysRunLogMapper;
 import com.tiamo.service.SysRunLogService;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;

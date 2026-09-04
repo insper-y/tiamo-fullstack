@@ -2,6 +2,14 @@ server:
   port: 8080
   servlet:
     context-path: /
+  # Tomcat线程池优化
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    accept-count: 100
+    max-connections: 10000
+    connection-timeout: 20000
 
 spring:
   application:
@@ -11,6 +19,15 @@ spring:
     url: ${DB_URL:jdbc:mysql://tiamo-db-mysql.ns-j6uaqkx1.svc:3306/mydb?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:7b4kzvdr}
+    # HikariCP连接池优化
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: TiamoHikariCP
+      connection-test-query: SELECT 1
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
@@ -65,8 +82,9 @@ mybatis-plus:
 # 日志配置
 logging:
   level:
-    com.tiamo: debug
+    com.tiamo: info
     org.springframework.web: info
+    com.zaxxer.hikari: info
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
 

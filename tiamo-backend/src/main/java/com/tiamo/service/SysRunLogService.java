@@ -44,4 +44,9 @@ public interface SysRunLogService extends IService<SysRunLog> {
      * 清空当天的日志
      */
     int cleanTodayLogs();
+
+    /**
+     * 聚合统计：总调用量、今日调用量、异常总数、今日异常数
+     */
+    Map<String, Object> getAggregateStats();
 }
