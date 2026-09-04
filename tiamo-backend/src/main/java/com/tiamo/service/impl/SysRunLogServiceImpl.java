@@ -5,6 +5,7 @@ import com.tiamo.entity.SysRunLog;
 import com.tiamo.mapper.SysRunLogMapper;
 import com.tiamo.service.SysRunLogService;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.Map;
  */
 @Service
 public class SysRunLogServiceImpl extends ServiceImpl<SysRunLogMapper, SysRunLog> implements SysRunLogService {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     @Async("logExecutor")
@@ -55,5 +59,35 @@ public class SysRunLogServiceImpl extends ServiceImpl<SysRunLogMapper, SysRunLog
     @Override
     public int cleanTodayLogs() {
         return baseMapper.cleanTodayLogs();
+    }
+
+    @Override
+    public Map<String, Object> getAggregateStats() {
+        String sql = "SELECT " +
+                "COUNT(*) AS totalCount, " +
+                "SUM(CASE WHEN DATE(create_time) = CURDATE() THEN 1 ELSE 0 END) AS todayCount, " +
+                "SUM(CASE WHEN status = 'FAIL' THEN 1 ELSE 0 END) AS errorCount, " +
+                "SUM(CASE WHEN status = 'FAIL' AND DATE(create_time) = CURDATE() THEN 1 ELSE 0 END) AS todayErrorCount " +
+                "FROM sys_run_log";
+        try {
+            Map<String, Object> result = jdbcTemplate.queryForMap(sql);
+            Map<String, Object> converted = new java.util.HashMap<>();
+            for (Map.Entry<String, Object> entry : result.entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof Number) {
+                    converted.put(entry.getKey(), ((Number) value).longValue());
+                } else {
+                    converted.put(entry.getKey(), value);
+                }
+            }
+            return converted;
+        } catch (Exception e) {
+            Map<String, Object> fallback = new java.util.HashMap<>();
+            fallback.put("totalCount", 0L);
+            fallback.put("todayCount", 0L);
+            fallback.put("errorCount", 0L);
+            fallback.put("todayErrorCount", 0L);
+            return fallback;
+        }
     }
 }
