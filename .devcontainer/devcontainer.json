@@ -40,7 +40,7 @@
   "remoteEnv": {
     "DB_URL": "jdbc:mysql://mysql-zeng80999-a9fd.d.aivencloud.com:12757/defaultdb?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true",
     "DB_USERNAME": "avnadmin",
-    "DB_PASSWORD": "AVNS_Dtwz8hHNvzxUTRYc7Ut",
+    "DB_PASSWORD": "your-aiven-db-password",
     "REDIS_HOST": "localhost",
     "REDIS_PORT": "6379",
     "JWT_SECRET": "tiamo-ai-secret-key-2024-must-be-at-least-256-bits-long-for-hs256"

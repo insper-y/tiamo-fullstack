@@ -21,7 +21,7 @@ services:
       - key: DB_USERNAME
         value: avnadmin
       - key: DB_PASSWORD
-        value: AVNS_Dtwz8hHNvzxUTRYc7Ut
+        value: your-aiven-db-password
       - key: REDIS_HOST
         value: redis-12345.c258.us-east-1-4.ec2.cloud.redislabs.com
       - key: REDIS_PORT
@@ -37,6 +37,6 @@ services:
       - key: SPRING_MAIL_USERNAME
         value: 1301628876@qq.com
       - key: SPRING_MAIL_PASSWORD
-        value: shabjipxdffeifdg
+        value: your-qq-mail-auth-code
       - key: APP_LOG_EMAIL_TO
         value: 1301628876@qq.com

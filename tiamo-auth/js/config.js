@@ -7,7 +7,7 @@ window.APP_CONFIG = {
     // 后端 API 地址
     // 本地开发: http://localhost:8080
     // Render 部署: https://tiamo-backend.onrender.com
-    API_BASE: 'https://flight-catalogs-raised-build.trycloudflare.com',
+    API_BASE: 'https://police-film-injuries-pharmaceuticals.trycloudflare.com',
 
     // 网站名称
     SITE_NAME: 'Tiamo AI',
