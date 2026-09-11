@@ -36,10 +36,16 @@ if pgrep -f "http.server 8083" > /dev/null; then
 else
     # 启动前端（端口8083）
     echo "🌐 启动前端服务（端口8083）..."
-    cd tiamo-auth
-    nohup python3 -m http.server 8083 > /tmp/frontend.log 2>&1 &
-    cd ..
-    echo "✅ 前端已启动"
+    cd /workspaces/tiamo-fullstack/tiamo-auth
+    nohup python3 -m http.server 8083 --bind 0.0.0.0 > /tmp/frontend.log 2>&1 &
+    sleep 2
+    # 验证前端是否启动成功
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8083/login.html | grep -q "200"; then
+        echo "✅ 前端已启动，login.html可访问"
+    else
+        echo "⚠️  前端启动可能失败，查看日志: cat /tmp/frontend.log"
+    fi
+    cd /workspaces/tiamo-fullstack
 fi
 
 # 等待服务启动
