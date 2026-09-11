@@ -1,0 +1,51 @@
+{
+  "name": "Tiamo AI 全栈开发环境",
+  "image": "mcr.microsoft.com/devcontainers/java:17",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17",
+      "installMaven": "true",
+      "mavenVersion": "3.9.6"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-boot-dev-pack",
+        "redhat.vscode-xml",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "java.configuration.updateBuildConfiguration": "interactive",
+        "java.compile.nullAnalysis.mode": "automatic",
+        "files.encoding": "utf8"
+      }
+    }
+  },
+  "forwardPorts": [8080, 8082, 8083, 3306, 6379],
+  "portsAttributes": {
+    "8082": {
+      "label": "后端API",
+      "onAutoForward": "openBrowser"
+    },
+    "8083": {
+      "label": "前端网站",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "remoteEnv": {
+    "DB_URL": "jdbc:mysql://mysql-zeng80999-a9fd.d.aivencloud.com:12757/defaultdb?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true",
+    "DB_USERNAME": "avnadmin",
+    "DB_PASSWORD": "AVNS_Dtwz8hHNvzxUTRYc7Ut",
+    "REDIS_HOST": "localhost",
+    "REDIS_PORT": "6379",
+    "JWT_SECRET": "tiamo-ai-secret-key-2024-must-be-at-least-256-bits-long-for-hs256"
+  },
+  "postCreateCommand": "cd tiamo-backend && mvn clean package -DskipTests -q && echo '✅ 后端编译完成！' && echo '📝 使用方法：运行 bash start.sh 启动服务'",
+  "postStartCommand": "echo '🚀 Tiamo AI 开发环境已就绪！' && echo '📖 运行 bash start.sh 启动前后端服务' && java -version && mvn -version",
+  "waitFor": "onCreateCommand"
+}
