@@ -9,6 +9,9 @@
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/redis:1": {
+      "version": "latest"
     }
   },
   "customizations": {
@@ -45,7 +48,7 @@
     "REDIS_PORT": "6379",
     "JWT_SECRET": "tiamo-ai-secret-key-2024-must-be-at-least-256-bits-long-for-hs256"
   },
-  "postCreateCommand": "cd tiamo-backend && mvn clean package -DskipTests -q && echo '✅ 后端编译完成！' && echo '📝 使用方法：运行 bash start.sh 启动服务'",
+  "postCreateCommand": "cd tiamo-backend && mvn clean package -DskipTests 2>&1 | tail -30 && echo '✅ 后端编译完成！' && echo '📝 使用方法：运行 bash start.sh 启动服务'",
   "postStartCommand": "echo '🚀 自动启动Tiamo AI服务...' && cd /workspaces/tiamo-fullstack && bash start.sh &",
   "waitFor": "onCreateCommand"
 }
