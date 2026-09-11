@@ -6,8 +6,8 @@
 window.APP_CONFIG = {
     // 后端 API 地址
     // 本地开发: http://localhost:8080
-    // GitHub Codespaces: https://fluffy-waddle-5g9j96pj74qx37xpq-8080.app.github.dev
-    API_BASE: 'https://fluffy-waddle-5g9j96pj74qx37xpq-8080.app.github.dev',
+    // GitHub Codespaces: https://ubiquitous-space-happiness-r4xqx9vq57v62x459-8080.app.github.dev
+    API_BASE: 'https://ubiquitous-space-happiness-r4xqx9vq57v62x459-8080.app.github.dev',
 
     // 网站名称
     SITE_NAME: 'Tiamo AI',
