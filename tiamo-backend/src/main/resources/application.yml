@@ -31,6 +31,12 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
   task:
     scheduling:
       timezone: Asia/Shanghai
@@ -103,3 +109,7 @@ app:
   log-email:
     enabled: true              # 是否开启邮件推送（true=开启，false=关闭）
     to: 1301628876@qq.com      # 接收操作日志的邮箱地址
+
+# 文件上传路径
+upload:
+  path: ${UPLOAD_PATH:/tmp/tiamo-uploads}
